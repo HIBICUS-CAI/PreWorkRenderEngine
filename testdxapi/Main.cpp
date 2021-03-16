@@ -220,7 +220,7 @@ HRESULT InitD3D11Device()
         dc.SampleDesc.Count = 1;
         dc.SampleDesc.Quality = 0;
         dc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        dc.BufferCount = 1;
+        dc.BufferCount = 2;
 
         hr = dxgiFactory2->CreateSwapChainForHwnd(gp_d3dDevice, g_hWnd,
             &dc, nullptr, nullptr, &gp_SwapChain1);
@@ -235,7 +235,7 @@ HRESULT InitD3D11Device()
     {
         // 11.0
         DXGI_SWAP_CHAIN_DESC dc = {};
-        dc.BufferCount = 1;
+        dc.BufferCount = 2;
         dc.BufferDesc.Width = width;
         dc.BufferDesc.Height = height;
         dc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -344,7 +344,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_KEYDOWN:
-        if (wParam == VK_SPACE)
+        if (wParam == VK_F1)
         {
             if (g_isFull)
             {
