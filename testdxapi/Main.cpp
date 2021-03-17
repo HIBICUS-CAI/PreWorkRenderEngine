@@ -687,7 +687,7 @@ HRESULT PrepareCube()
     D3D11_BUFFER_DESC bdc = {};
     bdc.Usage = D3D11_USAGE_DEFAULT;
     bdc.ByteWidth = sizeof(SimpleVertex) * 8;
-    bdc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bdc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bdc.CPUAccessFlags = 0;
     D3D11_SUBRESOURCE_DATA initData = {};
     initData.pSysMem = vertices;
