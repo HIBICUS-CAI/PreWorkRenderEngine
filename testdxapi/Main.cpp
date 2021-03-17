@@ -25,6 +25,7 @@ ID3D11RenderTargetView* gp_RenderTargetView = nullptr;
 
 HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 HRESULT InitD3D11Device();
+void ChangeWindowSize();
 void CleanupDevice();
 void Render();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -87,10 +88,10 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow)
 
     g_hInst = hInstance;
 
+#ifdef CREATE_FULLSCREEN_ATINIT
     UINT width = GetSystemMetrics(SM_CXSCREEN);
     UINT height = GetSystemMetrics(SM_CYSCREEN);
 
-#ifdef CREATE_FULLSCREEN_ATINIT
     RECT rc = {
         0, 0,
         width, height
@@ -123,6 +124,17 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow)
     }
 
     ShowWindow(g_hWnd, nCmdShow);
+    HWND hDesk;
+    hDesk = GetDesktopWindow();
+    GetWindowRect(hDesk, &rc);
+    UINT offsetX = rc.right / 2;
+    UINT offsetY = rc.bottom / 2;
+    UINT width = 1280;
+    UINT height = 720;
+    SetWindowLong(g_hWnd, GWL_STYLE,
+        WS_OVERLAPPED);
+    SetWindowPos(g_hWnd, HWND_NOTOPMOST, offsetX - width / 2, offsetY - height / 2,
+        width, height, SWP_SHOWWINDOW);
 
     return S_OK;
 }
@@ -284,6 +296,92 @@ HRESULT InitD3D11Device()
     return hr;
 }
 
+void ChangeWindowSize()
+{
+    if (gp_RenderTargetView)
+    {
+        gp_RenderTargetView->Release();
+    }
+    if (gp_SwapChain1)
+    {
+        gp_SwapChain1->Release();
+    }
+    if (gp_SwapChain)
+    {
+        gp_SwapChain->Release();
+    }
+
+    RECT rc = {};
+    GetClientRect(g_hWnd, &rc);
+    UINT width = rc.right - rc.left;
+    UINT height = rc.bottom - rc.top;
+
+    IDXGIFactory1* dxgiFactory1 = nullptr;
+    {
+        IDXGIDevice* dxgiDevice = nullptr;
+        gp_d3dDevice->QueryInterface(IID_PPV_ARGS(&dxgiDevice));
+        IDXGIAdapter* adapter = nullptr;
+        dxgiDevice->GetAdapter(&adapter);
+        adapter->GetParent(IID_PPV_ARGS(&dxgiFactory1));
+        adapter->Release();
+        dxgiDevice->Release();
+    }
+    IDXGIFactory2* dxgiFactory2 = nullptr;
+    dxgiFactory1->QueryInterface(IID_PPV_ARGS(&dxgiFactory2));
+    if (dxgiFactory2)
+    {
+        // 11.1+
+        gp_d3dDevice->QueryInterface(IID_PPV_ARGS(&gp_d3dDevice1));
+        gp_ImmediateContext->QueryInterface(IID_PPV_ARGS(&gp_ImmediateContext1));
+        DXGI_SWAP_CHAIN_DESC1 dc = {};
+        dc.Width = width;
+        dc.Height = height;
+        dc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        dc.SampleDesc.Count = 1;
+        dc.SampleDesc.Quality = 0;
+        dc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        dc.BufferCount = 2;
+        dxgiFactory2->CreateSwapChainForHwnd(gp_d3dDevice, g_hWnd,
+            &dc, nullptr, nullptr, &gp_SwapChain1);
+        gp_SwapChain1->QueryInterface(IID_PPV_ARGS(&gp_SwapChain));
+        dxgiFactory2->Release();
+    }
+    else
+    {
+        // 11.0
+        DXGI_SWAP_CHAIN_DESC dc = {};
+        dc.BufferCount = 2;
+        dc.BufferDesc.Width = width;
+        dc.BufferDesc.Height = height;
+        dc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        dc.BufferDesc.RefreshRate.Numerator = 60;
+        dc.BufferDesc.RefreshRate.Denominator = 1;
+        dc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        dc.OutputWindow = g_hWnd;
+        dc.SampleDesc.Count = 1;
+        dc.SampleDesc.Quality = 0;
+        dc.Windowed = TRUE;
+        dxgiFactory1->CreateSwapChain(gp_d3dDevice, &dc, &gp_SwapChain);
+    }
+    dxgiFactory1->Release();
+    ID3D11Texture2D* pBackBuffer = nullptr;
+    gp_SwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+    if (pBackBuffer != nullptr)
+    {
+        gp_d3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &gp_RenderTargetView);
+    }
+    pBackBuffer->Release();
+    gp_ImmediateContext->OMSetRenderTargets(1, &gp_RenderTargetView, nullptr);
+    D3D11_VIEWPORT vp;
+    vp.Width = (FLOAT)width;
+    vp.Height = (FLOAT)height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    gp_ImmediateContext->RSSetViewports(1, &vp);
+}
+
 void CleanupDevice()
 {
     if (gp_ImmediateContext)
@@ -356,10 +454,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 UINT offsetY = rc.bottom / 2;
                 UINT width = 1280;
                 UINT height = 720;
-                SetWindowLong(hWnd, GWL_STYLE,
-                    WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX);
-                SetWindowPos(hWnd, HWND_NOTOPMOST, offsetX - width / 2, offsetY - height / 2,
+                SetWindowLong(g_hWnd, GWL_STYLE,
+                    WS_OVERLAPPED);
+                SetWindowPos(g_hWnd, HWND_NOTOPMOST, offsetX - width / 2, offsetY - height / 2,
                     width, height, SWP_SHOWWINDOW);
+                GetClientRect(g_hWnd, &rc);
+                int a = 12;
             }
             else
             {
@@ -367,12 +467,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 RECT rc;
                 hDesk = GetDesktopWindow();
                 GetWindowRect(hDesk, &rc);
-                SetWindowLong(hWnd, GWL_STYLE, WS_POPUP);
-                SetWindowPos(hWnd, HWND_TOPMOST, 0, 0,
+                SetWindowLong(g_hWnd, GWL_STYLE, WS_POPUP);
+                SetWindowPos(g_hWnd, HWND_NOTOPMOST, 0, 0,
                     rc.right, rc.bottom, SWP_SHOWWINDOW);
             }
 
             g_isFull = !g_isFull;
+            ChangeWindowSize();
         }
         break;
 
