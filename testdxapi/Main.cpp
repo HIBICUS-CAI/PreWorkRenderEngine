@@ -18,7 +18,7 @@ bool g_isFull = false;
 struct SimpleVertex
 {
     DirectX::XMFLOAT3 Pos;
-    DirectX::XMFLOAT4 Color;
+    DirectX::XMFLOAT3 Normal;
 };
 
 struct ConstantBuffer
@@ -26,6 +26,28 @@ struct ConstantBuffer
     DirectX::XMMATRIX mWorld;
     DirectX::XMMATRIX mView;
     DirectX::XMMATRIX mProjection;
+};
+
+struct Material
+{
+    DirectX::XMFLOAT4 mDiffuseAlbedo;
+    DirectX::XMFLOAT3 mFresnelR0;
+    FLOAT mShininess;
+};
+
+struct Light
+{
+    DirectX::XMFLOAT3 Strength = { 1.f,1.f,1.f };   // 光源强度和光色
+    FLOAT FalloffStart = 1.f;                       // 点光源和聚光灯光源可用
+    DirectX::XMFLOAT3 Direction = { 0.f,-1.f,0.f }; // 平行光源和聚光灯光源可用
+    FLOAT FalloffEnd = 5.f;                         // 点光源和聚光灯光源可用
+    DirectX::XMFLOAT3 Position = { 0.f,0.f,0.f };   // 点光源和聚光灯光源可用
+    FLOAT SpotPower = 64.f;                         // 聚光灯光源可用
+};
+
+struct AmbientLight
+{
+    DirectX::XMFLOAT4 ALight = { 1.f,1.f,1.f,1.f };
 };
 
 D3D_DRIVER_TYPE g_DriverType;
@@ -43,6 +65,9 @@ ID3D11InputLayout* gp_VertexLayout = nullptr;
 ID3D11Buffer* gp_VertexBuffer = nullptr;
 ID3D11Buffer* gp_IndexBuffer = nullptr;
 ID3D11Buffer* gp_ConstantBuffer = nullptr;
+ID3D11Buffer* gp_MatConstantBuffer = nullptr;
+ID3D11Buffer* gp_LightConstantBuffer = nullptr;
+ID3D11Buffer* gp_AmbientLightConstantBuffer = nullptr;
 DirectX::XMMATRIX g_World;
 DirectX::XMMATRIX g_View;
 DirectX::XMMATRIX g_Projection;
@@ -479,7 +504,7 @@ void CleanupDevice()
 
 void Render()
 {
-    gp_ImmediateContext->ClearRenderTargetView(gp_RenderTargetView, DirectX::Colors::Azure);
+    gp_ImmediateContext->ClearRenderTargetView(gp_RenderTargetView, DirectX::Colors::Black);
 
 #ifdef SHOW_CUBE
     RenderCube();
@@ -512,7 +537,27 @@ void RenderCube()
     gp_ImmediateContext->UpdateSubresource(gp_ConstantBuffer, 0, nullptr, &cb, 0, 0);
     gp_ImmediateContext->VSSetShader(gp_VertexShader, nullptr, 0);
     gp_ImmediateContext->VSSetConstantBuffers(0, 1, &gp_ConstantBuffer);
+
+    Light lb;
+    AmbientLight alb;
+    Material mb;
+    lb.Direction = { 0.f,0.f,1.f };
+    lb.Position = { 0.f,0.f,-5.f };
+    lb.Strength = { 1.f,1.f,1.f };
+    lb.SpotPower = 64.f;
+    lb.FalloffStart = 1.f;
+    lb.FalloffEnd = 10.f;
+    alb.ALight = { 1.f,1.f,1.f,1.f };
+    mb.mDiffuseAlbedo = { 0.5f,0.5f,0.5f,1.f };
+    mb.mFresnelR0 = { 0.95f,0.64f,0.54f };
+    mb.mShininess = 0.875f;
+    gp_ImmediateContext->UpdateSubresource(gp_LightConstantBuffer, 0, nullptr, &lb, 0, 0);
+    gp_ImmediateContext->UpdateSubresource(gp_AmbientLightConstantBuffer, 0, nullptr, &alb, 0, 0);
+    gp_ImmediateContext->UpdateSubresource(gp_MatConstantBuffer, 0, nullptr, &mb, 0, 0);
     gp_ImmediateContext->PSSetShader(gp_PixelShader, nullptr, 0);
+    gp_ImmediateContext->PSSetConstantBuffers(0, 1, &gp_LightConstantBuffer);
+    gp_ImmediateContext->PSSetConstantBuffers(1, 1, &gp_AmbientLightConstantBuffer);
+    gp_ImmediateContext->PSSetConstantBuffers(2, 1, &gp_MatConstantBuffer);
     gp_ImmediateContext->DrawIndexed(36, 0, 0);
 }
 
@@ -566,7 +611,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             g_isFull = !g_isFull;
             ChangeWindowSize();
         }
-        else if (wParam==VK_ESCAPE)
+        else if (wParam == VK_ESCAPE)
         {
             PostQuitMessage(0);
         }
@@ -592,7 +637,8 @@ HRESULT CompileShaderFromFile(const WCHAR* szFileName,
 #endif
 
     ID3DBlob* pErrorBlob = nullptr;
-    hr = D3DCompileFromFile(szFileName, nullptr, nullptr, szEntryPoint, szShaderModel,
+    // 使用D3D_COMPILE_STANDARD_FILE_INCLUDE导入include句柄
+    hr = D3DCompileFromFile(szFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, szEntryPoint, szShaderModel,
         dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
     if (FAILED(hr))
     {
@@ -627,7 +673,7 @@ HRESULT PrepareCube()
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         {"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-        {"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0}
+        {"NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0}
     };
     UINT numInputLayouts = ARRAYSIZE(layout);
     hr = gp_d3dDevice->CreateInputLayout(layout, numInputLayouts,
@@ -657,35 +703,35 @@ HRESULT PrepareCube()
     {
         {
             DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f),
-            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+            DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f)
         }
     };
     D3D11_BUFFER_DESC bdc = {};
@@ -745,6 +791,37 @@ HRESULT PrepareCube()
     {
         return hr;
     }
+
+    bdc.Usage = D3D11_USAGE_DEFAULT;
+    bdc.ByteWidth = sizeof(Material);
+    bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    hr = gp_d3dDevice->CreateBuffer(&bdc, nullptr, &gp_MatConstantBuffer);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    bdc.Usage = D3D11_USAGE_DEFAULT;
+    bdc.ByteWidth = sizeof(Light);
+    bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    hr = gp_d3dDevice->CreateBuffer(&bdc, nullptr, &gp_LightConstantBuffer);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    bdc.Usage = D3D11_USAGE_DEFAULT;
+    bdc.ByteWidth = sizeof(AmbientLight);
+    bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    hr = gp_d3dDevice->CreateBuffer(&bdc, nullptr, &gp_AmbientLightConstantBuffer);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
     g_World = DirectX::XMMatrixIdentity();
     DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.f, 0.f, -5.f, 0.f);
     DirectX::XMVECTOR lookat = DirectX::XMVectorSet(0.f, 0.f, 0.f, 0.f);
