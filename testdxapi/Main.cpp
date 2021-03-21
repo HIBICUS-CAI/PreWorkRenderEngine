@@ -6,7 +6,7 @@
 #include <directxcolors.h>
 
 //#define CREATE_FULLSCREEN_ATINIT
-//#define SHOW_CUBE
+#define SHOW_CUBE
 //#define SHOW_MESH
 
 // 管理win32方面的内容
@@ -74,10 +74,12 @@ int WINAPI WinMain(
     {
         return -2;
     }
+#ifdef SHOW_CUBE
     if (FAILED(PrepareCube()))
     {
         return -3;
     }
+#endif // SHOW_CUBE
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
@@ -479,7 +481,9 @@ void Render()
 {
     gp_ImmediateContext->ClearRenderTargetView(gp_RenderTargetView, DirectX::Colors::Azure);
 
+#ifdef SHOW_CUBE
     RenderCube();
+#endif // SHOW_CUBE
 
     gp_SwapChain->Present(0, 0);
 }
@@ -623,7 +627,7 @@ HRESULT PrepareCube()
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         {"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-        {"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0}
+        {"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0}
     };
     UINT numInputLayouts = ARRAYSIZE(layout);
     hr = gp_d3dDevice->CreateInputLayout(layout, numInputLayouts,
@@ -653,36 +657,36 @@ HRESULT PrepareCube()
     {
         {
             DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f),
-            DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f),
-            DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
-            DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f),
-            DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f),
-            DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f),
-            DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f),
-            DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
         },
         {
             DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f),
-            DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)
-        },
+            DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)
+        }
     };
     D3D11_BUFFER_DESC bdc = {};
     bdc.Usage = D3D11_USAGE_DEFAULT;
