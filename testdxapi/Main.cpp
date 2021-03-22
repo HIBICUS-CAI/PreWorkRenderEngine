@@ -4,7 +4,9 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <directxcolors.h>
+#include "DDSTextureLoader.h"
 
+//#define CHECK_RELEASE
 //#define CREATE_FULLSCREEN_ATINIT
 #define SHOW_CUBE
 //#define SHOW_MESH
@@ -19,6 +21,7 @@ struct SimpleVertex
 {
     DirectX::XMFLOAT3 Pos;
     DirectX::XMFLOAT3 Normal;
+    DirectX::XMFLOAT2 TexCoord;
 };
 
 struct ConstantBuffer
@@ -59,6 +62,8 @@ ID3D11DeviceContext1* gp_ImmediateContext1 = nullptr;
 IDXGISwapChain* gp_SwapChain = nullptr;
 IDXGISwapChain1* gp_SwapChain1 = nullptr;
 ID3D11RenderTargetView* gp_RenderTargetView = nullptr;
+ID3D11Texture2D* gp_DepthStencil = nullptr;
+ID3D11DepthStencilView* gp_DepthStencilView = nullptr;
 ID3D11VertexShader* gp_VertexShader = nullptr;
 ID3D11PixelShader* gp_PixelShader = nullptr;
 ID3D11InputLayout* gp_VertexLayout = nullptr;
@@ -68,6 +73,8 @@ ID3D11Buffer* gp_ConstantBuffer = nullptr;
 ID3D11Buffer* gp_MatConstantBuffer = nullptr;
 ID3D11Buffer* gp_LightConstantBuffer = nullptr;
 ID3D11Buffer* gp_AmbientLightConstantBuffer = nullptr;
+ID3D11ShaderResourceView* gp_TextureRV = nullptr;
+ID3D11SamplerState* gp_SamplerLinear = nullptr;
 DirectX::XMMATRIX g_World;
 DirectX::XMMATRIX g_View;
 DirectX::XMMATRIX g_Projection;
@@ -342,7 +349,35 @@ HRESULT InitD3D11Device()
         return hr;
     }
 
-    gp_ImmediateContext->OMSetRenderTargets(1, &gp_RenderTargetView, nullptr);
+    D3D11_TEXTURE2D_DESC texDepSte = {};
+    texDepSte.Width = width;
+    texDepSte.Height = height;
+    texDepSte.MipLevels = 1;
+    texDepSte.ArraySize = 1;
+    texDepSte.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texDepSte.SampleDesc.Count = 1;
+    texDepSte.SampleDesc.Quality = 0;
+    texDepSte.Usage = D3D11_USAGE_DEFAULT;
+    texDepSte.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texDepSte.CPUAccessFlags = 0;
+    texDepSte.MiscFlags = 0;
+    hr = gp_d3dDevice->CreateTexture2D(&texDepSte, nullptr, &gp_DepthStencil);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC desDSV = {};
+    desDSV.Format = texDepSte.Format;
+    desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    desDSV.Texture2D.MipSlice = 0;
+    hr = gp_d3dDevice->CreateDepthStencilView(gp_DepthStencil, &desDSV, &gp_DepthStencilView);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    gp_ImmediateContext->OMSetRenderTargets(1, &gp_RenderTargetView, gp_DepthStencilView);
 
     D3D11_VIEWPORT vp;
     vp.Width = (FLOAT)width;
@@ -472,6 +507,34 @@ void CleanupDevice()
     {
         gp_PixelShader->Release();
     }
+    if (gp_TextureRV)
+    {
+        gp_TextureRV->Release();
+    }
+    if (gp_SamplerLinear)
+    {
+        gp_SamplerLinear->Release();
+    }
+    if (gp_MatConstantBuffer)
+    {
+        gp_MatConstantBuffer->Release();
+    }
+    if (gp_LightConstantBuffer)
+    {
+        gp_LightConstantBuffer->Release();
+    }
+    if (gp_AmbientLightConstantBuffer)
+    {
+        gp_AmbientLightConstantBuffer->Release();
+    }
+    if (gp_DepthStencilView)
+    {
+        gp_DepthStencilView->Release();
+    }
+    if (gp_DepthStencil)
+    {
+        gp_DepthStencil->Release();
+    }
     if (gp_RenderTargetView)
     {
         gp_RenderTargetView->Release();
@@ -492,6 +555,19 @@ void CleanupDevice()
     {
         gp_ImmediateContext->Release();
     }
+
+#ifdef _DEBUG
+#ifdef CHECK_RELEASE
+    ID3D11Debug* pDebug = nullptr;
+    HRESULT hr = gp_d3dDevice->QueryInterface(IID_PPV_ARGS(&pDebug));
+    if (SUCCEEDED(hr))
+    {
+        hr = pDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+        pDebug->Release();
+    }
+#endif // CHECK_RELEASE
+#endif // _DEBUG
+
     if (gp_d3dDevice1)
     {
         gp_d3dDevice1->Release();
@@ -505,6 +581,7 @@ void CleanupDevice()
 void Render()
 {
     gp_ImmediateContext->ClearRenderTargetView(gp_RenderTargetView, DirectX::Colors::Black);
+    gp_ImmediateContext->ClearDepthStencilView(gp_DepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
 
 #ifdef SHOW_CUBE
     RenderCube();
@@ -558,6 +635,8 @@ void RenderCube()
     gp_ImmediateContext->PSSetConstantBuffers(0, 1, &gp_LightConstantBuffer);
     gp_ImmediateContext->PSSetConstantBuffers(1, 1, &gp_AmbientLightConstantBuffer);
     gp_ImmediateContext->PSSetConstantBuffers(2, 1, &gp_MatConstantBuffer);
+    gp_ImmediateContext->PSSetShaderResources(0, 1, &gp_TextureRV);
+    gp_ImmediateContext->PSSetSamplers(0, 1, &gp_SamplerLinear);
     gp_ImmediateContext->DrawIndexed(36, 0, 0);
 }
 
@@ -657,7 +736,7 @@ HRESULT CompileShaderFromFile(const WCHAR* szFileName,
 HRESULT PrepareCube()
 {
     ID3DBlob* pVSBlob = nullptr;
-    HRESULT hr = CompileShaderFromFile(L"VertexShader.hlsl", "main", "vs_4_0", &pVSBlob);
+    HRESULT hr = CompileShaderFromFile(L"VertexShader.hlsl", "main", "vs_5_0", &pVSBlob);
     if (FAILED(hr))
     {
         return hr;
@@ -673,7 +752,8 @@ HRESULT PrepareCube()
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         {"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-        {"NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0}
+        {"NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0},
+        {"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,24,D3D11_INPUT_PER_VERTEX_DATA,0}
     };
     UINT numInputLayouts = ARRAYSIZE(layout);
     hr = gp_d3dDevice->CreateInputLayout(layout, numInputLayouts,
@@ -686,7 +766,7 @@ HRESULT PrepareCube()
     gp_ImmediateContext->IASetInputLayout(gp_VertexLayout);
 
     ID3DBlob* pPSBlob = nullptr;
-    hr = CompileShaderFromFile(L"PixelShader.hlsl", "main", "ps_4_0", &pPSBlob);
+    hr = CompileShaderFromFile(L"PixelShader.hlsl", "main", "ps_5_0", &pPSBlob);
     if (FAILED(hr))
     {
         return hr;
@@ -701,42 +781,39 @@ HRESULT PrepareCube()
 
     SimpleVertex vertices[] =
     {
-        {
-            DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f),
-            DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f),
-            DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
-            DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f),
-            DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f),
-            DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f),
-            DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f),
-            DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f)
-        },
-        {
-            DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f),
-            DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f)
-        }
+        { DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) },
+        { DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(0.0f, 0.0f) },
+        { DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT2(1.0f, 1.0f) },
+
+        { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT2(0.0f, 0.0f) },
+        { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) },
+        { DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT2(1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 1.0f) },
+
+        { DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) },
+        { DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 0.0f) },
+
+        { DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT2(1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT2(0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(0.0f, 0.0f) },
+        { DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) },
+
+        { DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT2(0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) },
+        { DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(0.0f, 0.0f) },
+
+        { DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, -1.0f, 1.0f), DirectX::XMFLOAT2(1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, -1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT2(0.0f, 0.0f) },
+        { DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, 1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) }
     };
     D3D11_BUFFER_DESC bdc = {};
     bdc.Usage = D3D11_USAGE_DEFAULT;
-    bdc.ByteWidth = sizeof(SimpleVertex) * 8;
+    bdc.ByteWidth = sizeof(SimpleVertex) * 24;
     bdc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bdc.CPUAccessFlags = 0;
     D3D11_SUBRESOURCE_DATA initData = {};
@@ -754,20 +831,20 @@ HRESULT PrepareCube()
         3,1,0,
         2,1,3,
 
-        0,5,4,
-        1,5,0,
-
-        3,4,7,
-        0,4,3,
-
-        1,6,5,
-        2,6,1,
-
-        2,7,6,
-        3,7,2,
-
         6,4,5,
         7,4,6,
+
+        11,9,8,
+        10,9,11,
+
+        14,12,13,
+        15,12,14,
+
+        19,17,16,
+        18,17,19,
+
+        22,20,21,
+        23,20,22
     };
     bdc.Usage = D3D11_USAGE_DEFAULT;
     bdc.ByteWidth = sizeof(WORD) * 36;
@@ -817,6 +894,26 @@ HRESULT PrepareCube()
     bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bdc.CPUAccessFlags = 0;
     hr = gp_d3dDevice->CreateBuffer(&bdc, nullptr, &gp_AmbientLightConstantBuffer);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = DirectX::CreateDDSTextureFromFile(gp_d3dDevice, L"seafloor.dds", nullptr, &gp_TextureRV);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    D3D11_SAMPLER_DESC desSam = {};
+    desSam.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    desSam.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    desSam.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    desSam.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    desSam.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    desSam.MinLOD = 0;
+    desSam.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = gp_d3dDevice->CreateSamplerState(&desSam, &gp_SamplerLinear);
     if (FAILED(hr))
     {
         return hr;

@@ -10,6 +10,8 @@
 
 #include "LightingUtil.hlsli"
 
+Texture2D CubeTex : register(t0);
+SamplerState SamLiner : register(s0);
 cbuffer Light : register(b0)
 {
     float3 Strength;
@@ -18,23 +20,24 @@ cbuffer Light : register(b0)
     float FalloffEnd;
     float3 Position;
     float SpotPower;
-}
+};
 cbuffer AmbientLight : register(b1)
 {
     float4 AmbientLight;
-}
+};
 cbuffer Material : register(b2)
 {
     float4 DiffuseAlbedo;
     float3 FresnelR0;
     float Shininess;
-}
+};
 
 struct VS_OUTPUT
 {
     float4 PosH : SV_POSITION;
     float3 PosW : POSITION;
     float3 NormalW : NORMAL;
+    float2 TexCoordL : TEXCOORD;
 };
 
 //#define SHOWONECOLOR (0.5f)
@@ -57,10 +60,12 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     Light l = { Strength,FalloffStart,Direction,FalloffEnd,Position,SpotPower };
     Material mat = { DiffuseAlbedo,FresnelR0,Shininess };
     float4 directL = float4(ComputeSpotLight(l, mat, input.PosW, input.NormalW, toEyeW), 0.0f);
-    
+
     // 光照效果和
     float4 litColor = ambientL + directL;
-    litColor.a = DiffuseAlbedo.a;
+    float4 texColor = CubeTex.Sample(SamLiner,input.TexCoordL);
+    litColor *= texColor;
+    litColor.a = texColor.a;
 
     return litColor;
 
