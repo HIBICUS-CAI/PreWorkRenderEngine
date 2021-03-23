@@ -78,6 +78,10 @@ ID3D11SamplerState* gp_SamplerLinear = nullptr;
 DirectX::XMMATRIX g_World;
 DirectX::XMMATRIX g_View;
 DirectX::XMMATRIX g_Projection;
+DirectX::XMFLOAT3 g_CameraPosition;
+DirectX::XMFLOAT3 g_CameraLookAt;
+DirectX::XMFLOAT3 g_CamearUpVec;
+DirectX::XMFLOAT3 g_LightDirection;
 
 HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 HRESULT InitD3D11Device();
@@ -607,6 +611,15 @@ void RenderCube()
     }
 
     g_World = DirectX::XMMatrixRotationY(t);
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
+        &DirectX::XMFLOAT4(g_CameraPosition.x, g_CameraPosition.y, g_CameraPosition.z, 0.f));
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        g_CameraPosition.x + g_CameraLookAt.x,
+        g_CameraPosition.y + g_CameraLookAt.y,
+        g_CameraPosition.z + g_CameraLookAt.z, 0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        g_CamearUpVec.x, g_CamearUpVec.y, g_CamearUpVec.z, 0.f);
+    g_View = DirectX::XMMatrixLookAtLH(eye, lookat, up);
     ConstantBuffer cb;
     cb.mWorld = XMMatrixTranspose(g_World);
     cb.mView = XMMatrixTranspose(g_View);
@@ -618,7 +631,7 @@ void RenderCube()
     Light lb;
     AmbientLight alb;
     Material mb;
-    lb.Direction = { 0.f,0.f,1.f };
+    lb.Direction = g_LightDirection;
     lb.Position = { 0.f,0.f,-5.f };
     lb.Strength = { 1.f,1.f,1.f };
     lb.SpotPower = 64.f;
@@ -689,6 +702,126 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             g_isFull = !g_isFull;
             ChangeWindowSize();
+        }
+        else if (wParam == 'W')
+        {
+            g_CameraPosition.z += 0.05f;
+        }
+        else if (wParam == 'S')
+        {
+            g_CameraPosition.z -= 0.05f;
+        }
+        else if (wParam == 'A')
+        {
+            g_CameraPosition.x -= 0.05f;
+        }
+        else if (wParam == 'D')
+        {
+            g_CameraPosition.x += 0.05f;
+        }
+        else if (wParam == 'I')
+        {
+            DirectX::XMVECTOR camDir = DirectX::XMLoadFloat3(
+                &g_CameraLookAt);
+            DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(
+                &g_CamearUpVec);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationX(-0.06f);
+            DirectX::XMVECTOR newCamDir = DirectX::XMVector3TransformNormal(
+                camDir, rotate
+            );
+            DirectX::XMVECTOR newCamUp = DirectX::XMVector3TransformNormal(
+                camUp, rotate
+            );
+            DirectX::XMStoreFloat3(&g_CameraLookAt, newCamDir);
+            DirectX::XMStoreFloat3(&g_CamearUpVec, newCamUp);
+        }
+        else if (wParam == 'K')
+        {
+            DirectX::XMVECTOR camDir = DirectX::XMLoadFloat3(
+                &g_CameraLookAt);
+            DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(
+                &g_CamearUpVec);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationX(0.06f);
+            DirectX::XMVECTOR newCamDir = DirectX::XMVector3TransformNormal(
+                camDir, rotate
+            );
+            DirectX::XMVECTOR newCamUp = DirectX::XMVector3TransformNormal(
+                camUp, rotate
+            );
+            DirectX::XMStoreFloat3(&g_CameraLookAt, newCamDir);
+            DirectX::XMStoreFloat3(&g_CamearUpVec, newCamUp);
+        }
+        else if (wParam == 'J')
+        {
+            DirectX::XMVECTOR camDir = DirectX::XMLoadFloat3(
+                &g_CameraLookAt);
+            DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(
+                &g_CamearUpVec);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationY(-0.06f);
+            DirectX::XMVECTOR newCamDir = DirectX::XMVector3TransformNormal(
+                camDir, rotate
+            );
+            DirectX::XMVECTOR newCamUp = DirectX::XMVector3TransformNormal(
+                camUp, rotate
+            );
+            DirectX::XMStoreFloat3(&g_CameraLookAt, newCamDir);
+            DirectX::XMStoreFloat3(&g_CamearUpVec, newCamUp);
+        }
+        else if (wParam == 'L')
+        {
+            DirectX::XMVECTOR camDir = DirectX::XMLoadFloat3(
+                &g_CameraLookAt);
+            DirectX::XMVECTOR camUp = DirectX::XMLoadFloat3(
+                &g_CamearUpVec);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationY(0.06f);
+            DirectX::XMVECTOR newCamDir = DirectX::XMVector3TransformNormal(
+                camDir, rotate
+            );
+            DirectX::XMVECTOR newCamUp = DirectX::XMVector3TransformNormal(
+                camUp, rotate
+            );
+            DirectX::XMStoreFloat3(&g_CameraLookAt, newCamDir);
+            DirectX::XMStoreFloat3(&g_CamearUpVec, newCamUp);
+        }
+        else if (wParam == VK_UP)
+        {
+            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
+                &g_LightDirection);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationX(-0.06f);
+            DirectX::XMVECTOR newLightDir = DirectX::XMVector3TransformNormal(
+                lightDir, rotate
+            );
+            DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
+        }
+        else if (wParam == VK_DOWN)
+        {
+            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
+                &g_LightDirection);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationX(0.06f);
+            DirectX::XMVECTOR newLightDir = DirectX::XMVector3TransformNormal(
+                lightDir, rotate
+            );
+            DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
+        }
+        else if (wParam == VK_LEFT)
+        {
+            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
+                &g_LightDirection);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationY(-0.06f);
+            DirectX::XMVECTOR newLightDir = DirectX::XMVector3TransformNormal(
+                lightDir, rotate
+            );
+            DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
+        }
+        else if (wParam == VK_RIGHT)
+        {
+            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
+                &g_LightDirection);
+            DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationY(0.06f);
+            DirectX::XMVECTOR newLightDir = DirectX::XMVector3TransformNormal(
+                lightDir, rotate
+            );
+            DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
         }
         else if (wParam == VK_ESCAPE)
         {
@@ -920,9 +1053,16 @@ HRESULT PrepareCube()
     }
 
     g_World = DirectX::XMMatrixIdentity();
-    DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.f, 0.f, -5.f, 0.f);
-    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(0.f, 0.f, 0.f, 0.f);
-    DirectX::XMVECTOR up = DirectX::XMVectorSet(0.f, 1.f, 0.f, 0.f);
+    g_CameraPosition = { 0.f,0.f,-5.f };
+    g_CameraLookAt = { 0.f,0.f,1.f };
+    g_CamearUpVec = { 0.f,1.f,0.f };
+    g_LightDirection = g_CameraLookAt;
+    DirectX::XMVECTOR eye = DirectX::XMVectorSet(
+        g_CameraPosition.x, g_CameraPosition.y, g_CameraPosition.z, 0.f);
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        g_CameraLookAt.x, g_CameraLookAt.y, g_CameraLookAt.z, 0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        g_CamearUpVec.x, g_CamearUpVec.y, g_CamearUpVec.z, 0.f);
     g_View = DirectX::XMMatrixLookAtLH(eye, lookat, up);
     RECT rc;
     GetClientRect(g_hWnd, &rc);
