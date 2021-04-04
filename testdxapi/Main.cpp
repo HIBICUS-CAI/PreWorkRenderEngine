@@ -1053,7 +1053,7 @@ HRESULT PrepareCube()
     }
 
     g_World = DirectX::XMMatrixIdentity();
-    g_CameraPosition = { 0.f,0.f,-5.f };
+    g_CameraPosition = { 0.f,0.f,-15.f };
     g_CameraLookAt = { 0.f,0.f,1.f };
     g_CamearUpVec = { 0.f,1.f,0.f };
     g_LightDirection = g_CameraLookAt;
@@ -1068,7 +1068,7 @@ HRESULT PrepareCube()
     GetClientRect(g_hWnd, &rc);
     UINT width = rc.right - rc.left;
     UINT height = rc.bottom - rc.top;
-    g_Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2,
+    g_Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PI / 6.f,
         width / (FLOAT)height, 0.01f, 100.f);
 
     return S_OK;
