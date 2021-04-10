@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testdll1", "testdll1\testdl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testdxapi", "testdxapi\testdxapi.vcxproj", "{C75AEA86-2B2F-454D-9A9A-BC77C65F5A7D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "04_WindowManager", "04_WindowManager\04_WindowManager.vcxproj", "{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{C75AEA86-2B2F-454D-9A9A-BC77C65F5A7D}.Release|x64.Build.0 = Release|x64
 		{C75AEA86-2B2F-454D-9A9A-BC77C65F5A7D}.Release|x86.ActiveCfg = Release|Win32
 		{C75AEA86-2B2F-454D-9A9A-BC77C65F5A7D}.Release|x86.Build.0 = Release|Win32
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Debug|x64.ActiveCfg = Debug|x64
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Debug|x64.Build.0 = Debug|x64
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Debug|x86.ActiveCfg = Debug|Win32
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Debug|x86.Build.0 = Debug|Win32
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Release|x64.ActiveCfg = Release|x64
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Release|x64.Build.0 = Release|x64
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Release|x86.ActiveCfg = Release|Win32
+		{948FF8DD-8FB2-4E3E-8AB2-F9F702F9C501}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
