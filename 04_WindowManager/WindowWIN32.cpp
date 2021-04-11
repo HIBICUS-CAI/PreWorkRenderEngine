@@ -1,5 +1,6 @@
 #include "WM_Common.h"
 #include "WindowWIN32.h"
+#include <string.h>
 
 WindowWIN32::WindowWIN32() :
     mInstance(nullptr), mWndHandle(nullptr), mbFullScr(false)
@@ -8,12 +9,15 @@ WindowWIN32::WindowWIN32() :
 }
 
 HRESULT WindowWIN32::CreateMyWindow(
-    const char* className,
     const char* wndName,
     HINSTANCE hInstance,
     int cmdShow,
     bool inFullScr)
 {
+    char className[128] = "";
+    strcpy_s(className, sizeof(className), wndName);
+    strcat_s(className, sizeof(className), " CLASS");
+
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;

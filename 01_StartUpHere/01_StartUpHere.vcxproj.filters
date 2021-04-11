@@ -13,10 +13,27 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Temp">
+      <UniqueIdentifier>{c2ceafb9-d789-4ef6-971b-b2f55c72e18e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="StartUp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tempD3d.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
+    <ClCompile Include="tempDDSTextureLoader.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tempD3d.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="tempDDSTextureLoader.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

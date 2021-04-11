@@ -1,27 +1,6 @@
-//#include <iostream>
-//#include "Header.h"
-//
-//int main(void)
-//{
-//    std::cout << "大丈夫だ" << std::endl;
-//    std::cout << "厳しいでも、きっと辿り着けるんだ" << std::endl;
-//    std::cout << "自分に信じていこう！" << std::endl;
-//
-//    std::cout << "DLLファイルで５足す６の結果を計算して表示させる：　"
-//        << ADD(5, 6) << std::endl;
-//
-//    std::cout << "dllファイルのclassを使用する" << std::endl;
-//    DllTestClass* test = new DllTestClass;
-//    std::cout << test->GetAPlusB() << std::endl;
-//    test->SetAAndB(10, 10);
-//    std::cout << test->GetAPlusB() << std::endl;
-//    delete test;
-//
-//    return 0;
-//}
-
 #include <Windows.h>
 #include "WindowWIN32.h"
+#include "tempD3d.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -31,8 +10,19 @@ int WINAPI WinMain(
 )
 {
     WindowWIN32* w = new WindowWIN32();
-    w->CreateMyWindow("test", "a test window",
+    w->CreateMyWindow("a test window",
         hInstance, iCmdShow, false);
+
+    if (FAILED(TEMP::InitD3D11Device(w->GetWndHandle())))
+    {
+        return -1;
+    }
+#ifdef SHOW_CUBE
+    if (FAILED(TEMP::PrepareCube(w->GetWndHandle())))
+    {
+        return -2;
+    }
+#endif // SHOW_CUBE
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
@@ -44,9 +34,12 @@ int WINAPI WinMain(
         }
         else
         {
-
+            TEMP::Render();
         }
     }
+
+    TEMP::CleanupDevice();
+    delete w;
 
     return (int)msg.wParam;
 }

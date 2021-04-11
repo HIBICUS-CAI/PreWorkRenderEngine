@@ -7,7 +7,6 @@ class WINDOWMANAGER_EXPORT WindowWIN32
 public:
     WindowWIN32();
     HRESULT CreateMyWindow(
-        const char* className,
         const char* wndName,
         HINSTANCE hInstance,
         int cmdShow,
