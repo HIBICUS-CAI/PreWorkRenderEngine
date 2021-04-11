@@ -164,6 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ID_BasicMacro.h" />
     <ClInclude Include="ID_Common.h" />
     <ClInclude Include="ID_ExportMacro.h" />
     <ClInclude Include="InputDeviceBase.h" />

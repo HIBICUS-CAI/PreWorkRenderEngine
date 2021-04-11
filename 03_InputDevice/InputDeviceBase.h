@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ID_BasicMacro.h"
+#include <dinput.h>
 #include "ID_ExportMacro.h"
 
 enum class INPUT_TYPE
@@ -16,7 +18,13 @@ public:
 
     virtual INPUT_TYPE GetInputType() = 0;
 
+    LPDIRECTINPUTDEVICE8 GetDIDeviceHandle();
+
+    DWORD GetXIDeviceHandle();
+
+    LPDIRECTINPUTDEVICE8 mDIDeviceHandle;
+
 private:
-    INPUT_TYPE mInputType;
+    DWORD mXIDeviceHandle;
 };
 

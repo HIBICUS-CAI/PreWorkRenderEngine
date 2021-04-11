@@ -1,35 +1,34 @@
 #pragma once
 
-#define DIRECTINPUT_VERSION 0x0800
-
+#include "ID_BasicMacro.h"
 #include <Windows.h>
 #include <dinput.h>
+#include "WindowWIN32.h"
 #include "ID_ExportMacro.h"
 #include "InputDeviceBase.h"
-
-#define MAX_INPUTDEVICE_NUM 4
 
 class INPUTDEVICE_EXPORT InputManager
 {
 public:
-    InputManager(HINSTANCE hInstance);
+    InputManager(WindowWIN32* wnd);
 
     HRESULT CreateDirectInputMain();
     void CloseDirectInputMain();
 
     void EnumAllInputDevices();
 
-    InputDeviceBase* GetKeyBoardByOffset(int offset = 0);
-    InputDeviceBase* GetMouseByOffset(int offset = 0);
+    InputDeviceBase* GetKeyBoard();
+    InputDeviceBase* GetMouse();
     InputDeviceBase* GetGamePadByOffset(int offset = 0);
 
 private:
     HINSTANCE mhInstance;
+    HWND mhWindow;
 
     LPDIRECTINPUT8 mpDirectInput;
 
-    InputDeviceBase* mpKeyBoards[MAX_INPUTDEVICE_NUM];
-    InputDeviceBase* mpMice[MAX_INPUTDEVICE_NUM];
+    InputDeviceBase* mpKeyBoard;
+    InputDeviceBase* mpMouse;
     InputDeviceBase* mpGamePads[MAX_INPUTDEVICE_NUM];
 };
 

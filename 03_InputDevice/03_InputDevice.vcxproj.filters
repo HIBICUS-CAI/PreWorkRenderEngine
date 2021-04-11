@@ -36,6 +36,9 @@
     <ClInclude Include="InputDeviceDirectInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ID_BasicMacro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

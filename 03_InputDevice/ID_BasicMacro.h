@@ -1,0 +1,4 @@
+#pragma once
+
+#define MAX_INPUTDEVICE_NUM 4
+#define DIRECTINPUT_VERSION 0x0800

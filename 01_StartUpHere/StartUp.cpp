@@ -17,8 +17,9 @@ int WINAPI WinMain(
         hInstance, iCmdShow, false);
 
     //---------------------------------------------
-    InputManager im(w->GetWndInstance());
+    InputManager im(w);
     im.CreateDirectInputMain();
+    im.EnumAllInputDevices();
 
     if (FAILED(TEMP::InitD3D11Device(w->GetWndHandle())))
     {
@@ -46,6 +47,9 @@ int WINAPI WinMain(
     }
 
     TEMP::CleanupDevice();
+    //--------------------------------------
+    im.CloseDirectInputMain();
+    //--------------------------------------
     delete w;
 
     return (int)msg.wParam;
