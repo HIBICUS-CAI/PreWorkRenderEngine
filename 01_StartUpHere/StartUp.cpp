@@ -42,6 +42,7 @@ int WINAPI WinMain(
         }
         else
         {
+            im.PollAllInputDevices();
             TEMP::Render();
         }
     }

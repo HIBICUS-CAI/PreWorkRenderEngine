@@ -56,7 +56,8 @@ void InputManager::EnumAllInputDevices()
     HRESULT hr = S_OK;
     LPDIRECTINPUTDEVICE8 tempDevice = nullptr;
     // keyboard
-    mpKeyBoard = new InputDeviceDirectInput();
+    mpKeyBoard = new InputDeviceDirectInput(
+        INPUT_DEVICE_TYPE::KEYBOARD);
     hr = mpDirectInput->CreateDevice(GUID_SysKeyboard,
         &(mpKeyBoard->mDIDeviceHandle), nullptr);
     if (FAILED(hr))
@@ -86,7 +87,8 @@ void InputManager::EnumAllInputDevices()
     }
 
     // mouse
-    mpMouse = new InputDeviceDirectInput();
+    mpMouse = new InputDeviceDirectInput(
+        INPUT_DEVICE_TYPE::MOUSE);
     hr = mpDirectInput->CreateDevice(GUID_SysKeyboard,
         &(mpMouse->mDIDeviceHandle), nullptr);
     if (FAILED(hr))
@@ -136,4 +138,40 @@ InputDeviceBase* InputManager::GetGamePadByOffset(int offset)
     }
 
     return mpGamePads[offset];
+}
+
+HRESULT InputManager::PollAllInputDevices()
+{
+    HRESULT hr = S_OK;
+    HRESULT fhr = S_OK;
+
+    if (mpKeyBoard)
+    {
+        hr = mpKeyBoard->PollDeviceStatus();
+        if (FAILED(hr))
+        {
+            fhr = hr;
+        }
+    }
+    if (mpMouse)
+    {
+        hr = mpMouse->PollDeviceStatus();
+        if (FAILED(hr))
+        {
+            fhr = hr;
+        }
+    }
+    for (int i = 0; i < MAX_INPUTDEVICE_NUM; i++)
+    {
+        if (mpGamePads[i])
+        {
+            hr = mpGamePads[i]->PollDeviceStatus();
+        }
+        if (FAILED(hr))
+        {
+            fhr = hr;
+        }
+    }
+
+    return fhr;
 }

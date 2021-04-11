@@ -16,6 +16,7 @@ public:
     void CloseDirectInputMain();
 
     void EnumAllInputDevices();
+    HRESULT PollAllInputDevices();
 
     InputDeviceBase* GetKeyBoard();
     InputDeviceBase* GetMouse();
