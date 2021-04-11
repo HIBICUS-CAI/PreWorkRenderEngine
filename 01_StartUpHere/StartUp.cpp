@@ -1,6 +1,9 @@
 #include <Windows.h>
 #include "WindowWIN32.h"
 #include "tempD3d.h"
+//---------------------------------------------
+#include "InputManager.h"
+#include "InputDeviceDirectInput.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -12,6 +15,10 @@ int WINAPI WinMain(
     WindowWIN32* w = new WindowWIN32();
     w->CreateMyWindow("a test window",
         hInstance, iCmdShow, false);
+
+    //---------------------------------------------
+    InputManager im(w->GetWndInstance());
+    im.CreateDirectInputMain();
 
     if (FAILED(TEMP::InitD3D11Device(w->GetWndHandle())))
     {
