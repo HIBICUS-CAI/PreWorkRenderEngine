@@ -173,8 +173,12 @@
   */
 #define KB_CIRCUMFLEX       KB_PREVTRACK       /* Japanese keyboard */
 
-#define M_LEFTBTN           0
-#define M_RIGHTBTN          1
-#define M_MIDDLEBTN         2
-#define M_SLIDEBTNBACK      3
-#define M_SLIDEBTNFRONT     4
+#define MOUSE_BTN_OFFSET    0xEE
+
+#define M_LEFTBTN           0 + MOUSE_BTN_OFFSET
+#define M_RIGHTBTN          1 + MOUSE_BTN_OFFSET
+#define M_MIDDLEBTN         2 + MOUSE_BTN_OFFSET
+#define M_SLIDEBTNBACK      3 + MOUSE_BTN_OFFSET
+#define M_SLIDEBTNFRONT     4 + MOUSE_BTN_OFFSET
+
+#define GAMEPAD_BTN_OFFSET  MOUSE_BTN_OFFSET + 0x08

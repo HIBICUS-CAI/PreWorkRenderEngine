@@ -96,7 +96,8 @@ const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
             }
         }
     case INPUT_DEVICE_TYPE::MOUSE:
-        if (keyCode > 7)
+        if (keyCode < MOUSE_BTN_OFFSET ||
+            keyCode > MOUSE_BTN_OFFSET + 7)
         {
             return false;
         }
@@ -104,7 +105,8 @@ const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
         {
             DIMOUSESTATE2* status =
                 (DIMOUSESTATE2*)mDeviceStatus;
-            if (status->rgbButtons[keyCode] & 0x80)
+            if (status->
+                rgbButtons[keyCode - MOUSE_BTN_OFFSET] & 0x80)
             {
                 return true;
             }
