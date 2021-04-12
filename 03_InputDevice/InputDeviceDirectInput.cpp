@@ -14,8 +14,8 @@ InputDeviceDirectInput::InputDeviceDirectInput(
         mDeviceStatusSize = sizeof(DIKEYBOARDSTATUSMINE);
         break;
     case INPUT_DEVICE_TYPE::MOUSE:
-        mDeviceStatus = new DIMOUSESTATE();
-        mDeviceStatusSize = sizeof(DIMOUSESTATE);
+        mDeviceStatus = new DIMOUSESTATE2();
+        mDeviceStatusSize = sizeof(DIMOUSESTATE2);
         break;
     case INPUT_DEVICE_TYPE::GAMEPAD:
         break;
@@ -78,7 +78,7 @@ const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
     switch (GetInputDeviceType())
     {
     case INPUT_DEVICE_TYPE::KEYBOARD:
-        if (keyCode < 0x01 || keyCode>0xED)
+        if (keyCode < 0x01 || keyCode > 0xED)
         {
             return false;
         }
@@ -96,7 +96,23 @@ const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
             }
         }
     case INPUT_DEVICE_TYPE::MOUSE:
-        break;
+        if (keyCode > 7)
+        {
+            return false;
+        }
+        else
+        {
+            DIMOUSESTATE2* status =
+                (DIMOUSESTATE2*)mDeviceStatus;
+            if (status->rgbButtons[keyCode] & 0x80)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     case INPUT_DEVICE_TYPE::GAMEPAD:
         break;
     default:

@@ -108,7 +108,7 @@ void InputManager::EnumAllInputDevices()
         else
         {
             hr = mpMouse->mDIDeviceHandle->SetDataFormat(
-                &c_dfDIMouse);
+                &c_dfDIMouse2);
             if (FAILED(hr))
             {
                 delete mpMouse;
