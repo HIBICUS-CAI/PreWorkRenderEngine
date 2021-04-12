@@ -89,7 +89,7 @@ void InputManager::EnumAllInputDevices()
     // mouse
     mpMouse = new InputDeviceDirectInput(
         INPUT_DEVICE_TYPE::MOUSE);
-    hr = mpDirectInput->CreateDevice(GUID_SysKeyboard,
+    hr = mpDirectInput->CreateDevice(GUID_SysMouse,
         &(mpMouse->mDIDeviceHandle), nullptr);
     if (FAILED(hr))
     {

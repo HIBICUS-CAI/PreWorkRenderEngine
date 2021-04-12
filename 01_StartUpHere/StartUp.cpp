@@ -47,7 +47,7 @@ int WINAPI WinMain(
             //-------------------------
             if (im.IsThisKeyBeingPushedInSingle(KB_ESCAPE))
             {
-                int a = 1 + 1;
+                PostQuitMessage(0);
             }
         }
     }
