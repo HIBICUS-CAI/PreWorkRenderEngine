@@ -175,3 +175,25 @@ HRESULT InputManager::PollAllInputDevices()
 
     return fhr;
 }
+
+const bool InputManager::IsThisKeyBeingPushedInSingle(
+    UINT keyCode)
+{
+    bool keyboard = false;
+    bool mouse = false;
+    bool gamepad = false;
+    if (mpKeyBoard)
+    {
+        keyboard = mpKeyBoard->IsKeyBeingPushed(keyCode);
+    }
+    if (mpMouse)
+    {
+        mouse = mpMouse->IsKeyBeingPushed(keyCode);
+    }
+    if (mpGamePads[0])
+    {
+        gamepad = mpGamePads[0]->IsKeyBeingPushed(keyCode);
+    }
+    
+    return (keyboard || mouse || gamepad);
+}

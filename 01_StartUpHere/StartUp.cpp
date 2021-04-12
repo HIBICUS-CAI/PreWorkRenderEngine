@@ -44,6 +44,11 @@ int WINAPI WinMain(
         {
             im.PollAllInputDevices();
             TEMP::Render();
+            //-------------------------
+            if (im.IsThisKeyBeingPushedInSingle(KB_ESCAPE))
+            {
+                int a = 1 + 1;
+            }
         }
     }
 

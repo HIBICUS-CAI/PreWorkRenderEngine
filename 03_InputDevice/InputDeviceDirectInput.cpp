@@ -2,7 +2,7 @@
 #include "InputDeviceDirectInput.h"
 
 InputDeviceDirectInput::InputDeviceDirectInput(
-    INPUT_DEVICE_TYPE deviceType):
+    INPUT_DEVICE_TYPE deviceType) :
     InputDeviceBase(deviceType),
     mDeviceStatus(nullptr),
     mDeviceStatusSize(0)
@@ -71,4 +71,37 @@ HRESULT InputDeviceDirectInput::PollDeviceStatus()
     }
 
     return hr;
+}
+
+const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
+{
+    switch (GetInputDeviceType())
+    {
+    case INPUT_DEVICE_TYPE::KEYBOARD:
+        if (keyCode < 0x01 || keyCode>0xED)
+        {
+            return false;
+        }
+        else
+        {
+            DIKEYBOARDSTATUSMINE* status =
+                (DIKEYBOARDSTATUSMINE*)mDeviceStatus;
+            if (status->Status[keyCode] & 0x80)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    case INPUT_DEVICE_TYPE::MOUSE:
+        break;
+    case INPUT_DEVICE_TYPE::GAMEPAD:
+        break;
+    default:
+        break;
+    }
+    //--------------------
+    return false;
 }

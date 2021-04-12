@@ -15,6 +15,8 @@ public:
 
     virtual const LPVOID GetDeviceStatus();
 
+    virtual const bool IsKeyBeingPushed(UINT keyCode);
+
 private:
     LPVOID mDeviceStatus;
     WORD mDeviceStatusSize;

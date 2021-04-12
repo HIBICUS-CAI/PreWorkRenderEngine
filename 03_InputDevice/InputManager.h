@@ -18,6 +18,8 @@ public:
     void EnumAllInputDevices();
     HRESULT PollAllInputDevices();
 
+    const bool IsThisKeyBeingPushedInSingle(UINT keyCode);
+
     InputDeviceBase* GetKeyBoard();
     InputDeviceBase* GetMouse();
     InputDeviceBase* GetGamePadByOffset(int offset = 0);
