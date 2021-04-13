@@ -72,6 +72,22 @@ DirectX::XMFLOAT3 g_LightDirection;
 
 namespace TEMP
 {
+    //-----------------------------------------------
+    LONG gx = 0, gy = 0, gz = 0;
+    void setLightOffsetX(LONG x)
+    {
+        gx = x;
+    }
+    void setLightOffsetY(LONG y)
+    {
+        gy = y;
+    }
+    void setLightOffsetZ(LONG z)
+    {
+        gz = z;
+    }
+    //-----------------------------------------------
+
     HRESULT InitD3D11Device(HWND wndHandle)
     {
         HRESULT hr = S_OK;
@@ -106,7 +122,7 @@ namespace TEMP
             hr = D3D11CreateDevice(nullptr, g_DriverType,
                 nullptr, deviceCreateFlag, featureLevels,
                 numFeatLevels, D3D11_SDK_VERSION,
-                &gp_d3dDevice, &g_FeatLevel, 
+                &gp_d3dDevice, &g_FeatLevel,
                 &gp_ImmediateContext);
 
             if (hr == E_INVALIDARG)
@@ -287,7 +303,7 @@ namespace TEMP
         ID3DBlob* pErrorBlob = nullptr;
 
         hr = D3DCompileFromFile(
-            szFileName, nullptr, 
+            szFileName, nullptr,
             D3D_COMPILE_STANDARD_FILE_INCLUDE,
             szEntryPoint, szShaderModel,
             dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
@@ -345,7 +361,7 @@ namespace TEMP
         UINT numInputLayouts = ARRAYSIZE(layout);
         hr = gp_d3dDevice->CreateInputLayout(
             layout, numInputLayouts,
-            pVSBlob->GetBufferPointer(), 
+            pVSBlob->GetBufferPointer(),
             pVSBlob->GetBufferSize(),
             &gp_VertexLayout);
         pVSBlob->Release();
@@ -501,7 +517,7 @@ namespace TEMP
         }
 
         hr = DirectX::CreateDDSTextureFromFile(
-            gp_d3dDevice, L"tempseafloor.dds", 
+            gp_d3dDevice, L"tempseafloor.dds",
             nullptr, &gp_TextureRV);
         if (FAILED(hr))
         {
@@ -539,9 +555,9 @@ namespace TEMP
             g_CameraLookAt.z,
             0.f);
         DirectX::XMVECTOR up = DirectX::XMVectorSet(
-            g_CamearUpVec.x, 
-            g_CamearUpVec.y, 
-            g_CamearUpVec.z, 
+            g_CamearUpVec.x,
+            g_CamearUpVec.y,
+            g_CamearUpVec.z,
             0.f);
         g_View = DirectX::XMMatrixLookAtLH(eye, lookat, up);
         RECT rc;
@@ -760,6 +776,26 @@ namespace TEMP
         gp_ImmediateContext->ClearDepthStencilView(
             gp_DepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
 
+        //---------------------------
+        DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
+            &g_LightDirection);
+        DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationX(
+            0.0001f * (FLOAT)gy);
+        DirectX::XMVECTOR newLightDir =
+            DirectX::XMVector3TransformNormal(
+                lightDir, rotate
+            );
+        DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
+
+        lightDir = DirectX::XMLoadFloat3(
+            &g_LightDirection);
+        rotate = DirectX::XMMatrixRotationY(0.0001f * (FLOAT)gx);
+        newLightDir = DirectX::XMVector3TransformNormal(
+            lightDir, rotate
+        );
+        DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
+        //---------------------------
+
 #ifdef SHOW_CUBE
         RenderCube();
 #endif // SHOW_CUBE
@@ -795,9 +831,9 @@ namespace TEMP
             g_CameraPosition.y + g_CameraLookAt.y,
             g_CameraPosition.z + g_CameraLookAt.z, 0.f);
         DirectX::XMVECTOR up = DirectX::XMVectorSet(
-            g_CamearUpVec.x, 
-            g_CamearUpVec.y, 
-            g_CamearUpVec.z, 
+            g_CamearUpVec.x,
+            g_CamearUpVec.y,
+            g_CamearUpVec.z,
             0.f);
         g_View = DirectX::XMMatrixLookAtLH(eye, lookat, up);
         ConstantBuffer cb;
@@ -825,10 +861,10 @@ namespace TEMP
         mb.mFresnelR0 = { 0.95f,0.64f,0.54f };
         mb.mShininess = 0.875f;
         gp_ImmediateContext->UpdateSubresource(
-            gp_LightConstantBuffer, 0, 
+            gp_LightConstantBuffer, 0,
             nullptr, &lb, 0, 0);
         gp_ImmediateContext->UpdateSubresource(
-            gp_AmbientLightConstantBuffer, 0, 
+            gp_AmbientLightConstantBuffer, 0,
             nullptr, &alb, 0, 0);
         gp_ImmediateContext->UpdateSubresource(
             gp_MatConstantBuffer, 0, nullptr, &mb, 0, 0);

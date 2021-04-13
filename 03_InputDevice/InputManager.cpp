@@ -197,3 +197,22 @@ const bool InputManager::IsThisKeyBeingPushedInSingle(
     
     return (keyboard || mouse || gamepad);
 }
+
+const MOUSE_OFFSET InputManager::GetMouseOffset()
+{
+    MOUSE_OFFSET mo;
+    mo.x = mpMouse->GetXOffset();
+    mo.y = mpMouse->GetYOffset();
+
+    return mo;
+}
+
+const bool InputManager::IsMouseScrollingUp()
+{
+    return mpMouse->GetZOffset() > 0;
+}
+
+const bool InputManager::IsMouseScrollingDown()
+{
+    return mpMouse->GetZOffset() < 0;
+}

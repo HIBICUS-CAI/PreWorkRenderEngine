@@ -123,3 +123,72 @@ const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
     //--------------------
     return false;
 }
+
+const LONG InputDeviceDirectInput::GetXOffset()
+{
+    LONG offsetX = 0;
+    switch (GetInputDeviceType())
+    {
+    case INPUT_DEVICE_TYPE::MOUSE:
+    {
+        DIMOUSESTATE2* status =
+            (DIMOUSESTATE2*)mDeviceStatus;
+        offsetX = status->lX;
+        break;
+    }
+    case INPUT_DEVICE_TYPE::GAMEPAD:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+
+    return offsetX;
+}
+
+const LONG InputDeviceDirectInput::GetYOffset()
+{
+    LONG offsetY = 0;
+    switch (GetInputDeviceType())
+    {
+    case INPUT_DEVICE_TYPE::MOUSE:
+    {
+        DIMOUSESTATE2* status =
+            (DIMOUSESTATE2*)mDeviceStatus;
+        offsetY = status->lY;
+        break;
+    }
+    case INPUT_DEVICE_TYPE::GAMEPAD:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+
+    return offsetY;
+}
+
+const LONG InputDeviceDirectInput::GetZOffset()
+{
+    LONG offsetZ = 0;
+    switch (GetInputDeviceType())
+    {
+    case INPUT_DEVICE_TYPE::MOUSE:
+    {
+        DIMOUSESTATE2* status =
+            (DIMOUSESTATE2*)mDeviceStatus;
+        offsetZ = status->lZ;
+        break;
+    }
+    case INPUT_DEVICE_TYPE::GAMEPAD:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+
+    return offsetZ;
+}

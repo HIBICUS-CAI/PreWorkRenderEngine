@@ -5,6 +5,17 @@
 #include "InputManager.h"
 #include "InputDeviceDirectInput.h"
 
+//-----------------------------------------------
+#include <stdio.h>
+void tempShowMousePos(LONG x, LONG y, LONG z)
+{
+    char str[64] = "";
+    sprintf_s(str, sizeof(str), "MOUSE:: X->%ld Y->%ld Z->%ld\n",
+        x, y, z);
+    OutputDebugString(str);
+}
+//-----------------------------------------------
+
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -49,6 +60,19 @@ int WINAPI WinMain(
             {
                 PostQuitMessage(0);
             }
+
+            LONG scrollOffset = 0;
+            if (im.IsMouseScrollingUp())
+            {
+                scrollOffset = -10;
+            }
+            if (im.IsMouseScrollingDown())
+            {
+                scrollOffset = 10;
+            }
+            TEMP::setLightOffsetX(im.GetMouseOffset().x);
+            TEMP::setLightOffsetY(im.GetMouseOffset().y +
+                scrollOffset);
         }
     }
 

@@ -7,6 +7,8 @@
 #include "ID_ExportMacro.h"
 #include "InputDeviceBase.h"
 
+typedef POINT MOUSE_OFFSET;
+
 class INPUTDEVICE_EXPORT InputManager
 {
 public:
@@ -19,6 +21,9 @@ public:
     HRESULT PollAllInputDevices();
 
     const bool IsThisKeyBeingPushedInSingle(UINT keyCode);
+    const MOUSE_OFFSET GetMouseOffset();
+    const bool IsMouseScrollingUp();
+    const bool IsMouseScrollingDown();
 
     InputDeviceBase* GetKeyBoard();
     InputDeviceBase* GetMouse();

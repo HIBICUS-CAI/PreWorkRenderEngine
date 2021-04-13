@@ -43,6 +43,9 @@ public:
     virtual const LPVOID GetDeviceStatus() = 0;
 
     virtual const bool IsKeyBeingPushed(UINT keyCode) = 0;
+    virtual const LONG GetXOffset() = 0;
+    virtual const LONG GetYOffset() = 0;
+    virtual const LONG GetZOffset() = 0;
 
     LPDIRECTINPUTDEVICE8 mDIDeviceHandle;
 
