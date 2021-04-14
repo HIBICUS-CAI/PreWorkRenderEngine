@@ -2,9 +2,11 @@
 #include "InputManager.h"
 #include "InputDeviceDirectInput.h"
 
+LPDIRECTINPUT8 InputManager::mpDirectInput = nullptr;
+
 InputManager::InputManager(WindowWIN32* wnd) :
     mhInstance(wnd->GetWndInstance()),
-    mhWindow(wnd->GetWndHandle()), mpDirectInput(nullptr),
+    mhWindow(wnd->GetWndHandle()),
     mpKeyBoard(nullptr), mpMouse(nullptr)
 {
     for (int i = 0; i < MAX_INPUTDEVICE_NUM; i++)
@@ -118,6 +120,125 @@ void InputManager::EnumAllInputDevices()
     }
 
     // gamepads
+    // 1 - xinput
+    // 2 - directinput
+    DIJOYCONFIG preferredJoyCfg = { 0 };
+    DI_ENUM_GAMEPAD_CONTEXT enumContext;
+    enumContext.pPreferredJoyCfg = &preferredJoyCfg;
+    enumContext.bPreferredJoyCfgValid = false;
+    IDirectInputJoyConfig8* pJoyConfig = nullptr;
+    hr = mpDirectInput->QueryInterface(
+        IID_IDirectInputJoyConfig8,
+        (void**)&pJoyConfig
+    );
+    if (FAILED(hr))
+    {
+        return;
+    }
+    preferredJoyCfg.dwSize = sizeof(preferredJoyCfg);
+    hr = pJoyConfig->GetConfig(
+        0, &preferredJoyCfg, DIJC_GUIDINSTANCE);
+    if (SUCCEEDED(hr))
+    {
+        enumContext.bPreferredJoyCfgValid = true;
+    }
+    pJoyConfig->Release();
+    hr = mpDirectInput->EnumDevices(
+        DI8DEVCLASS_GAMECTRL,
+        DIEnumGamePadCallBack,
+        &mpGamePads, DIEDFL_ATTACHEDONLY
+    );
+    if (FAILED(hr))
+    {
+        return;
+    }
+    for (int i = 0; i < MAX_INPUTDEVICE_NUM; i++)
+    {
+        if (mpGamePads[i])
+        {
+            if (
+                FAILED(hr =
+                    mpGamePads[i]->mDIDeviceHandle->
+                    SetDataFormat(&c_dfDIJoystick2)) ||
+                FAILED(hr =
+                    mpGamePads[i]->mDIDeviceHandle->
+                    SetCooperativeLevel(mhWindow,
+                        DISCL_EXCLUSIVE | DISCL_FOREGROUND)) ||
+                FAILED(hr =
+                    mpGamePads[i]->mDIDeviceHandle->
+                    EnumObjects(DIEnumGamePadObjCallBack,
+                        &mpGamePads[i], DIDFT_ALL)))
+            {
+                delete mpGamePads[i];
+                for (int j = i; j < MAX_INPUTDEVICE_NUM - 1; j++)
+                {
+                    mpGamePads[j] = mpGamePads[j + 1];
+                }
+                mpGamePads[MAX_INPUTDEVICE_NUM - 1] = nullptr;
+                --i;
+            }
+        }
+    }
+}
+
+BOOL CALLBACK InputManager::DIEnumGamePadCallBack(
+    const DIDEVICEINSTANCE* pdiDeviceInst,
+    VOID* pContext)
+{
+    auto pGamePads =
+        reinterpret_cast<InputDeviceBase**>(pContext);
+
+    int index = -1;
+    for (int i = 0; i < MAX_INPUTDEVICE_NUM; i++)
+    {
+        if (!pGamePads[i])
+        {
+            pGamePads[i] =
+                new InputDeviceDirectInput(
+                    INPUT_DEVICE_TYPE::GAMEPAD);
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1)
+    {
+        return DIENUM_STOP;
+    }
+
+    mpDirectInput->CreateDevice(
+        pdiDeviceInst->guidInstance,
+        &(pGamePads[index]->mDIDeviceHandle), nullptr);
+
+    return DIENUM_CONTINUE;
+}
+
+BOOL CALLBACK InputManager::DIEnumGamePadObjCallBack(
+    const DIDEVICEOBJECTINSTANCE* pdiDeviceObjInst,
+    VOID* pContext)
+{
+    auto pGamePad =
+        reinterpret_cast<InputDeviceBase**>(pContext);
+
+    if (pdiDeviceObjInst->dwType & DIDFT_AXIS)
+    {
+        DIPROPRANGE diprg;
+        diprg.diph.dwSize = sizeof(DIPROPRANGE);
+        diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        diprg.diph.dwHow = DIPH_BYID;
+        diprg.diph.dwObj = pdiDeviceObjInst->dwType;
+        diprg.lMin = -1000;
+        diprg.lMax = +1000;
+        
+        // Set the range for the axis
+        if (FAILED(pGamePad[0]->mDIDeviceHandle->
+            SetProperty(DIPROP_RANGE, &diprg.diph)))
+        {
+            return DIENUM_STOP;
+        }
+    }
+
+    return DIENUM_CONTINUE;
 }
 
 InputDeviceBase* InputManager::GetKeyBoard()
@@ -194,7 +315,7 @@ const bool InputManager::IsThisKeyBeingPushedInSingle(
     {
         gamepad = mpGamePads[0]->IsKeyBeingPushed(keyCode);
     }
-    
+
     return (keyboard || mouse || gamepad);
 }
 
