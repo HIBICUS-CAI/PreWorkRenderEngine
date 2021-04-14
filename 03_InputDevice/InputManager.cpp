@@ -122,27 +122,6 @@ void InputManager::EnumAllInputDevices()
     // gamepads
     // 1 - xinput
     // 2 - directinput
-    DIJOYCONFIG preferredJoyCfg = { 0 };
-    DI_ENUM_GAMEPAD_CONTEXT enumContext;
-    enumContext.pPreferredJoyCfg = &preferredJoyCfg;
-    enumContext.bPreferredJoyCfgValid = false;
-    IDirectInputJoyConfig8* pJoyConfig = nullptr;
-    hr = mpDirectInput->QueryInterface(
-        IID_IDirectInputJoyConfig8,
-        (void**)&pJoyConfig
-    );
-    if (FAILED(hr))
-    {
-        return;
-    }
-    preferredJoyCfg.dwSize = sizeof(preferredJoyCfg);
-    hr = pJoyConfig->GetConfig(
-        0, &preferredJoyCfg, DIJC_GUIDINSTANCE);
-    if (SUCCEEDED(hr))
-    {
-        enumContext.bPreferredJoyCfgValid = true;
-    }
-    pJoyConfig->Release();
     hr = mpDirectInput->EnumDevices(
         DI8DEVCLASS_GAMECTRL,
         DIEnumGamePadCallBack,
