@@ -124,7 +124,7 @@ const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)
     return false;
 }
 
-const LONG InputDeviceDirectInput::GetXOffset()
+const LONG InputDeviceDirectInput::GetXPositionOffset()
 {
     LONG offsetX = 0;
     switch (GetInputDeviceType())
@@ -147,7 +147,7 @@ const LONG InputDeviceDirectInput::GetXOffset()
     return offsetX;
 }
 
-const LONG InputDeviceDirectInput::GetYOffset()
+const LONG InputDeviceDirectInput::GetYPositionOffset()
 {
     LONG offsetY = 0;
     switch (GetInputDeviceType())
@@ -170,7 +170,7 @@ const LONG InputDeviceDirectInput::GetYOffset()
     return offsetY;
 }
 
-const LONG InputDeviceDirectInput::GetZOffset()
+const LONG InputDeviceDirectInput::GetZPositionOffset()
 {
     LONG offsetZ = 0;
     switch (GetInputDeviceType())

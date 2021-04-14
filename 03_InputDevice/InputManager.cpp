@@ -54,7 +54,7 @@ void InputManager::EnumAllInputDevices()
     }
 
     HRESULT hr = S_OK;
-    LPDIRECTINPUTDEVICE8 tempDevice = nullptr;
+
     // keyboard
     mpKeyBoard = new InputDeviceDirectInput(
         INPUT_DEVICE_TYPE::KEYBOARD);
@@ -201,18 +201,18 @@ const bool InputManager::IsThisKeyBeingPushedInSingle(
 const MOUSE_OFFSET InputManager::GetMouseOffset()
 {
     MOUSE_OFFSET mo;
-    mo.x = mpMouse->GetXOffset();
-    mo.y = mpMouse->GetYOffset();
+    mo.x = mpMouse->GetXPositionOffset();
+    mo.y = mpMouse->GetYPositionOffset();
 
     return mo;
 }
 
 const bool InputManager::IsMouseScrollingUp()
 {
-    return mpMouse->GetZOffset() > 0;
+    return mpMouse->GetZPositionOffset() > 0;
 }
 
 const bool InputManager::IsMouseScrollingDown()
 {
-    return mpMouse->GetZOffset() < 0;
+    return mpMouse->GetZPositionOffset() < 0;
 }

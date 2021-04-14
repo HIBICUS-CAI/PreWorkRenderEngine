@@ -16,9 +16,9 @@ public:
     virtual const LPVOID GetDeviceStatus();
 
     virtual const bool IsKeyBeingPushed(UINT keyCode);
-    virtual const LONG GetXOffset();
-    virtual const LONG GetYOffset();
-    virtual const LONG GetZOffset();
+    virtual const LONG GetXPositionOffset();
+    virtual const LONG GetYPositionOffset();
+    virtual const LONG GetZPositionOffset();
 
 private:
     LPVOID mDeviceStatus;
