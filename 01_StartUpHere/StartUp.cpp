@@ -56,7 +56,7 @@ int WINAPI WinMain(
             im.PollAllInputDevices();
             TEMP::Render();
             //-------------------------
-            if (im.IsThisKeyBeingPushedInSingle(KB_ESCAPE))
+            if (im.IsThisKeyBeingPushedInSingle(GP_RIGHTDIRBTN))
             {
                 PostQuitMessage(0);
             }

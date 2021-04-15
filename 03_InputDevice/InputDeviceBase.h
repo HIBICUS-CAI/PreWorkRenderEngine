@@ -46,6 +46,9 @@ public:
     virtual const LONG GetXPositionOffset() = 0;
     virtual const LONG GetYPositionOffset() = 0;
     virtual const LONG GetZPositionOffset() = 0;
+    virtual const LONG GetXRotationOffset() = 0;
+    virtual const LONG GetYRotationOffset() = 0;
+    virtual const LONG GetZRotationOffset() = 0;
 
     LPDIRECTINPUTDEVICE8 mDIDeviceHandle;
 

@@ -19,6 +19,9 @@ public:
     virtual const LONG GetXPositionOffset();
     virtual const LONG GetYPositionOffset();
     virtual const LONG GetZPositionOffset();
+    virtual const LONG GetXRotationOffset();
+    virtual const LONG GetYRotationOffset();
+    virtual const LONG GetZRotationOffset();
 
 private:
     LPVOID mDeviceStatus;
