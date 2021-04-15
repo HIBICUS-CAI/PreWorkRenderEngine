@@ -56,23 +56,15 @@ int WINAPI WinMain(
             im.PollAllInputDevices();
             TEMP::Render();
             //-------------------------
-            if (im.IsThisKeyBeingPushedInSingle(GP_RIGHTDIRBTN))
+            if (im.IsThisKeyBeingPushedInSingle(GP_RIGHTMENUBTN))
             {
                 PostQuitMessage(0);
             }
 
-            LONG scrollOffset = 0;
-            if (im.IsMouseScrollingUp())
-            {
-                scrollOffset = -10;
-            }
-            if (im.IsMouseScrollingDown())
-            {
-                scrollOffset = 10;
-            }
-            TEMP::setLightOffsetX(im.GetMouseOffset().x);
-            TEMP::setLightOffsetY(im.GetMouseOffset().y +
-                scrollOffset);
+            TEMP::setLightOffsetX(
+                im.GetGamePadRightStickOffset().x/(FLOAT)800);
+            TEMP::setLightOffsetY(
+                im.GetGamePadRightStickOffset().y/(FLOAT)800);
         }
     }
 

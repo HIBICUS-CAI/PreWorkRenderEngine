@@ -316,3 +316,103 @@ const bool InputManager::IsMouseScrollingDown()
 {
     return mpMouse->GetZPositionOffset() < 0;
 }
+
+const STICK_OFFSET
+InputManager::GetGamePadLeftStickOffset(
+    int gamepadOffset)
+{
+    STICK_OFFSET so;
+    if (mpGamePads[gamepadOffset])
+    {
+        if (mpGamePads[gamepadOffset]->GetInputType() ==
+            INPUT_TYPE::DIRECTINPUT)
+        {
+            so.x = mpGamePads[gamepadOffset]->
+                GetXPositionOffset();
+            so.y = mpGamePads[gamepadOffset]->
+                GetYPositionOffset();
+        }
+        else
+        {
+            so.x = 0;
+            so.y = 0;
+        }
+    }
+    else
+    {
+        so.x = 0;
+        so.y = 0;
+    }
+
+    return so;
+}
+
+const STICK_OFFSET
+InputManager::GetGamePadRightStickOffset(
+    int gamepadOffset)
+{
+    STICK_OFFSET so;
+    if (mpGamePads[gamepadOffset])
+    {
+        if (mpGamePads[gamepadOffset]->GetInputType() ==
+            INPUT_TYPE::DIRECTINPUT)
+        {
+            so.x = mpGamePads[gamepadOffset]->
+                GetZPositionOffset();
+            so.y = mpGamePads[gamepadOffset]->
+                GetZRotationOffset();
+        }
+        else
+        {
+            so.x = 0;
+            so.y = 0;
+        }
+    }
+    else
+    {
+        so.x = 0;
+        so.y = 0;
+    }
+
+    return so;
+}
+
+const BACKSHD_OFFSET
+InputManager::GetGamePadLeftBackShdBtnOffset(
+    int gamepadOffset)
+{
+    if (!mpGamePads[gamepadOffset])
+    {
+        return 0;
+    }
+
+    if (mpGamePads[gamepadOffset]->GetInputType() ==
+        INPUT_TYPE::DIRECTINPUT)
+    {
+        return mpGamePads[gamepadOffset]->GetXRotationOffset();
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+const BACKSHD_OFFSET
+InputManager::GetGamePadRightBackShdBtnOffset(
+    int gamepadOffset)
+{
+    if (!mpGamePads[gamepadOffset])
+    {
+        return 0;
+    }
+
+    if (mpGamePads[gamepadOffset]->GetInputType() ==
+        INPUT_TYPE::DIRECTINPUT)
+    {
+        return mpGamePads[gamepadOffset]->GetYRotationOffset();
+    }
+    else
+    {
+        return 0;
+    }
+}

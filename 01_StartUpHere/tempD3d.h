@@ -9,9 +9,9 @@
 namespace TEMP
 {
     //------------------------
-    void setLightOffsetX(LONG x);
-    void setLightOffsetY(LONG y);
-    void setLightOffsetZ(LONG z);
+    void setLightOffsetX(FLOAT x);
+    void setLightOffsetY(FLOAT y);
+    void setLightOffsetZ(FLOAT z);
     //------------------------
 
     HRESULT InitD3D11Device(HWND wndHandle);

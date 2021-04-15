@@ -73,16 +73,16 @@ DirectX::XMFLOAT3 g_LightDirection;
 namespace TEMP
 {
     //-----------------------------------------------
-    LONG gx = 0, gy = 0, gz = 0;
-    void setLightOffsetX(LONG x)
+    FLOAT gx = 0, gy = 0, gz = 0;
+    void setLightOffsetX(FLOAT x)
     {
         gx = x;
     }
-    void setLightOffsetY(LONG y)
+    void setLightOffsetY(FLOAT y)
     {
         gy = y;
     }
-    void setLightOffsetZ(LONG z)
+    void setLightOffsetZ(FLOAT z)
     {
         gz = z;
     }

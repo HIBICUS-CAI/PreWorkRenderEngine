@@ -229,6 +229,10 @@ const LONG InputDeviceDirectInput::GetXPositionOffset()
     {
         DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
         offsetX = status->lX;
+        if (offsetX <= 100 && offsetX >= -100)
+        {
+            offsetX = 0;
+        }
         break;
     }
     default:
@@ -254,6 +258,10 @@ const LONG InputDeviceDirectInput::GetYPositionOffset()
     {
         DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
         offsetY = status->lY;
+        if (offsetY <= 100 && offsetY >= -100)
+        {
+            offsetY = 0;
+        }
         break;
     }
     default:
@@ -279,6 +287,10 @@ const LONG InputDeviceDirectInput::GetZPositionOffset()
     {
         DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
         offsetZ = status->lZ;
+        if (offsetZ <= 100 && offsetZ >= -100)
+        {
+            offsetZ = 0;
+        }
         break;
     }
     default:
@@ -298,7 +310,7 @@ const LONG InputDeviceDirectInput::GetXRotationOffset()
     }
 
     DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
-    offsetX = status->lRx;
+    offsetX = (status->lRx + 1000) / 2;
 
     return offsetX;
 }
@@ -313,7 +325,7 @@ const LONG InputDeviceDirectInput::GetYRotationOffset()
     }
 
     DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
-    offsetY = status->lRy;
+    offsetY = (status->lRy + 1000) / 2;
 
     return offsetY;
 }
@@ -329,6 +341,10 @@ const LONG InputDeviceDirectInput::GetZRotationOffset()
 
     DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
     offsetZ = status->lRz;
+    if (offsetZ <= 100 && offsetZ >= -100)
+    {
+        offsetZ = 0;
+    }
 
     return offsetZ;
 }

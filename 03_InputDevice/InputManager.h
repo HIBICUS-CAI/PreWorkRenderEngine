@@ -9,6 +9,8 @@
 #include "InputDeviceBase.h"
 
 typedef POINT MOUSE_OFFSET;
+typedef POINT STICK_OFFSET;
+typedef LONG BACKSHD_OFFSET;
 
 struct DI_ENUM_GAMEPAD_CONTEXT
 {
@@ -28,6 +30,14 @@ public:
     HRESULT PollAllInputDevices();
 
     const bool IsThisKeyBeingPushedInSingle(UINT keyCode);
+    const STICK_OFFSET GetGamePadLeftStickOffset(
+        int gamepadOffset = 0);
+    const STICK_OFFSET GetGamePadRightStickOffset(
+        int gamepadOffset = 0);
+    const BACKSHD_OFFSET GetGamePadLeftBackShdBtnOffset(
+        int gamepadOffset = 0);
+    const BACKSHD_OFFSET GetGamePadRightBackShdBtnOffset(
+        int gamepadOffset = 0);
     const MOUSE_OFFSET GetMouseOffset();
     const bool IsMouseScrollingUp();
     const bool IsMouseScrollingDown();
