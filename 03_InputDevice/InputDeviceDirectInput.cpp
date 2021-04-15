@@ -18,6 +18,8 @@ InputDeviceDirectInput::InputDeviceDirectInput(
         mDeviceStatusSize = sizeof(DIMOUSESTATE2);
         break;
     case INPUT_DEVICE_TYPE::GAMEPAD:
+        mDeviceStatus = new DIJOYSTATE2();
+        mDeviceStatusSize = sizeof(DIJOYSTATE2);
         break;
     default:
         break;

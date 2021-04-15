@@ -208,9 +208,9 @@ BOOL CALLBACK InputManager::DIEnumGamePadObjCallBack(
         diprg.diph.dwObj = pdiDeviceObjInst->dwType;
         diprg.lMin = -1000;
         diprg.lMax = +1000;
-        
+
         // Set the range for the axis
-        if (FAILED(pGamePad[0]->mDIDeviceHandle->
+        if (FAILED((*pGamePad)->mDIDeviceHandle->
             SetProperty(DIPROP_RANGE, &diprg.diph)))
         {
             return DIENUM_STOP;
