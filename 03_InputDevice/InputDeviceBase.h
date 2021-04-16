@@ -43,6 +43,7 @@ public:
     virtual const LPVOID GetDeviceStatus() = 0;
 
     virtual const bool IsKeyBeingPushed(UINT keyCode) = 0;
+    virtual const bool HasKeyPushedInLastFrame(UINT keyCode) = 0;
     virtual const LONG GetXPositionOffset() = 0;
     virtual const LONG GetYPositionOffset() = 0;
     virtual const LONG GetZPositionOffset() = 0;

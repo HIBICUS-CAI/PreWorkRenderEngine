@@ -298,6 +298,37 @@ const bool InputManager::IsThisKeyBeingPushedInSingle(
     return (keyboard || mouse || gamepad);
 }
 
+const bool InputManager::IsThisKeyHasBeenPushedInSingle(
+    UINT keyCode)
+{
+    bool confirm1 = IsThisKeyBeingPushedInSingle(keyCode);
+
+    if (!confirm1)
+    {
+        return confirm1;
+    }
+
+    bool kconfirm2 = false;
+    bool mconfirm2 = false;
+    bool gconfirm2 = false;
+
+    if (mpKeyBoard)
+    {
+        kconfirm2 = mpKeyBoard->HasKeyPushedInLastFrame(keyCode);
+    }
+    if (mpMouse)
+    {
+        mconfirm2 = mpMouse->HasKeyPushedInLastFrame(keyCode);
+    }
+    if (mpGamePads[0])
+    {
+        gconfirm2 = mpGamePads[0]->
+            HasKeyPushedInLastFrame(keyCode);
+    }
+
+    return (!(kconfirm2 || mconfirm2 || gconfirm2) && confirm1);
+}
+
 const MOUSE_OFFSET InputManager::GetMouseOffset()
 {
     MOUSE_OFFSET mo;

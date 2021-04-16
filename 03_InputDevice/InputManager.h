@@ -30,6 +30,7 @@ public:
     HRESULT PollAllInputDevices();
 
     const bool IsThisKeyBeingPushedInSingle(UINT keyCode);
+    const bool IsThisKeyHasBeenPushedInSingle(UINT keyCode);
     const STICK_OFFSET GetGamePadLeftStickOffset(
         int gamepadOffset = 0);
     const STICK_OFFSET GetGamePadRightStickOffset(

@@ -61,6 +61,15 @@ int WINAPI WinMain(
                 PostQuitMessage(0);
             }
 
+            if (im.IsThisKeyBeingPushedInSingle(GP_LEFTSTICKBTN))
+            {
+                tempShowMousePos(1, 0, 0);
+            }
+            if (im.IsThisKeyHasBeenPushedInSingle(GP_LEFTDIRBTN))
+            {
+                tempShowMousePos(0, 0, 0);
+            }
+
             TEMP::setLightOffsetX(
                 im.GetGamePadRightStickOffset().x/(FLOAT)800);
             TEMP::setLightOffsetY(

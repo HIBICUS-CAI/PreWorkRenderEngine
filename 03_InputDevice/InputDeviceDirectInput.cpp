@@ -7,6 +7,11 @@ InputDeviceDirectInput::InputDeviceDirectInput(
     mDeviceStatus(nullptr),
     mDeviceStatusSize(0)
 {
+    for (int i = 0; i < sizeof(mButtonsStatusBeforeThisPoll); i++)
+    {
+        mButtonsStatusBeforeThisPoll[i] = false;
+    }
+
     switch (deviceType)
     {
     case INPUT_DEVICE_TYPE::KEYBOARD:
@@ -70,6 +75,88 @@ HRESULT InputDeviceDirectInput::PollDeviceStatus()
         return S_OK;
     }
 
+    // store this status to backup before being updated
+    switch (GetInputDeviceType())
+    {
+    case INPUT_DEVICE_TYPE::KEYBOARD:
+        for (UINT i = KB_ESCAPE;
+            i < KB_MEDIASELECT + KB_ESCAPE;
+            i++)
+        {
+            DIKEYBOARDSTATUSMINE* status =
+                (DIKEYBOARDSTATUSMINE*)mDeviceStatus;
+            if (status->Status[i] & 0x80)
+            {
+                mButtonsStatusBeforeThisPoll[i] = true;
+            }
+            else
+            {
+                mButtonsStatusBeforeThisPoll[i] = false;
+            }
+        }
+        break;
+    case INPUT_DEVICE_TYPE::MOUSE:
+        for (UINT i = 0x00; i < 0x08; i++)
+        {
+            DIMOUSESTATE2* status =
+                (DIMOUSESTATE2*)mDeviceStatus;
+            if (status->rgbButtons[i] & 0x80)
+            {
+                mButtonsStatusBeforeThisPoll[i + MOUSE_BTN_OFFSET]
+                    = true;
+            }
+            else
+            {
+                mButtonsStatusBeforeThisPoll[i + MOUSE_BTN_OFFSET]
+                    = false;
+            }
+        }
+        break;
+    case INPUT_DEVICE_TYPE::GAMEPAD:
+        for (UINT i = 0x00; i < 0x14; i++)
+        {
+            DIJOYSTATE2* status = (DIJOYSTATE2*)mDeviceStatus;
+            if (i < 0x0C)
+            {
+                if (status->rgbButtons[i] & 0x80)
+                {
+                    mButtonsStatusBeforeThisPoll
+                        [i + GAMEPAD_BTN_OFFSET] = true;
+                }
+                else
+                {
+                    mButtonsStatusBeforeThisPoll
+                        [i + GAMEPAD_BTN_OFFSET] = false;
+                }
+            }
+            else
+            {
+                for (UINT i = 0x00; i < 0x08; i++)
+                {
+                    mButtonsStatusBeforeThisPoll
+                        [i + GP_UPDIRBTN] = false;
+                }
+                if (status->rgdwPOV[0] == 1)
+                {
+                    break;
+                }
+                UINT dirOffset = status->rgdwPOV[0] / 4500;
+                if (dirOffset > 7)
+                {
+                    break;
+                }
+                else
+                {
+                    mButtonsStatusBeforeThisPoll
+                        [dirOffset + GP_UPDIRBTN] = true;
+                }
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
     hr = mDIDeviceHandle->GetDeviceState(
         mDeviceStatusSize, mDeviceStatus);
     if (FAILED(hr))
@@ -78,6 +165,12 @@ HRESULT InputDeviceDirectInput::PollDeviceStatus()
     }
 
     return hr;
+}
+
+const bool InputDeviceDirectInput::HasKeyPushedInLastFrame(
+    UINT keyCode)
+{
+    return mButtonsStatusBeforeThisPoll[keyCode];
 }
 
 const bool InputDeviceDirectInput::IsKeyBeingPushed(UINT keyCode)

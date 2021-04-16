@@ -16,6 +16,7 @@ public:
     virtual const LPVOID GetDeviceStatus();
 
     virtual const bool IsKeyBeingPushed(UINT keyCode);
+    virtual const bool HasKeyPushedInLastFrame(UINT keyCode);
     virtual const LONG GetXPositionOffset();
     virtual const LONG GetYPositionOffset();
     virtual const LONG GetZPositionOffset();
@@ -26,5 +27,6 @@ public:
 private:
     LPVOID mDeviceStatus;
     WORD mDeviceStatusSize;
+    bool mButtonsStatusBeforeThisPoll[GP_UPLEFTDIRBTN + 0x01];
 };
 
