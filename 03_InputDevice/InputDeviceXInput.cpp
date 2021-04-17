@@ -5,11 +5,12 @@
 
 InputDeviceXInput::InputDeviceXInput(DWORD xiDeviceHandle) :
     InputDeviceBase(INPUT_DEVICE_TYPE::GAMEPAD, xiDeviceHandle),
-    mDeviceStatus(nullptr)
+    mDeviceStatus(nullptr), mDeviceStatusBeforeThisPoll(nullptr)
 {
     if (xiDeviceHandle < 4 && xiDeviceHandle >= 0)
     {
         mDeviceStatus = new XINPUT_STATE();
+        mDeviceStatusBeforeThisPoll = new XINPUT_STATE();
     }
 
     mXIKeyCodeToNorm.insert(
@@ -76,6 +77,10 @@ InputDeviceXInput::~InputDeviceXInput()
     {
         delete mDeviceStatus;
     }
+    if (mDeviceStatusBeforeThisPoll)
+    {
+        delete mDeviceStatusBeforeThisPoll;
+    }
 }
 
 INPUT_TYPE InputDeviceXInput::GetInputType()
@@ -85,7 +90,11 @@ INPUT_TYPE InputDeviceXInput::GetInputType()
 
 HRESULT InputDeviceXInput::PollDeviceStatus()
 {
-    if (!mDeviceStatus)
+    if (mDeviceStatus && mDeviceStatusBeforeThisPoll)
+    {
+        *mDeviceStatusBeforeThisPoll = *mDeviceStatus;
+    }
+    else
     {
         return E_FAIL;
     }
@@ -182,8 +191,76 @@ const bool InputDeviceXInput::IsKeyBeingPushed(UINT keyCode)
 const bool InputDeviceXInput::HasKeyPushedInLastFrame(
     UINT keyCode)
 {
-    //---------
-    return false;
+    if (!mDeviceStatusBeforeThisPoll)
+    {
+        return false;
+    }
+
+    switch (keyCode)
+    {
+    case GP_LEFTBACKSHDBTN:
+        return (mDeviceStatusBeforeThisPoll->
+            Gamepad.bLeftTrigger > 0) ? true : false;
+
+    case GP_RIGHTBACKSHDBTN:
+        return (mDeviceStatusBeforeThisPoll->
+            Gamepad.bRightTrigger > 0) ? true : false;
+
+    case GP_UPRIGHTDIRBTN:
+        return
+            ((mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_UP) &&
+                (mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_RIGHT)) ? true : false;
+
+    case GP_DOWNRIGHTDIRBTN:
+        return
+            ((mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_DOWN) &&
+                (mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_RIGHT)) ? true : false;
+
+    case GP_DOWNLEFTDIRBTN:
+        return
+            ((mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_DOWN) &&
+                (mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_LEFT)) ? true : false;
+
+    case GP_UPLEFTDIRBTN:
+        return
+            ((mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_UP) &&
+                (mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_LEFT)) ? true : false;
+
+    default:
+        break;
+    }
+
+    WORD xiKeyCode;
+    bool hasFound = false;
+    for (auto it = mXIKeyCodeToNorm.begin();
+        it != mXIKeyCodeToNorm.end(); it++)
+    {
+        if (it->first == keyCode)
+        {
+            xiKeyCode = it->second;
+            hasFound = true;
+            break;
+        }
+    }
+
+    if (!hasFound)
+    {
+        return false;
+    }
+    else
+    {
+        return (mDeviceStatusBeforeThisPoll->Gamepad.wButtons &
+            xiKeyCode) ?
+            true : false;
+    }
 }
 
 const LONG InputDeviceXInput::GetXPositionOffset()

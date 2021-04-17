@@ -28,6 +28,7 @@ public:
 
 private:
     XINPUT_STATE* mDeviceStatus;
+    XINPUT_STATE* mDeviceStatusBeforeThisPoll;
 
     std::map<UINT, WORD> mXIKeyCodeToNorm;
 };
