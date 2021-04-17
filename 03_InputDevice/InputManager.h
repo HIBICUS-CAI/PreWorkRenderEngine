@@ -3,7 +3,6 @@
 #include "ID_BasicMacro.h"
 #include <Windows.h>
 #include <dinput.h>
-#include <dinputd.h>
 #include "WindowWIN32.h"
 #include "ID_ExportMacro.h"
 #include "InputDeviceBase.h"
@@ -11,12 +10,6 @@
 typedef POINT MOUSE_OFFSET;
 typedef POINT STICK_OFFSET;
 typedef LONG BACKSHD_OFFSET;
-
-struct DI_ENUM_GAMEPAD_CONTEXT
-{
-    DIJOYCONFIG* pPreferredJoyCfg;
-    bool bPreferredJoyCfgValid;
-};
 
 class INPUTDEVICE_EXPORT InputManager
 {
