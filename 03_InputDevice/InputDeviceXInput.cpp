@@ -2,14 +2,21 @@
 #include "InputDeviceXInput.h"
 
 InputDeviceXInput::InputDeviceXInput(DWORD xiDeviceHandle) :
-    InputDeviceBase(INPUT_DEVICE_TYPE::GAMEPAD, xiDeviceHandle)
+    InputDeviceBase(INPUT_DEVICE_TYPE::GAMEPAD, xiDeviceHandle),
+    mDeviceStatus(nullptr)
 {
-
+    if (xiDeviceHandle < 4 && xiDeviceHandle >= 0)
+    {
+        mDeviceStatus = new XINPUT_STATE();
+    }
 }
 
 InputDeviceXInput::~InputDeviceXInput()
 {
-
+    if (mDeviceStatus)
+    {
+        delete mDeviceStatus;
+    }
 }
 
 INPUT_TYPE InputDeviceXInput::GetInputType()
@@ -19,14 +26,27 @@ INPUT_TYPE InputDeviceXInput::GetInputType()
 
 HRESULT InputDeviceXInput::PollDeviceStatus()
 {
-    //---------
-    return S_OK;
+    if (!mDeviceStatus)
+    {
+        return E_FAIL;
+    }
+
+    DWORD result = XInputGetState(
+        GetXIDeviceHandle(), mDeviceStatus);
+
+    if (result == ERROR_SUCCESS)
+    {
+        return S_OK;
+    }
+    else
+    {
+        return E_FAIL;
+    }
 }
 
 const LPVOID InputDeviceXInput::GetDeviceStatus()
 {
-    //---------
-    return nullptr;
+    return (LPVOID)mDeviceStatus;
 }
 
 const bool InputDeviceXInput::IsKeyBeingPushed(UINT keyCode)

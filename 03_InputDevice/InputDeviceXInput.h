@@ -1,5 +1,6 @@
 #pragma once
 #include "InputDeviceBase.h"
+#include <Xinput.h>
 
 class InputDeviceXInput :
     public InputDeviceBase
@@ -23,5 +24,8 @@ public:
     virtual const LONG GetXRotationOffset();
     virtual const LONG GetYRotationOffset();
     virtual const LONG GetZRotationOffset();
+
+private:
+    XINPUT_STATE* mDeviceStatus;
 };
 
