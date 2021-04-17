@@ -2,6 +2,7 @@
 
 #include "ID_BasicMacro.h"
 #include <dinput.h>
+#include <Xinput.h>
 #include "ID_ExportMacro.h"
 
 enum class INPUT_TYPE

@@ -1,7 +1,7 @@
 #pragma once
 #include "InputDeviceBase.h"
 
-class INPUTDEVICE_EXPORT InputDeviceDirectInput :
+class InputDeviceDirectInput :
     public InputDeviceBase
 {
 public:

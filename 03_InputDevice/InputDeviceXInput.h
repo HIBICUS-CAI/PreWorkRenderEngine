@@ -1,9 +1,8 @@
 #pragma once
 #include "InputDeviceBase.h"
-#include <Xinput.h>
 #include <map>
 
-class INPUTDEVICE_EXPORT InputDeviceXInput :
+class InputDeviceXInput :
     public InputDeviceBase
 {
 public:
