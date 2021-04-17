@@ -11,6 +11,63 @@ InputDeviceXInput::InputDeviceXInput(DWORD xiDeviceHandle) :
     {
         mDeviceStatus = new XINPUT_STATE();
     }
+
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_LEFTBTN,
+            XINPUT_GAMEPAD_X));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_BOTTOMBTN,
+            XINPUT_GAMEPAD_A));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_RIGHTBTN,
+            XINPUT_GAMEPAD_B));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_TOPBTN,
+            XINPUT_GAMEPAD_Y));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_LEFTFORESHDBTN,
+            XINPUT_GAMEPAD_LEFT_SHOULDER));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_RIGHTFORESHDBTN,
+            XINPUT_GAMEPAD_RIGHT_SHOULDER));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_LEFTMENUBTN,
+            XINPUT_GAMEPAD_BACK));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_RIGHTMENUBTN,
+            XINPUT_GAMEPAD_START));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_LEFTSTICKBTN,
+            XINPUT_GAMEPAD_LEFT_THUMB));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_RIGHTSTICKBTN,
+            XINPUT_GAMEPAD_RIGHT_THUMB));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_UPDIRBTN,
+            XINPUT_GAMEPAD_DPAD_UP));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_RIGHTDIRBTN,
+            XINPUT_GAMEPAD_DPAD_RIGHT));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_DOWNDIRBTN,
+            XINPUT_GAMEPAD_DPAD_DOWN));
+    mXIKeyCodeToNorm.insert(
+        std::make_pair(
+            GP_LEFTDIRBTN,
+            XINPUT_GAMEPAD_DPAD_LEFT));
 }
 
 InputDeviceXInput::~InputDeviceXInput()
@@ -53,8 +110,73 @@ const LPVOID InputDeviceXInput::GetDeviceStatus()
 
 const bool InputDeviceXInput::IsKeyBeingPushed(UINT keyCode)
 {
-    //---------
-    return false;
+    if (!mDeviceStatus)
+    {
+        return false;
+    }
+
+    switch (keyCode)
+    {
+    case GP_LEFTBACKSHDBTN:
+        return (GetZPositionOffset() > 0) ? true : false;
+
+    case GP_RIGHTBACKSHDBTN:
+        return (GetZRotationOffset() > 0) ? true : false;
+
+    case GP_UPRIGHTDIRBTN:
+        return
+            ((mDeviceStatus->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_UP) &&
+                (mDeviceStatus->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_RIGHT)) ? true : false;
+
+    case GP_DOWNRIGHTDIRBTN:
+        return
+            ((mDeviceStatus->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_DOWN) &&
+                (mDeviceStatus->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_RIGHT)) ? true : false;
+
+    case GP_DOWNLEFTDIRBTN:
+        return
+            ((mDeviceStatus->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_DOWN) &&
+                (mDeviceStatus->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_LEFT)) ? true : false;
+
+    case GP_UPLEFTDIRBTN:
+        return
+            ((mDeviceStatus->Gamepad.wButtons &
+                XINPUT_GAMEPAD_DPAD_UP) &&
+                (mDeviceStatus->Gamepad.wButtons &
+                    XINPUT_GAMEPAD_DPAD_LEFT)) ? true : false;
+
+    default:
+        break;
+    }
+
+    WORD xiKeyCode;
+    bool hasFound = false;
+    for (auto it = mXIKeyCodeToNorm.begin();
+        it != mXIKeyCodeToNorm.end(); it++)
+    {
+        if (it->first == keyCode)
+        {
+            xiKeyCode = it->second;
+            hasFound = true;
+            break;
+        }
+    }
+
+    if (!hasFound)
+    {
+        return false;
+    }
+    else
+    {
+        return (mDeviceStatus->Gamepad.wButtons & xiKeyCode) ?
+            true : false;
+    }
 }
 
 const bool InputDeviceXInput::HasKeyPushedInLastFrame(

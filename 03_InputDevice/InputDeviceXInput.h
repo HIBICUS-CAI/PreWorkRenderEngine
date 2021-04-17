@@ -1,6 +1,7 @@
 #pragma once
 #include "InputDeviceBase.h"
 #include <Xinput.h>
+#include <map>
 
 class InputDeviceXInput :
     public InputDeviceBase
@@ -27,5 +28,7 @@ public:
 
 private:
     XINPUT_STATE* mDeviceStatus;
+
+    std::map<UINT, WORD> mXIKeyCodeToNorm;
 };
 
