@@ -3,7 +3,7 @@
 #include <Xinput.h>
 #include <map>
 
-class InputDeviceXInput :
+class INPUTDEVICE_EXPORT InputDeviceXInput :
     public InputDeviceBase
 {
 public:
