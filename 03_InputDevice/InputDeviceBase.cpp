@@ -1,9 +1,10 @@
 #include "ID_Common.h"
 #include "InputDeviceBase.h"
 
-InputDeviceBase::InputDeviceBase(INPUT_DEVICE_TYPE deviceType) :
+InputDeviceBase::InputDeviceBase(INPUT_DEVICE_TYPE deviceType,
+    DWORD xiDeviceHandle) :
     mDIDeviceHandle(nullptr),
-    mXIDeviceHandle(MAX_INPUTDEVICE_NUM),
+    mXIDeviceHandle(xiDeviceHandle),
     mDeviceType(deviceType)
 {
     

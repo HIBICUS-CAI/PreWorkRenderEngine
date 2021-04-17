@@ -3,6 +3,7 @@
 #include "ID_BasicMacro.h"
 #include <Windows.h>
 #include <dinput.h>
+#include <Xinput.h>
 #include "WindowWIN32.h"
 #include "ID_ExportMacro.h"
 #include "InputDeviceBase.h"
@@ -41,7 +42,7 @@ public:
     InputDeviceBase* GetGamePadByOffset(int offset = 0);
 
 private:
-    static BOOL CALLBACK DIEnumGamePadCallBack(
+    static BOOL CALLBACK EnumGamePadCallBack(
         const DIDEVICEINSTANCE* pdiDeviceInst,
         VOID* pContext);
     static BOOL CALLBACK DIEnumGamePadObjCallBack(

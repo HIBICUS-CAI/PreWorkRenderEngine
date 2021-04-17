@@ -1,6 +1,7 @@
 #include "ID_Common.h"
 #include "InputManager.h"
 #include "InputDeviceDirectInput.h"
+#include "InputDeviceXInput.h"
 
 LPDIRECTINPUT8 InputManager::mpDirectInput = nullptr;
 
@@ -124,7 +125,7 @@ void InputManager::EnumAllInputDevices()
     // 2 - directinput
     hr = mpDirectInput->EnumDevices(
         DI8DEVCLASS_GAMECTRL,
-        DIEnumGamePadCallBack,
+        EnumGamePadCallBack,
         &mpGamePads, DIEDFL_ATTACHEDONLY
     );
     if (FAILED(hr))
@@ -133,7 +134,9 @@ void InputManager::EnumAllInputDevices()
     }
     for (int i = 0; i < MAX_INPUTDEVICE_NUM; i++)
     {
-        if (mpGamePads[i])
+        if (mpGamePads[i] &&
+            mpGamePads[i]->GetInputType() ==
+            INPUT_TYPE::DIRECTINPUT)
         {
             if (
                 FAILED(hr =
@@ -160,7 +163,7 @@ void InputManager::EnumAllInputDevices()
     }
 }
 
-BOOL CALLBACK InputManager::DIEnumGamePadCallBack(
+BOOL CALLBACK InputManager::EnumGamePadCallBack(
     const DIDEVICEINSTANCE* pdiDeviceInst,
     VOID* pContext)
 {
@@ -168,10 +171,23 @@ BOOL CALLBACK InputManager::DIEnumGamePadCallBack(
         reinterpret_cast<InputDeviceBase**>(pContext);
 
     int index = -1;
+    bool inXI = false;
     for (int i = 0; i < MAX_INPUTDEVICE_NUM; i++)
     {
         if (!pGamePads[i])
         {
+            static int xiIndex = 0;
+            XINPUT_STATE xs;
+            DWORD xResult = XInputGetState(i, &xs);
+            if (xResult == ERROR_SUCCESS)
+            {
+                pGamePads[i] = new InputDeviceXInput(xiIndex);
+                ++xiIndex;
+                index = i;
+                inXI = true;
+                break;
+            }
+
             pGamePads[i] =
                 new InputDeviceDirectInput(
                     INPUT_DEVICE_TYPE::GAMEPAD);
@@ -185,9 +201,12 @@ BOOL CALLBACK InputManager::DIEnumGamePadCallBack(
         return DIENUM_STOP;
     }
 
-    mpDirectInput->CreateDevice(
-        pdiDeviceInst->guidInstance,
-        &(pGamePads[index]->mDIDeviceHandle), nullptr);
+    if (!inXI)
+    {
+        mpDirectInput->CreateDevice(
+            pdiDeviceInst->guidInstance,
+            &(pGamePads[index]->mDIDeviceHandle), nullptr);
+    }
 
     return DIENUM_CONTINUE;
 }

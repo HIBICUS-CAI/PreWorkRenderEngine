@@ -26,7 +26,8 @@ struct DIKEYBOARDSTATUSMINE
 class INPUTDEVICE_EXPORT InputDeviceBase
 {
 public:
-    InputDeviceBase(INPUT_DEVICE_TYPE deviceType);
+    InputDeviceBase(INPUT_DEVICE_TYPE deviceType,
+        DWORD xiDeviceHandle = MAX_INPUTDEVICE_NUM);
 
     virtual ~InputDeviceBase();
 
