@@ -1,6 +1,8 @@
 #include "ID_Common.h"
 #include "InputDeviceXInput.h"
 
+#define INPUT_DEADZONE (0.24f * FLOAT(0x7FFF))
+
 InputDeviceXInput::InputDeviceXInput(DWORD xiDeviceHandle) :
     InputDeviceBase(INPUT_DEVICE_TYPE::GAMEPAD, xiDeviceHandle),
     mDeviceStatus(nullptr)
@@ -64,36 +66,86 @@ const bool InputDeviceXInput::HasKeyPushedInLastFrame(
 
 const LONG InputDeviceXInput::GetXPositionOffset()
 {
-    //---------
-    return 0;
+    if (!mDeviceStatus)
+    {
+        return 0;
+    }
+
+    SHORT xOffset = mDeviceStatus->Gamepad.sThumbLX;
+    if (xOffset<INPUT_DEADZONE && xOffset>-INPUT_DEADZONE)
+    {
+        xOffset = 0;
+    }
+
+    return (LONG)((FLOAT)xOffset / (FLOAT)(0x7FFF) * 1000.f);
 }
 
 const LONG InputDeviceXInput::GetYPositionOffset()
 {
-    //---------
-    return 0;
+    if (!mDeviceStatus)
+    {
+        return 0;
+    }
+
+    SHORT yOffset = mDeviceStatus->Gamepad.sThumbLY;
+    if (yOffset<INPUT_DEADZONE && yOffset>-INPUT_DEADZONE)
+    {
+        yOffset = 0;
+    }
+
+    return -(LONG)((FLOAT)yOffset / (FLOAT)(0x7FFF) * 1000.f);
 }
 
 const LONG InputDeviceXInput::GetZPositionOffset()
 {
-    //---------
-    return 0;
+    if (!mDeviceStatus)
+    {
+        return 0;
+    }
+
+    return (LONG)((FLOAT)mDeviceStatus->Gamepad.bLeftTrigger /
+        (FLOAT)(255) * 1000.f);
 }
 
 const LONG InputDeviceXInput::GetXRotationOffset()
 {
-    //---------
-    return 0;
+    if (!mDeviceStatus)
+    {
+        return 0;
+    }
+
+    SHORT xOffset = mDeviceStatus->Gamepad.sThumbRX;
+    if (xOffset<INPUT_DEADZONE && xOffset>-INPUT_DEADZONE)
+    {
+        xOffset = 0;
+    }
+
+    return (LONG)((FLOAT)xOffset / (FLOAT)(0x7FFF) * 1000.f);
 }
 
 const LONG InputDeviceXInput::GetYRotationOffset()
 {
-    //---------
-    return 0;
+    if (!mDeviceStatus)
+    {
+        return 0;
+    }
+
+    SHORT yOffset = mDeviceStatus->Gamepad.sThumbRY;
+    if (yOffset<INPUT_DEADZONE && yOffset>-INPUT_DEADZONE)
+    {
+        yOffset = 0;
+    }
+
+    return -(LONG)((FLOAT)yOffset / (FLOAT)(0x7FFF) * 1000.f);
 }
 
 const LONG InputDeviceXInput::GetZRotationOffset()
 {
-    //---------
-    return 0;
+    if (!mDeviceStatus)
+    {
+        return 0;
+    }
+
+    return (LONG)((FLOAT)mDeviceStatus->Gamepad.bRightTrigger /
+        (FLOAT)(255) * 1000.f);
 }

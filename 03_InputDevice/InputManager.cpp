@@ -382,6 +382,14 @@ InputManager::GetGamePadLeftStickOffset(
             so.y = mpGamePads[gamepadOffset]->
                 GetYPositionOffset();
         }
+        else if (mpGamePads[gamepadOffset]->GetInputType() ==
+            INPUT_TYPE::XINPUT)
+        {
+            so.x = mpGamePads[gamepadOffset]->
+                GetXPositionOffset();
+            so.y = mpGamePads[gamepadOffset]->
+                GetYPositionOffset();
+        }
         else
         {
             so.x = 0;
@@ -412,6 +420,14 @@ InputManager::GetGamePadRightStickOffset(
             so.y = mpGamePads[gamepadOffset]->
                 GetZRotationOffset();
         }
+        else if (mpGamePads[gamepadOffset]->GetInputType() ==
+            INPUT_TYPE::XINPUT)
+        {
+            so.x = mpGamePads[gamepadOffset]->
+                GetXRotationOffset();
+            so.y = mpGamePads[gamepadOffset]->
+                GetYRotationOffset();
+        }
         else
         {
             so.x = 0;
@@ -441,6 +457,11 @@ InputManager::GetGamePadLeftBackShdBtnOffset(
     {
         return mpGamePads[gamepadOffset]->GetXRotationOffset();
     }
+    else if (mpGamePads[gamepadOffset]->GetInputType() ==
+        INPUT_TYPE::XINPUT)
+    {
+        return mpGamePads[gamepadOffset]->GetZPositionOffset();
+    }
     else
     {
         return 0;
@@ -460,6 +481,11 @@ InputManager::GetGamePadRightBackShdBtnOffset(
         INPUT_TYPE::DIRECTINPUT)
     {
         return mpGamePads[gamepadOffset]->GetYRotationOffset();
+    }
+    else if (mpGamePads[gamepadOffset]->GetInputType() ==
+        INPUT_TYPE::XINPUT)
+    {
+        return mpGamePads[gamepadOffset]->GetZRotationOffset();
     }
     else
     {
