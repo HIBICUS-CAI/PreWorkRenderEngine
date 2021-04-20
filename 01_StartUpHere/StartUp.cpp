@@ -56,7 +56,7 @@ int WINAPI WinMain(
             im.PollAllInputDevices();
             TEMP::Render();
             //-------------------------
-            if (im.IsThisKeyBeingPushedInSingle(GP_RIGHTMENUBTN))
+            if (im.IsThisKeyBeingPushedInSingle(KB_ESCAPE))
             {
                 PostQuitMessage(0);
             }
@@ -71,9 +71,9 @@ int WINAPI WinMain(
             }
 
             TEMP::setLightOffsetX(
-                im.GetGamePadRightStickOffset().x/(FLOAT)800);
+                (FLOAT)im.GetMouseOffset().x);
             TEMP::setLightOffsetY(
-                im.GetGamePadRightStickOffset().y/(FLOAT)800);
+                (FLOAT)im.GetMouseOffset().y);
         }
     }
 
