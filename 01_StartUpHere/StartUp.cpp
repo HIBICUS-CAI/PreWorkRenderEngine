@@ -1,10 +1,7 @@
 #include <Windows.h>
 #include "WindowWIN32.h"
 #include "tempD3d.h"
-//---------------------------------------------
 #include "InputManager.h"
-#include "InputDeviceDirectInput.h"
-
 //-----------------------------------------------
 #include <stdio.h>
 void tempShowMousePos(LONG x, LONG y, LONG z)
