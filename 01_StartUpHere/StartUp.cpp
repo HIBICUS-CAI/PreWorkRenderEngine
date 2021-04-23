@@ -84,6 +84,9 @@ int WINAPI WinMain(
         }
     }
 
+    testMesh->DeleteThisMesh();
+    delete testMesh;
+
     TEMP::CleanupDevice();
     //--------------------------------------
     im.CloseDirectInputMain();
