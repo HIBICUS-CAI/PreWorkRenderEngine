@@ -127,7 +127,7 @@ void Mesh::DeleteThisMesh()
         mSubMeshes[i].DeleteThisSubMesh();
     }
 
-    mD3DDev->Release();
+    //mD3DDev->Release();
 }
 
 void Mesh::Draw(ID3D11DeviceContext* devContext)
