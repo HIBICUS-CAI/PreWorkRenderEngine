@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "WindowWIN32.h"
 #include "tempD3d.h"
+#include "tempMesh.h"
 #include "InputManager.h"
 //-----------------------------------------------
 #include <stdio.h>
@@ -39,6 +40,15 @@ int WINAPI WinMain(
         return -2;
     }
 #endif // SHOW_CUBE
+
+    //--------------------------------
+    static TEMP::Mesh* testMesh = new TEMP::Mesh(
+        TEMP::GetD3DDevicePointer());
+    if (!testMesh->Load("spider.fbx"))
+    {
+        return -3;
+    }
+    //--------------------------------
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)

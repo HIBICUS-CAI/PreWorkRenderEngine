@@ -72,6 +72,11 @@ DirectX::XMFLOAT3 g_LightDirection;
 
 namespace TEMP
 {
+    ID3D11Device* GetD3DDevicePointer()
+    {
+        return gp_d3dDevice;
+    }
+
     //-----------------------------------------------
     FLOAT gx = 0, gy = 0, gz = 0;
     void setLightOffsetX(FLOAT x)

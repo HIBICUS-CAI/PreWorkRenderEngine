@@ -8,6 +8,8 @@
 
 namespace TEMP
 {
+    ID3D11Device* GetD3DDevicePointer();
+
     //------------------------
     void setLightOffsetX(FLOAT x);
     void setLightOffsetY(FLOAT y);
