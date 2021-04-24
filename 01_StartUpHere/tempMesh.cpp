@@ -1,7 +1,143 @@
 #include "tempMesh.h"
+#include "tempD3d.h"
+
+namespace TEMP
+{
+    ID3D11VertexShader* gp_MVertexShader = nullptr;
+    ID3D11PixelShader* gp_MPixelShader = nullptr;
+    ID3D11InputLayout* gp_MVertexLayout = nullptr;
+    ID3D11Buffer* gp_WVPConstantBuffer = nullptr;
+    DirectX::XMMATRIX g_MWorld;
+    DirectX::XMMATRIX g_MView;
+    DirectX::XMMATRIX g_MProjection;
+    DirectX::XMFLOAT3 g_MCameraPosition;
+    DirectX::XMFLOAT3 g_MCameraLookAt;
+    DirectX::XMFLOAT3 g_MCamearUpVec;
+    DirectX::XMFLOAT3 g_MLightDirection;
+
+    struct WVPConstantBuffer
+    {
+        DirectX::XMMATRIX mWorld;
+        DirectX::XMMATRIX mView;
+        DirectX::XMMATRIX mProjection;
+    };
+
+    WVPConstantBuffer g_WVPcb;
+}
 
 using namespace TEMP;
 using namespace DirectX;
+
+HRESULT TEMP::PrepareMeshD3D(ID3D11Device* dev,
+    HWND wndHandle)
+{
+    HRESULT hr = S_OK;
+
+    ID3DBlob* pVSBlob = nullptr;
+    hr = CompileShaderFromFile(
+        L"tempMeshVS.hlsl", "main",
+        "vs_5_0", &pVSBlob
+    );
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    hr = dev->CreateVertexShader(pVSBlob->GetBufferPointer(),
+        pVSBlob->GetBufferSize(), nullptr, &gp_MVertexShader);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    D3D11_INPUT_ELEMENT_DESC layout[] =
+    {
+        {
+            "POSITION",0,
+            DXGI_FORMAT_R32G32B32_FLOAT,0,0,
+            D3D11_INPUT_PER_VERTEX_DATA,0
+        },
+        {
+            "NORMAL",0,
+            DXGI_FORMAT_R32G32B32_FLOAT,0,12,
+            D3D11_INPUT_PER_VERTEX_DATA,0
+        },
+        {
+            "TEXCOORD",0,
+            DXGI_FORMAT_R32G32_FLOAT,0,24,
+            D3D11_INPUT_PER_VERTEX_DATA,0
+        }
+    };
+    UINT numInputLayouts = ARRAYSIZE(layout);
+    hr = dev->CreateInputLayout(
+        layout, numInputLayouts,
+        pVSBlob->GetBufferPointer(),
+        pVSBlob->GetBufferSize(),
+        &gp_MVertexLayout);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    pVSBlob->Release();
+
+    ID3DBlob* pPSBlob = nullptr;
+    hr = CompileShaderFromFile(
+        L"tempMeshPS.hlsl", "main",
+        "ps_5_0", &pPSBlob
+    );
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    hr = dev->CreatePixelShader(pPSBlob->GetBufferPointer(),
+        pPSBlob->GetBufferSize(), nullptr, &gp_MPixelShader);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    pPSBlob->Release();
+
+    D3D11_BUFFER_DESC bdc = {};
+    bdc.Usage = D3D11_USAGE_DEFAULT;
+    bdc.ByteWidth = sizeof(WVPConstantBuffer);
+    bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    hr = dev->CreateBuffer(
+        &bdc, nullptr, &gp_WVPConstantBuffer);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    g_MWorld = DirectX::XMMatrixIdentity();
+    g_MCameraPosition = { 0.f,0.f,-15.f };
+    g_MCameraLookAt = { 0.f,0.f,1.f };
+    g_MCamearUpVec = { 0.f,1.f,0.f };
+    g_MLightDirection = g_MCameraLookAt;
+    DirectX::XMVECTOR eye = DirectX::XMVectorSet(
+        g_MCameraPosition.x,
+        g_MCameraPosition.y,
+        g_MCameraPosition.z,
+        0.f);
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        g_MCameraLookAt.x,
+        g_MCameraLookAt.y,
+        g_MCameraLookAt.z,
+        0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        g_MCamearUpVec.x,
+        g_MCamearUpVec.y,
+        g_MCamearUpVec.z,
+        0.f);
+    g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);
+    RECT rc;
+    GetClientRect(wndHandle, &rc);
+    UINT width = rc.right - rc.left;
+    UINT height = rc.bottom - rc.top;
+    g_MProjection = DirectX::XMMatrixPerspectiveFovLH(
+        DirectX::XM_PI / 6.f,
+        width / (FLOAT)height, 0.01f, 100.f);
+
+    return S_OK;
+}
 
 SubMesh::SubMesh(ID3D11Device* dev,
     std::vector<MESH_VERTEX> vertices,
@@ -28,8 +164,8 @@ void SubMesh::Draw(ID3D11DeviceContext* devContext)
         &stride, &offset);
     devContext->IASetIndexBuffer(mIndexBuffer,
         DXGI_FORMAT_R32_UINT, 0);
-    //devContext->PSSetShaderResources(0, 1,
-        //&mTextures[0].TexResView);
+    devContext->VSSetConstantBuffers(
+        0, 1, &gp_WVPConstantBuffer);
 
     devContext->DrawIndexed(mIndices.size(), 0, 0);
 }
@@ -132,6 +268,55 @@ void Mesh::DeleteThisMesh()
 
 void Mesh::Draw(ID3D11DeviceContext* devContext)
 {
+    static float time = 0.0f;
+    if (TEMP::GetDriverType() == D3D_DRIVER_TYPE_REFERENCE)
+    {
+        time += (float)DirectX::XM_PI * 0.0125f;
+    }
+    else
+    {
+        static ULONGLONG timeStart = 0;
+        ULONGLONG timeCur = GetTickCount64();
+        if (timeStart == 0)
+            timeStart = timeCur;
+        time = (timeCur - timeStart) / 1000.0f;
+    }
+
+    g_MWorld = DirectX::XMMatrixMultiply(
+        DirectX::XMMatrixScaling(0.03f, 0.03f, 0.03f),
+        DirectX::XMMatrixRotationY(time)
+    );
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
+        &DirectX::XMFLOAT4(
+            g_MCameraPosition.x,
+            g_MCameraPosition.y,
+            g_MCameraPosition.z,
+            0.f));
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        g_MCameraPosition.x + g_MCameraLookAt.x,
+        g_MCameraPosition.y + g_MCameraLookAt.y,
+        g_MCameraPosition.z + g_MCameraLookAt.z, 0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        g_MCamearUpVec.x,
+        g_MCamearUpVec.y,
+        g_MCamearUpVec.z,
+        0.f);
+    g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);
+    
+    g_WVPcb.mWorld = DirectX::XMMatrixTranspose(g_MWorld);
+    g_WVPcb.mView = DirectX::XMMatrixTranspose(g_MView);
+    g_WVPcb.mProjection = DirectX::XMMatrixTranspose(
+        g_MProjection);
+    
+    devContext->UpdateSubresource(
+        gp_WVPConstantBuffer, 0, nullptr, &g_WVPcb, 0, 0);
+    devContext->IASetInputLayout(TEMP::gp_MVertexLayout);
+    devContext->IASetPrimitiveTopology(
+        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    devContext->VSSetShader(
+        gp_MVertexShader, nullptr, 0);
+    devContext->PSSetShader(
+        gp_MPixelShader, nullptr, 0);
     for (int i = 0; i < mSubMeshes.size(); i++)
     {
         mSubMeshes[i].Draw(devContext);

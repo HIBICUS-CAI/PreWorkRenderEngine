@@ -12,6 +12,9 @@
 
 namespace TEMP
 {
+    HRESULT PrepareMeshD3D(ID3D11Device* dev,
+        HWND wndHandle);
+
     struct MESH_VERTEX
     {
         DirectX::XMFLOAT3 Position;

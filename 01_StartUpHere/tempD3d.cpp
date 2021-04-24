@@ -76,6 +76,29 @@ namespace TEMP
     {
         return gp_d3dDevice;
     }
+    ID3D11DeviceContext* GetD3DDevContPointer()
+    {
+        return gp_ImmediateContext;
+    }
+    D3D_DRIVER_TYPE GetDriverType()
+    {
+        return g_DriverType;
+    }
+    IDXGISwapChain* GetSwapChain()
+    {
+        return gp_SwapChain;
+    }
+    void TempMeshBegin()
+    {
+        gp_ImmediateContext->ClearRenderTargetView(
+            gp_RenderTargetView, DirectX::Colors::Black);
+        gp_ImmediateContext->ClearDepthStencilView(
+            gp_DepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
+    }
+    void TempMeshEnd()
+    {
+        gp_SwapChain->Present(0, 0);
+    }
 
     //-----------------------------------------------
     FLOAT gx = 0, gy = 0, gz = 0;

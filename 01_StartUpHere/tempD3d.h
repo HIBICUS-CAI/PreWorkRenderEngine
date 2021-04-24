@@ -8,7 +8,12 @@
 
 namespace TEMP
 {
+    IDXGISwapChain* GetSwapChain();
     ID3D11Device* GetD3DDevicePointer();
+    ID3D11DeviceContext* GetD3DDevContPointer();
+    D3D_DRIVER_TYPE GetDriverType();
+    void TempMeshBegin();
+    void TempMeshEnd();
 
     //------------------------
     void setLightOffsetX(FLOAT x);

@@ -48,6 +48,8 @@ int WINAPI WinMain(
     {
         return -3;
     }
+    TEMP::PrepareMeshD3D(TEMP::GetD3DDevicePointer(),
+        w->GetWndHandle());
     //--------------------------------
 
     MSG msg = { 0 };
@@ -61,7 +63,11 @@ int WINAPI WinMain(
         else
         {
             im.PollAllInputDevices();
-            TEMP::Render();
+            //TEMP::Render();
+
+            TEMP::TempMeshBegin();
+            testMesh->Draw(TEMP::GetD3DDevContPointer());
+            TEMP::TempMeshEnd();
             //-------------------------
             if (im.IsThisKeyBeingPushedInSingle(KB_ESCAPE))
             {
