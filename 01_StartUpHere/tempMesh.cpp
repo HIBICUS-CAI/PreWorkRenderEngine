@@ -8,6 +8,7 @@ namespace TEMP
     ID3D11PixelShader* gp_MPixelShader = nullptr;
     ID3D11InputLayout* gp_MVertexLayout = nullptr;
     ID3D11Buffer* gp_WVPConstantBuffer = nullptr;
+    ID3D11SamplerState* gp_TexSamplerState = nullptr;
     DirectX::XMMATRIX g_MWorld;
     DirectX::XMMATRIX g_MView;
     DirectX::XMMATRIX g_MProjection;
@@ -137,6 +138,22 @@ HRESULT TEMP::PrepareMeshD3D(ID3D11Device* dev,
         DirectX::XM_PI / 6.f,
         width / (FLOAT)height, 0.01f, 100.f);
 
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = dev->CreateSamplerState(&sampDesc, &gp_TexSamplerState);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
     return S_OK;
 }
 
@@ -167,6 +184,8 @@ void SubMesh::Draw(ID3D11DeviceContext* devContext)
         DXGI_FORMAT_R32_UINT, 0);
     devContext->VSSetConstantBuffers(
         0, 1, &gp_WVPConstantBuffer);
+    devContext->PSSetShaderResources(0, 1,
+        &mTextures[0].TexResView);
 
     devContext->DrawIndexed(mIndices.size(), 0, 0);
 }
@@ -318,6 +337,7 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
         gp_MVertexShader, nullptr, 0);
     devContext->PSSetShader(
         gp_MPixelShader, nullptr, 0);
+    devContext->PSSetSamplers(0, 1, &gp_TexSamplerState);
     for (int i = 0; i < mSubMeshes.size(); i++)
     {
         mSubMeshes[i].Draw(devContext);

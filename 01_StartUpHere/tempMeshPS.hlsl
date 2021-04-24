@@ -6,9 +6,14 @@ struct VS_OUTPUT
     float2 TexCoordL : TEXCOORD;
 };
 
+Texture2D g_DiffuseTexture : register(t0);
+SamplerState g_TexSampler : register(s0);
+
 #define SHOWONECOLOR (0.5f)
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-    return float4(SHOWONECOLOR, SHOWONECOLOR, SHOWONECOLOR, 1.0f);
+    float4 textureColor = g_DiffuseTexture.Sample(g_TexSampler, input.TexCoordL);
+
+	return textureColor;
 }
