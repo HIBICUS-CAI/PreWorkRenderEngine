@@ -1,5 +1,6 @@
 #include "tempMesh.h"
 #include "tempD3d.h"
+#include "WICTextureLoader.h"
 
 namespace TEMP
 {
@@ -302,12 +303,12 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
         g_MCamearUpVec.z,
         0.f);
     g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);
-    
+
     g_WVPcb.mWorld = DirectX::XMMatrixTranspose(g_MWorld);
     g_WVPcb.mView = DirectX::XMMatrixTranspose(g_MView);
     g_WVPcb.mProjection = DirectX::XMMatrixTranspose(
         g_MProjection);
-    
+
     devContext->UpdateSubresource(
         gp_WVPConstantBuffer, 0, nullptr, &g_WVPcb, 0, 0);
     devContext->IASetInputLayout(TEMP::gp_MVertexLayout);
@@ -346,6 +347,17 @@ SubMesh Mesh::ProcessSubMesh(
     std::vector<UINT> indices;
     std::vector<MESH_TEXTURE> textures;
 
+    if (mesh->mMaterialIndex >= 0)
+    {
+        aiMaterial* mat =
+            scene->mMaterials[mesh->mMaterialIndex];
+        if (mTextureType.empty())
+        {
+            mTextureType =
+                DetermineDiffuseTextureType(scene, mat);
+        }
+    }
+
     // Walk through each of the mesh's vertices
     for (UINT i = 0; i < mesh->mNumVertices; i++)
     {
@@ -383,13 +395,127 @@ SubMesh Mesh::ProcessSubMesh(
         }
     }
 
-    /*if (mesh->mMaterialIndex >= 0)
+    if (mesh->mMaterialIndex >= 0)
     {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        vector<Texture> diffuseMaps = this->loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", scene);
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    }*/
+        std::vector<MESH_TEXTURE> diffuseMaps =
+            LoadMaterialTextures(
+                material, aiTextureType_DIFFUSE,
+                "texture_diffuse", scene);
+        textures.insert(textures.end(),
+            diffuseMaps.begin(), diffuseMaps.end());
+    }
 
     return SubMesh(mD3DDev, vertices, indices, textures);
+}
+
+std::vector<MESH_TEXTURE> Mesh::LoadMaterialTextures(
+    aiMaterial* mat, aiTextureType type,
+    std::string typeName, const aiScene* scene)
+{
+    std::vector<MESH_TEXTURE> textures;
+    for (UINT i = 0; i < mat->GetTextureCount(type); i++)
+    {
+        aiString str;
+        mat->GetTexture(type, i, &str);
+        bool skip = false;
+        for (UINT j = 0; j < mLoadedTexs.size(); j++)
+        {
+            if (std::strcmp(mLoadedTexs[j].Path.c_str(),
+                str.C_Str()) == 0)
+            {
+                textures.push_back(mLoadedTexs[j]);
+                skip = true;
+                break;
+            }
+        }
+        if (!skip)
+        {
+            HRESULT hr = S_OK;
+            MESH_TEXTURE meshTex;
+            if (mTextureType == "embedded compressed texture")
+            {
+                int textureIndex = GetTextureIndex(&str);
+                meshTex.TexResView = GetTextureFromModel(
+                    scene, textureIndex);
+            }
+            else
+            {
+                std::string fileName = std::string(str.C_Str());
+                fileName = fileName.substr(
+                    fileName.find_last_of("\\") + 1);
+                fileName = "Textures\\" + fileName;
+                std::wstring wFileName = std::wstring(
+                    fileName.begin(), fileName.end());
+                hr = CreateWICTextureFromFile(mD3DDev,
+                    wFileName.c_str(), nullptr,
+                    &meshTex.TexResView);
+                if (FAILED(hr))
+                {
+                    return std::vector<MESH_TEXTURE>(0);
+                }
+            }
+            meshTex.Type = typeName;
+            meshTex.Path = str.C_Str();
+            textures.push_back(meshTex);
+            mLoadedTexs.push_back(meshTex);
+        }
+    }
+    return textures;
+}
+
+std::string Mesh::DetermineDiffuseTextureType(
+    const aiScene* scene, aiMaterial* mat)
+{
+    aiString aiTexTypeStr;
+    mat->GetTexture(aiTextureType_DIFFUSE, 0, &aiTexTypeStr);
+    std::string texTypeStr = aiTexTypeStr.C_Str();
+    if (texTypeStr == "*0" || texTypeStr == "*1" ||
+        texTypeStr == "*2" || texTypeStr == "*3" ||
+        texTypeStr == "*4" || texTypeStr == "*5")
+    {
+        if (scene->mTextures[0]->mHeight == 0)
+        {
+            return "embedded compressed texture";
+        }
+        else
+        {
+            return "embedded non-compressed texture";
+        }
+    }
+    if (texTypeStr.find('.') != std::string::npos)
+    {
+        return "textures are on disk";
+    }
+}
+
+int Mesh::GetTextureIndex(aiString* str)
+{
+    std::string tistr;
+    tistr = str->C_Str();
+    tistr = tistr.substr(1);
+    return stoi(tistr);
+}
+
+ID3D11ShaderResourceView* Mesh::GetTextureFromModel(
+    const aiScene* scene, int texIndex)
+{
+    HRESULT hr = S_OK;
+    ID3D11ShaderResourceView* texSRV = nullptr;
+
+    int* size = reinterpret_cast<int*>(
+        &scene->mTextures[texIndex]->mWidth);
+
+    hr = CreateWICTextureFromMemory(
+        mD3DDev, GetD3DDevContPointer(),
+        reinterpret_cast<unsigned char*>(
+            scene->mTextures[texIndex]->pcData),
+        *size, nullptr, &texSRV);
+    if (FAILED(hr))
+    {
+        return nullptr;
+    }
+
+    return texSRV;
 }

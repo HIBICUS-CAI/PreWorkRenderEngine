@@ -68,10 +68,19 @@ namespace TEMP
             aiNode* node, const aiScene* scene);
         SubMesh ProcessSubMesh(
             aiMesh* mesh, const aiScene* scene);
+        std::vector<MESH_TEXTURE> LoadMaterialTextures(
+            aiMaterial* mat, aiTextureType type,
+            std::string typeName, const aiScene* scene);
+        std::string DetermineDiffuseTextureType(
+            const aiScene* scene, aiMaterial* mat);
+        int GetTextureIndex(aiString* str);
+        ID3D11ShaderResourceView* GetTextureFromModel(
+            const aiScene* scene, int texIndex);
 
         ID3D11Device* mD3DDev;
         std::vector<SubMesh> mSubMeshes;
         std::string mDirectory;
         std::vector<MESH_TEXTURE> mLoadedTexs;
+        std::string mTextureType;
     };
 }
