@@ -1,5 +1,5 @@
 #include <Windows.h>
-#include "WindowWIN32.h"
+#include "WM_Interface.h"
 #include "tempD3d.h"
 #include "tempMesh.h"
 #include "InputManager.h"
@@ -21,21 +21,22 @@ int WINAPI WinMain(
     _In_ int iCmdShow
 )
 {
-    WindowWIN32* w = new WindowWIN32();
-    w->CreateMyWindow("a test window",
-        hInstance, iCmdShow, false);
+    WindowInterface::CreateInitWindow("a test window",
+        hInstance, iCmdShow);
 
     //---------------------------------------------
-    InputManager im(w);
+    InputManager im(WindowInterface::GetWindowPtr());
     im.CreateDirectInputMain();
     im.EnumAllInputDevices();
 
-    if (FAILED(TEMP::InitD3D11Device(w->GetWndHandle())))
+    if (FAILED(TEMP::InitD3D11Device(
+        WindowInterface::GetWindowPtr()->GetWndHandle())))
     {
         return -1;
     }
 #ifdef SHOW_CUBE
-    if (FAILED(TEMP::PrepareCube(w->GetWndHandle())))
+    if (FAILED(TEMP::PrepareCube(
+        WindowInterface::GetWindowPtr()->GetWndHandle())))
     {
         return -2;
     }
@@ -49,7 +50,7 @@ int WINAPI WinMain(
         return -3;
     }
     TEMP::PrepareMeshD3D(TEMP::GetD3DDevicePointer(),
-        w->GetWndHandle());
+        WindowInterface::GetWindowPtr()->GetWndHandle());
     //--------------------------------
 
     MSG msg = { 0 };
@@ -97,7 +98,7 @@ int WINAPI WinMain(
     //--------------------------------------
     im.CloseDirectInputMain();
     //--------------------------------------
-    delete w;
+    WindowInterface::CleanAndStop();
 
     return (int)msg.wParam;
 }
