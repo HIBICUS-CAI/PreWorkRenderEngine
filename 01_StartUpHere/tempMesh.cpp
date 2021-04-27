@@ -1,6 +1,6 @@
+#include <DirectXTK\WICTextureLoader.h>
 #include "tempMesh.h"
 #include "tempD3d.h"
-#include "WICTextureLoader.h"
 
 namespace TEMP
 {
