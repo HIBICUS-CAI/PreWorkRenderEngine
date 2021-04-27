@@ -167,6 +167,7 @@
     <ClInclude Include="ID_BasicMacro.h" />
     <ClInclude Include="ID_Common.h" />
     <ClInclude Include="ID_ExportMacro.h" />
+    <ClInclude Include="ID_Interface.h" />
     <ClInclude Include="InputDeviceBase.h" />
     <ClInclude Include="InputDeviceDirectInput.h" />
     <ClInclude Include="InputDeviceXInput.h" />
@@ -180,6 +181,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ID_Interface.cpp" />
     <ClCompile Include="InputDeviceBase.cpp" />
     <ClCompile Include="InputDeviceDirectInput.cpp" />
     <ClCompile Include="InputDeviceXInput.cpp" />

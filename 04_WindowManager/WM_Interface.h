@@ -6,6 +6,8 @@
 
 namespace WindowInterface
 {
+    bool WINDOWMANAGER_EXPORT StartUp();
+
     bool WINDOWMANAGER_EXPORT CreateInitWindow(
         const char* wndName,
         HINSTANCE hInstance,

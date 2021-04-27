@@ -1,8 +1,8 @@
 #include <Windows.h>
 #include "WM_Interface.h"
+#include "ID_Interface.h"
 #include "tempD3d.h"
 #include "tempMesh.h"
-#include "InputManager.h"
 //-----------------------------------------------
 #include <stdio.h>
 void tempShowMousePos(LONG x, LONG y, LONG z)
@@ -21,13 +21,10 @@ int WINAPI WinMain(
     _In_ int iCmdShow
 )
 {
+    WindowInterface::StartUp();
     WindowInterface::CreateInitWindow("a test window",
         hInstance, iCmdShow);
-
-    //---------------------------------------------
-    InputManager im(WindowInterface::GetWindowPtr());
-    im.CreateDirectInputMain();
-    im.EnumAllInputDevices();
+    InputInterface::StartUp();
 
     if (FAILED(TEMP::InitD3D11Device(
         WindowInterface::GetWindowPtr()->GetWndHandle())))
@@ -63,31 +60,33 @@ int WINAPI WinMain(
         }
         else
         {
-            im.PollAllInputDevices();
+            InputInterface::PollDevices();
             //TEMP::Render();
 
             TEMP::TempMeshBegin();
             testMesh->Draw(TEMP::GetD3DDevContPointer());
             TEMP::TempMeshEnd();
             //-------------------------
-            if (im.IsThisKeyBeingPushedInSingle(KB_ESCAPE))
+            if (InputInterface::IsKeyPushedInSingle(KB_ESCAPE))
             {
                 PostQuitMessage(0);
             }
 
-            if (im.IsThisKeyBeingPushedInSingle(GP_LEFTSTICKBTN))
+            if (InputInterface::IsKeyDownInSingle(
+                GP_LEFTSTICKBTN))
             {
                 tempShowMousePos(1, 0, 0);
             }
-            if (im.IsThisKeyHasBeenPushedInSingle(GP_LEFTDIRBTN))
+            if (InputInterface::IsKeyPushedInSingle(
+                GP_LEFTDIRBTN))
             {
                 tempShowMousePos(0, 0, 0);
             }
 
             TEMP::setLightOffsetX(
-                (FLOAT)im.GetMouseOffset().x);
+                (FLOAT)InputInterface::GetMouseOffset().x);
             TEMP::setLightOffsetY(
-                (FLOAT)im.GetMouseOffset().y);
+                (FLOAT)InputInterface::GetMouseOffset().y);
         }
     }
 
@@ -95,9 +94,7 @@ int WINAPI WinMain(
     delete testMesh;
 
     TEMP::CleanupDevice();
-    //--------------------------------------
-    im.CloseDirectInputMain();
-    //--------------------------------------
+    InputInterface::CleanAndStop();
     WindowInterface::CleanAndStop();
 
     return (int)msg.wParam;

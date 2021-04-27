@@ -5,6 +5,13 @@ namespace WindowInterface
 {
     WindowWIN32* g_Wnd = nullptr;
 
+    bool StartUp()
+    {
+        g_Wnd = new WindowWIN32();
+
+        return true;
+    }
+
     bool CreateInitWindow(
         const char* wndName,
         HINSTANCE hInstance,
@@ -12,7 +19,11 @@ namespace WindowInterface
         bool inFullScr
     )
     {
-        g_Wnd = new WindowWIN32();
+        if (!g_Wnd)
+        {
+            return false;
+        }
+
         HRESULT hr = g_Wnd->CreateMyWindow(
             wndName, hInstance, cmdShow, inFullScr);
         if (FAILED(hr))
@@ -32,7 +43,10 @@ namespace WindowInterface
 
     void CleanAndStop()
     {
-        delete g_Wnd;
-        g_Wnd = nullptr;
+        if (g_Wnd)
+        {
+            delete g_Wnd;
+            g_Wnd = nullptr;
+        }
     }
 }
