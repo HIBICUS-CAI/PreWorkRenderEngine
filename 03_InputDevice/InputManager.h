@@ -5,14 +5,13 @@
 #include <dinput.h>
 #include <Xinput.h>
 #include "WindowWIN32.h"
-#include "ID_ExportMacro.h"
 #include "InputDeviceBase.h"
 
 typedef POINT MOUSE_OFFSET;
 typedef POINT STICK_OFFSET;
 typedef LONG BACKSHD_OFFSET;
 
-class INPUTDEVICE_EXPORT InputManager
+class InputManager
 {
 public:
     InputManager(WindowWIN32* wnd);

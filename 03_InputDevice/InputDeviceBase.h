@@ -3,7 +3,6 @@
 #include "ID_BasicMacro.h"
 #include <dinput.h>
 #include <Xinput.h>
-#include "ID_ExportMacro.h"
 
 enum class INPUT_TYPE
 {
@@ -24,7 +23,7 @@ struct DIKEYBOARDSTATUSMINE
     UCHAR Status[MAX_KEYBOARDS_KEY_NUM];
 };
 
-class INPUTDEVICE_EXPORT InputDeviceBase
+class InputDeviceBase
 {
 public:
     InputDeviceBase(INPUT_DEVICE_TYPE deviceType,
