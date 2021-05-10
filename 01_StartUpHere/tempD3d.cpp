@@ -88,14 +88,14 @@ namespace TEMP
     {
         return gp_SwapChain;
     }
-    void TempMeshBegin()
+    void TempRenderBegin()
     {
         gp_ImmediateContext->ClearRenderTargetView(
             gp_RenderTargetView, DirectX::Colors::Black);
         gp_ImmediateContext->ClearDepthStencilView(
             gp_DepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
     }
-    void TempMeshEnd()
+    void TempRenderEnd()
     {
         gp_SwapChain->Present(0, 0);
     }
@@ -799,11 +799,6 @@ namespace TEMP
 
     void Render()
     {
-        gp_ImmediateContext->ClearRenderTargetView(
-            gp_RenderTargetView, DirectX::Colors::Black);
-        gp_ImmediateContext->ClearDepthStencilView(
-            gp_DepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
-
         //---------------------------
         DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
             &g_LightDirection);
@@ -827,8 +822,6 @@ namespace TEMP
 #ifdef SHOW_CUBE
         RenderCube();
 #endif // SHOW_CUBE
-
-        gp_SwapChain->Present(0, 0);
     }
 
     void RenderCube()
@@ -870,6 +863,15 @@ namespace TEMP
         cb.mProjection = XMMatrixTranspose(g_Projection);
         gp_ImmediateContext->UpdateSubresource(
             gp_ConstantBuffer, 0, nullptr, &cb, 0, 0);
+        gp_ImmediateContext->IASetInputLayout(gp_VertexLayout);
+        UINT stride = sizeof(SimpleVertex);
+        UINT offset = 0;
+        gp_ImmediateContext->IASetVertexBuffers(
+            0, 1, &gp_VertexBuffer, &stride, &offset);
+        gp_ImmediateContext->IASetIndexBuffer(
+            gp_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+        gp_ImmediateContext->IASetPrimitiveTopology(
+            D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         gp_ImmediateContext->VSSetShader(
             gp_VertexShader, nullptr, 0);
         gp_ImmediateContext->VSSetConstantBuffers(

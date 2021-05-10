@@ -61,11 +61,11 @@ int WINAPI WinMain(
         else
         {
             InputInterface::PollDevices();
-            //TEMP::Render();
 
-            TEMP::TempMeshBegin();
+            TEMP::TempRenderBegin();
+            TEMP::Render();
             testMesh->Draw(TEMP::GetD3DDevContPointer());
-            TEMP::TempMeshEnd();
+            TEMP::TempRenderEnd();
             //-------------------------
             if (InputInterface::IsKeyPushedInSingle(KB_ESCAPE))
             {

@@ -12,8 +12,8 @@ namespace TEMP
     ID3D11Device* GetD3DDevicePointer();
     ID3D11DeviceContext* GetD3DDevContPointer();
     D3D_DRIVER_TYPE GetDriverType();
-    void TempMeshBegin();
-    void TempMeshEnd();
+    void TempRenderBegin();
+    void TempRenderEnd();
 
     //------------------------
     void setLightOffsetX(FLOAT x);
