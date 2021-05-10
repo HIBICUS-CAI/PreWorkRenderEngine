@@ -306,6 +306,10 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
         DirectX::XMMatrixScaling(0.03f, 0.03f, 0.03f),
         DirectX::XMMatrixRotationY(time)
     );
+    g_MWorld = DirectX::XMMatrixMultiply(
+        g_MWorld,
+        DirectX::XMMatrixTranslation(0.f, -2.f, 0.f)
+    );
     DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
         &DirectX::XMFLOAT4(
             g_MCameraPosition.x,

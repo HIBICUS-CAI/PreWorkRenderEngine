@@ -42,7 +42,7 @@ int WINAPI WinMain(
     //--------------------------------
     static TEMP::Mesh* testMesh = new TEMP::Mesh(
         TEMP::GetD3DDevicePointer());
-    if (!testMesh->Load("spider.fbx"))
+    if (!testMesh->Load("man.fbx"))
     {
         return -3;
     }
