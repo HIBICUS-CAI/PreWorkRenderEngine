@@ -4,7 +4,7 @@
 #include <d3d11_1.h>
 
 #define CHECK_RELEASE
-#define SHOW_CUBE
+//#define SHOW_CUBE
 
 namespace TEMP
 {
@@ -35,5 +35,5 @@ namespace TEMP
         LPCSTR szEntryPoint, LPCSTR szShaderModel,
         ID3DBlob** ppBlobOut);
 
-    HRESULT PrepareCube(HWND wndHandle);
+    HRESULT PrepareBasicRender(HWND wndHandle);
 }

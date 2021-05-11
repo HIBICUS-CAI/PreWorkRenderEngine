@@ -337,10 +337,6 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     devContext->IASetInputLayout(TEMP::gp_MVertexLayout);
     devContext->IASetPrimitiveTopology(
         D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    devContext->VSSetShader(
-        gp_MVertexShader, nullptr, 0);
-    devContext->PSSetShader(
-        gp_MPixelShader, nullptr, 0);
     devContext->PSSetSamplers(0, 1, &gp_TexSamplerState);
     for (int i = 0; i < mSubMeshes.size(); i++)
     {

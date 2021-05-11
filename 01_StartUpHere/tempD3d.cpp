@@ -350,7 +350,7 @@ namespace TEMP
         return S_OK;
     }
 
-    HRESULT PrepareCube(HWND wndHandle)
+    HRESULT PrepareBasicRender(HWND wndHandle)
     {
         ID3DBlob* pVSBlob = nullptr;
         HRESULT hr = CompileShaderFromFile(
@@ -414,7 +414,7 @@ namespace TEMP
         {
             return hr;
         }
-
+#ifdef SHOW_CUBE
         SimpleVertex vertices[] =
         {
             { DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT3(-1.0f, 1.0f, -1.0f), DirectX::XMFLOAT2(1.0f, 0.0f) },
@@ -566,6 +566,7 @@ namespace TEMP
         {
             return hr;
         }
+#endif // SHOW_CUBE
 
         g_World = DirectX::XMMatrixIdentity();
         g_CameraPosition = { 0.f,0.f,-15.f };
@@ -595,6 +596,51 @@ namespace TEMP
         g_Projection = DirectX::XMMatrixPerspectiveFovLH(
             DirectX::XM_PI / 6.f,
             width / (FLOAT)height, 0.01f, 100.f);
+
+        D3D11_BUFFER_DESC lbdc = {};
+        lbdc.Usage = D3D11_USAGE_DEFAULT;
+        lbdc.ByteWidth = sizeof(ConstantBuffer);
+        lbdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        lbdc.CPUAccessFlags = 0;
+        hr = gp_d3dDevice->CreateBuffer(
+            &lbdc, nullptr, &gp_ConstantBuffer);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        lbdc.Usage = D3D11_USAGE_DEFAULT;
+        lbdc.ByteWidth = sizeof(Material);
+        lbdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        lbdc.CPUAccessFlags = 0;
+        hr = gp_d3dDevice->CreateBuffer(
+            &lbdc, nullptr, &gp_MatConstantBuffer);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        lbdc.Usage = D3D11_USAGE_DEFAULT;
+        lbdc.ByteWidth = sizeof(Light);
+        lbdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        lbdc.CPUAccessFlags = 0;
+        hr = gp_d3dDevice->CreateBuffer(
+            &lbdc, nullptr, &gp_LightConstantBuffer);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        lbdc.Usage = D3D11_USAGE_DEFAULT;
+        lbdc.ByteWidth = sizeof(AmbientLight);
+        lbdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        lbdc.CPUAccessFlags = 0;
+        hr = gp_d3dDevice->CreateBuffer(
+            &lbdc, nullptr, &gp_AmbientLightConstantBuffer);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
 
         return S_OK;
     }
@@ -819,6 +865,43 @@ namespace TEMP
         DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
         //---------------------------
 
+        gp_ImmediateContext->VSSetShader(
+            gp_VertexShader, nullptr, 0);
+        gp_ImmediateContext->PSSetShader(
+            gp_PixelShader, nullptr, 0);
+        Light lb;
+        AmbientLight alb;
+        Material mb;
+        lb.Direction = g_LightDirection;
+        lb.Position = { 0.f,0.f,-5.f };
+        lb.Strength = { 1.f,1.f,1.f };
+        lb.SpotPower = 64.f;
+        lb.FalloffStart = 1.f;
+        lb.FalloffEnd = 10.f;
+        alb.ALight = { 1.f,1.f,1.f,1.f };
+        mb.mDiffuseAlbedo = { 0.5f,0.5f,0.5f,1.f };
+        mb.mFresnelR0 = { 0.95f,0.64f,0.54f };
+        mb.mShininess = 0.875f;
+        gp_ImmediateContext->UpdateSubresource(
+            gp_LightConstantBuffer, 0,
+            nullptr, &lb, 0, 0);
+        gp_ImmediateContext->UpdateSubresource(
+            gp_AmbientLightConstantBuffer, 0,
+            nullptr, &alb, 0, 0);
+        gp_ImmediateContext->UpdateSubresource(
+            gp_MatConstantBuffer, 0, nullptr, &mb, 0, 0);
+
+        gp_ImmediateContext->PSSetConstantBuffers(
+            0, 1, &gp_LightConstantBuffer);
+        gp_ImmediateContext->PSSetConstantBuffers(
+            1, 1, &gp_AmbientLightConstantBuffer);
+        gp_ImmediateContext->PSSetConstantBuffers(
+            2, 1, &gp_MatConstantBuffer);
+        gp_ImmediateContext->PSSetShaderResources(
+            0, 1, &gp_TextureRV);
+        gp_ImmediateContext->PSSetSamplers(
+            0, 1, &gp_SamplerLinear);
+
 #ifdef SHOW_CUBE
         RenderCube();
 #endif // SHOW_CUBE
@@ -872,44 +955,10 @@ namespace TEMP
             gp_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
         gp_ImmediateContext->IASetPrimitiveTopology(
             D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        gp_ImmediateContext->VSSetShader(
-            gp_VertexShader, nullptr, 0);
+        
         gp_ImmediateContext->VSSetConstantBuffers(
             0, 1, &gp_ConstantBuffer);
-
-        Light lb;
-        AmbientLight alb;
-        Material mb;
-        lb.Direction = g_LightDirection;
-        lb.Position = { 0.f,0.f,-5.f };
-        lb.Strength = { 1.f,1.f,1.f };
-        lb.SpotPower = 64.f;
-        lb.FalloffStart = 1.f;
-        lb.FalloffEnd = 10.f;
-        alb.ALight = { 1.f,1.f,1.f,1.f };
-        mb.mDiffuseAlbedo = { 0.5f,0.5f,0.5f,1.f };
-        mb.mFresnelR0 = { 0.95f,0.64f,0.54f };
-        mb.mShininess = 0.875f;
-        gp_ImmediateContext->UpdateSubresource(
-            gp_LightConstantBuffer, 0,
-            nullptr, &lb, 0, 0);
-        gp_ImmediateContext->UpdateSubresource(
-            gp_AmbientLightConstantBuffer, 0,
-            nullptr, &alb, 0, 0);
-        gp_ImmediateContext->UpdateSubresource(
-            gp_MatConstantBuffer, 0, nullptr, &mb, 0, 0);
-        gp_ImmediateContext->PSSetShader(
-            gp_PixelShader, nullptr, 0);
-        gp_ImmediateContext->PSSetConstantBuffers(
-            0, 1, &gp_LightConstantBuffer);
-        gp_ImmediateContext->PSSetConstantBuffers(
-            1, 1, &gp_AmbientLightConstantBuffer);
-        gp_ImmediateContext->PSSetConstantBuffers(
-            2, 1, &gp_MatConstantBuffer);
-        gp_ImmediateContext->PSSetShaderResources(
-            0, 1, &gp_TextureRV);
-        gp_ImmediateContext->PSSetSamplers(
-            0, 1, &gp_SamplerLinear);
+        
         gp_ImmediateContext->DrawIndexed(36, 0, 0);
     }
 }

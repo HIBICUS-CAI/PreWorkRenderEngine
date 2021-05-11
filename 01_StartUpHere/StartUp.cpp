@@ -31,13 +31,12 @@ int WINAPI WinMain(
     {
         return -1;
     }
-#ifdef SHOW_CUBE
-    if (FAILED(TEMP::PrepareCube(
+
+    if (FAILED(TEMP::PrepareBasicRender(
         WindowInterface::GetWindowPtr()->GetWndHandle())))
     {
         return -2;
     }
-#endif // SHOW_CUBE
 
     //--------------------------------
     static TEMP::Mesh* testMesh = new TEMP::Mesh(
