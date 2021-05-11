@@ -106,6 +106,8 @@ int WINAPI WinMain(
 
     testMesh->DeleteThisMesh();
     delete testMesh;
+    testmyMesh->DeleteThisMesh();
+    delete testmyMesh;
 
     TEMP::CleanupDevice();
     InputInterface::CleanAndStop();
