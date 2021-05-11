@@ -54,13 +54,19 @@ int WINAPI WinMain(
     std::vector<MESH_VERTEX> v;
     std::vector<UINT> i;
     std::vector<MESH_TEXTURE> t;
-    if (TEMP::PrepareTempMyMesh(&v, &i, &t))
+    if (TEMP::PrepareTempMyMesh1(&v, &i, &t))
     {
         testmyMesh->CreateSub(v, i, t);
-
-        testmyMesh->SetPosition({ 0.f,-2.f,2.f });
-        testmyMesh->SetScale({ 3.f,3.f,3.f });
+        v.clear();
     }
+    if (TEMP::PrepareTempMyMesh2(&v, &i, &t))
+    {
+        testmyMesh->CreateSub(v, i, t);
+        v.clear();
+    }
+
+    testmyMesh->SetPosition({ 0.f,-3.f,2.f });
+    testmyMesh->SetScale({ 4.f,4.f,4.f });
     //--------------------------------
 
     MSG msg = { 0 };

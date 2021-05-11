@@ -18,7 +18,7 @@ ID3D11ShaderResourceView* TEMP::CreateTextureView(
     return texSRV;
 }
 
-bool TEMP::PrepareTempMyMesh(
+bool TEMP::PrepareTempMyMesh1(
     std::vector<MESH_VERTEX>* vertices,
     std::vector<UINT>* indices,
     std::vector<MESH_TEXTURE>* textures)
@@ -56,6 +56,29 @@ bool TEMP::PrepareTempMyMesh(
     t.TexResView = TEMP::CreateTextureView(
         L"Textures\\white.jpg");
     textures->push_back(t);
+
+    return true;
+}
+
+bool TEMP::PrepareTempMyMesh2(
+    std::vector<MESH_VERTEX>* vertices,
+    std::vector<UINT>* indices,
+    std::vector<MESH_TEXTURE>* textures)
+{
+    MESH_VERTEX v = {};
+    v.Normal = { 0.f, 1.f, 0.f };
+    v.Position = { -1.f, 0.f, -2.f };
+    v.TexCoord = { 0.f, 1.f };
+    vertices->push_back(v);
+    v.Position = { -1.f, 0.f, 0.f };
+    v.TexCoord = { 0.f, 0.f };
+    vertices->push_back(v);
+    v.Position = { 1.f, 0.f, 0.f };
+    v.TexCoord = { 1.f, 0.f };
+    vertices->push_back(v);
+    v.Position = { 1.f, 0.f, -2.f };
+    v.TexCoord = { 1.f, 1.f };
+    vertices->push_back(v);
 
     return true;
 }

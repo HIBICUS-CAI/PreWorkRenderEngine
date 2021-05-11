@@ -8,7 +8,11 @@
 
 namespace TEMP
 {
-    bool PrepareTempMyMesh(
+    bool PrepareTempMyMesh1(
+        std::vector<MESH_VERTEX>* vertices,
+        std::vector<UINT>* indices,
+        std::vector<MESH_TEXTURE>* textures);
+    bool PrepareTempMyMesh2(
         std::vector<MESH_VERTEX>* vertices,
         std::vector<UINT>* indices,
         std::vector<MESH_TEXTURE>* textures);
