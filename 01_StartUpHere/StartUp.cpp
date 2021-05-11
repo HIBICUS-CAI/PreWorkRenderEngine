@@ -57,6 +57,9 @@ int WINAPI WinMain(
     if (TEMP::PrepareTempMyMesh(&v, &i, &t))
     {
         testmyMesh->CreateSub(v, i, t);
+
+        testmyMesh->SetPosition({ 0.f,-2.f,2.f });
+        testmyMesh->SetScale({ 3.f,3.f,3.f });
     }
     //--------------------------------
 

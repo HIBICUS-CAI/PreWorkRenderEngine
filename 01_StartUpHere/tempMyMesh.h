@@ -65,6 +65,15 @@ namespace TEMP
             return mWVPConstantBuffer;
         }
 
+        void SetPosition(DirectX::XMFLOAT3 pos)
+        {
+            mPosition = pos;
+        }
+        void SetScale(DirectX::XMFLOAT3 scale)
+        {
+            mScale = scale;
+        }
+
     private:
         ID3D11Device* mD3DDev;
         std::vector<MySubMesh> mSubMeshes;

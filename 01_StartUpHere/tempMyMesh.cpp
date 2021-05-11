@@ -24,18 +24,18 @@ bool TEMP::PrepareTempMyMesh(
     std::vector<MESH_TEXTURE>* textures)
 {
     MESH_VERTEX v = {};
-    v.Normal = DirectX::XMFLOAT3(0.f, 0.f, -1.f);
-    v.Position = DirectX::XMFLOAT3(-2.f, 0.f, 2.f);
-    v.TexCoord = DirectX::XMFLOAT2(0.f, 1.f);
+    v.Normal = { 0.f, 0.f, -1.f };
+    v.Position = { -1.f, 0.f, 0.f };
+    v.TexCoord = { 0.f, 1.f };
     vertices->push_back(v);
-    v.Position = DirectX::XMFLOAT3(-2.f, 4.f, 2.f);
-    v.TexCoord = DirectX::XMFLOAT2(0.f, 0.f);
+    v.Position = { -1.f, 2.f, 0.f };
+    v.TexCoord = { 0.f, 0.f };
     vertices->push_back(v);
-    v.Position = DirectX::XMFLOAT3(2.f, 4.f, 2.f);
-    v.TexCoord = DirectX::XMFLOAT2(1.f, 0.f);
+    v.Position = { 1.f, 2.f, 0.f };
+    v.TexCoord = { 1.f, 0.f };
     vertices->push_back(v);
-    v.Position = DirectX::XMFLOAT3(2.f, 0.f, 2.f);
-    v.TexCoord = DirectX::XMFLOAT2(1.f, 1.f);
+    v.Position = { 1.f, 0.f, 0.f };
+    v.TexCoord = { 1.f, 1.f };
     vertices->push_back(v);
 
     UINT i;
