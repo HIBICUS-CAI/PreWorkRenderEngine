@@ -1,0 +1,228 @@
+#include <DirectXTK\WICTextureLoader.h>
+#include "tempMyMesh.h"
+#include "tempD3d.h"
+
+ID3D11ShaderResourceView* TEMP::CreateTextureView(
+    const wchar_t* fileName)
+{
+    HRESULT hr = S_OK;
+    ID3D11ShaderResourceView* texSRV = nullptr;
+
+    hr = DirectX::CreateWICTextureFromFile(
+        GetD3DDevicePointer(), fileName, nullptr, &texSRV);
+    if (FAILED(hr))
+    {
+        return nullptr;
+    }
+
+    return texSRV;
+}
+
+bool TEMP::PrepareTempMyMesh(
+    std::vector<MESH_VERTEX>* vertices,
+    std::vector<UINT>* indices,
+    std::vector<MESH_TEXTURE>* textures)
+{
+    MESH_VERTEX v = {};
+    v.Normal = DirectX::XMFLOAT3(0.f, 0.f, -1.f);
+    v.Position = DirectX::XMFLOAT3(-2.f, 0.f, 2.f);
+    v.TexCoord = DirectX::XMFLOAT2(0.f, 1.f);
+    vertices->push_back(v);
+    v.Position = DirectX::XMFLOAT3(-2.f, 4.f, 2.f);
+    v.TexCoord = DirectX::XMFLOAT2(0.f, 0.f);
+    vertices->push_back(v);
+    v.Position = DirectX::XMFLOAT3(2.f, 4.f, 2.f);
+    v.TexCoord = DirectX::XMFLOAT2(1.f, 0.f);
+    vertices->push_back(v);
+    v.Position = DirectX::XMFLOAT3(2.f, 0.f, 2.f);
+    v.TexCoord = DirectX::XMFLOAT2(1.f, 1.f);
+    vertices->push_back(v);
+
+    UINT i;
+    i = 0;
+    indices->push_back(i);
+    i = 1;
+    indices->push_back(i);
+    i = 2;
+    indices->push_back(i);
+    i = 2;
+    indices->push_back(i);
+    i = 3;
+    indices->push_back(i);
+    i = 0;
+    indices->push_back(i);
+
+    MESH_TEXTURE t = {};
+    t.TexResView = TEMP::CreateTextureView(
+        L"Textures\\white.jpg");
+    textures->push_back(t);
+
+    return true;
+}
+
+using namespace TEMP;
+
+MySubMesh::MySubMesh(ID3D11Device* dev, MyMesh* myMesh,
+    std::vector<MESH_VERTEX> vertices,
+    std::vector<UINT> indices,
+    std::vector<MESH_TEXTURE> textures)
+    :mVertices(vertices), mIndices(indices), mTextures(textures),
+    mD3DDev(dev), mVertexBuffer(nullptr), mIndexBuffer(nullptr),
+    mMyMesh(myMesh)
+{
+    if (!mD3DDev)
+    {
+        return;
+    }
+
+    HRESULT hr = S_OK;
+
+    D3D11_BUFFER_DESC vbd;
+    vbd.Usage = D3D11_USAGE_IMMUTABLE;
+    vbd.ByteWidth = sizeof(MESH_VERTEX) * mVertices.size();
+    vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vbd.CPUAccessFlags = 0;
+    vbd.MiscFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA initData;
+    initData.pSysMem = &mVertices[0];
+
+    hr = mD3DDev->CreateBuffer(&vbd, &initData, &mVertexBuffer);
+    if (FAILED(hr))
+    {
+        return;
+    }
+
+    D3D11_BUFFER_DESC ibd;
+    ibd.Usage = D3D11_USAGE_IMMUTABLE;
+    ibd.ByteWidth = sizeof(UINT) * mIndices.size();
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    ibd.CPUAccessFlags = 0;
+    ibd.MiscFlags = 0;
+
+    initData.pSysMem = &mIndices[0];
+
+    hr = mD3DDev->CreateBuffer(&ibd, &initData, &mIndexBuffer);
+    if (FAILED(hr))
+    {
+        return;
+    }
+}
+
+MySubMesh::~MySubMesh()
+{
+
+}
+
+void MySubMesh::DeleteThisSubMesh()
+{
+    if (mVertexBuffer)
+    {
+        mVertexBuffer->Release();
+    }
+    if (mIndexBuffer)
+    {
+        mIndexBuffer->Release();
+    }
+}
+
+void MySubMesh::Draw(ID3D11DeviceContext* devContext)
+{
+    UINT stride = sizeof(MESH_VERTEX);
+    UINT offset = 0;
+
+    devContext->IASetVertexBuffers(0, 1, &mVertexBuffer,
+        &stride, &offset);
+    devContext->IASetIndexBuffer(mIndexBuffer,
+        DXGI_FORMAT_R32_UINT, 0);
+    ID3D11Buffer* buffer = mMyMesh->GetWVPBufferPtr();
+    devContext->VSSetConstantBuffers(
+        0, 1, &buffer);
+    devContext->PSSetShaderResources(0, 1,
+        &mTextures[0].TexResView);
+
+    devContext->DrawIndexed(mIndices.size(), 0, 0);
+}
+
+MyMesh::MyMesh(ID3D11Device* d3DDevice)
+    :mD3DDev(d3DDevice)
+{
+    mProj = GetProjMat();
+    mCameraPosition = GetEyePos();
+    mCameraLookAt = GetEyeLookat();
+    mCamearUpVec = GetEyeUp();
+
+    mWVPConstantBuffer = nullptr;
+    D3D11_BUFFER_DESC bdc = {};
+    bdc.Usage = D3D11_USAGE_DEFAULT;
+    bdc.ByteWidth = sizeof(WVPConstantBuffer);
+    bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    mD3DDev->CreateBuffer(
+        &bdc, nullptr, &mWVPConstantBuffer);
+
+    mPosition = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
+    mScale = DirectX::XMFLOAT3(1.f, 1.f, 1.f);
+
+    mWVPcb = {};
+}
+
+MyMesh::~MyMesh()
+{
+
+}
+
+void MyMesh::CreateSub(
+    std::vector<MESH_VERTEX> vertices,
+    std::vector<UINT> indices,
+    std::vector<MESH_TEXTURE> textures
+)
+{
+    mSubMeshes.push_back(MySubMesh(mD3DDev, this, vertices,
+        indices, textures));
+}
+
+void MyMesh::DeleteThisMesh()
+{
+    for (int i = 0; i < mSubMeshes.size(); i++)
+    {
+        mSubMeshes[i].DeleteThisSubMesh();
+    }
+}
+
+void MyMesh::Draw(ID3D11DeviceContext* devContext)
+{
+    DirectX::XMMATRIX world =
+        DirectX::XMMatrixMultiply(
+            DirectX::XMMatrixScalingFromVector(
+                DirectX::XMLoadFloat3(&mScale)),
+            DirectX::XMMatrixTranslationFromVector(
+                DirectX::XMLoadFloat3(&mPosition)));
+
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
+        &DirectX::XMFLOAT4(
+            GetEyePos().x, GetEyePos().y,
+            GetEyePos().z, 0.f));
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        GetEyePos().x + GetEyeLookat().x,
+        GetEyePos().y + GetEyeLookat().y,
+        GetEyePos().z + GetEyeLookat().z, 0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        GetEyeUp().x, GetEyeUp().y, GetEyeUp().z, 0.f);
+    DirectX::XMMATRIX view =
+        DirectX::XMMatrixLookAtLH(eye, lookat, up);
+
+    DirectX::XMMATRIX proj = GetProjMat();
+
+    mWVPcb.mWorld = DirectX::XMMatrixTranspose(world);
+    mWVPcb.mView = DirectX::XMMatrixTranspose(view);
+    mWVPcb.mProjection = DirectX::XMMatrixTranspose(proj);
+
+    devContext->UpdateSubresource(
+        mWVPConstantBuffer, 0, nullptr, &mWVPcb, 0, 0);
+
+    for (int i = 0; i < mSubMeshes.size(); i++)
+    {
+        mSubMeshes[i].Draw(devContext);
+    }
+}

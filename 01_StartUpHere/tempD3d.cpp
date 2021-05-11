@@ -99,6 +99,22 @@ namespace TEMP
     {
         gp_SwapChain->Present(0, 0);
     }
+    DirectX::XMFLOAT3 GetEyePos()
+    {
+        return g_CameraPosition;
+    }
+    DirectX::XMFLOAT3 GetEyeLookat()
+    {
+        return g_CameraLookAt;
+    }
+    DirectX::XMFLOAT3 GetEyeUp()
+    {
+        return g_CamearUpVec;
+    }
+    DirectX::XMMATRIX GetProjMat()
+    {
+        return g_Projection;
+    }
 
     //-----------------------------------------------
     FLOAT gx = 0, gy = 0, gz = 0;

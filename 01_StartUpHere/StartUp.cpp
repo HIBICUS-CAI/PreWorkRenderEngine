@@ -3,6 +3,7 @@
 #include "ID_Interface.h"
 #include "tempD3d.h"
 #include "tempMesh.h"
+#include "tempMyMesh.h"
 //-----------------------------------------------
 #include <stdio.h>
 void tempShowMousePos(LONG x, LONG y, LONG z)
@@ -47,6 +48,16 @@ int WINAPI WinMain(
     }
     TEMP::PrepareMeshD3D(TEMP::GetD3DDevicePointer(),
         WindowInterface::GetWindowPtr()->GetWndHandle());
+
+    TEMP::MyMesh* testmyMesh = new TEMP::MyMesh(
+        TEMP::GetD3DDevicePointer());
+    std::vector<MESH_VERTEX> v;
+    std::vector<UINT> i;
+    std::vector<MESH_TEXTURE> t;
+    if (TEMP::PrepareTempMyMesh(&v, &i, &t))
+    {
+        testmyMesh->CreateSub(v, i, t);
+    }
     //--------------------------------
 
     MSG msg = { 0 };
@@ -64,6 +75,7 @@ int WINAPI WinMain(
             TEMP::TempRenderBegin();
             TEMP::Render();
             testMesh->Draw(TEMP::GetD3DDevContPointer());
+            testmyMesh->Draw(TEMP::GetD3DDevContPointer());
             TEMP::TempRenderEnd();
             //-------------------------
             if (InputInterface::IsKeyPushedInSingle(KB_ESCAPE))

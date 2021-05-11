@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <DirectXMath.h>
 #include <d3d11_1.h>
 
 #define CHECK_RELEASE
@@ -14,6 +15,10 @@ namespace TEMP
     D3D_DRIVER_TYPE GetDriverType();
     void TempRenderBegin();
     void TempRenderEnd();
+    DirectX::XMFLOAT3 GetEyePos();
+    DirectX::XMFLOAT3 GetEyeLookat();
+    DirectX::XMFLOAT3 GetEyeUp();
+    DirectX::XMMATRIX GetProjMat();
 
     //------------------------
     void setLightOffsetX(FLOAT x);

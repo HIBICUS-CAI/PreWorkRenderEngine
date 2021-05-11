@@ -155,6 +155,7 @@
     <ClCompile Include="tempD3d.cpp" />
     <ClCompile Include="tempDDSTextureLoader.cpp" />
     <ClCompile Include="tempMesh.cpp" />
+    <ClCompile Include="tempMyMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\03_InputDevice\03_InputDevice.vcxproj">
@@ -167,7 +168,9 @@
   <ItemGroup>
     <ClInclude Include="tempD3d.h" />
     <ClInclude Include="tempDDSTextureLoader.h" />
+    <ClInclude Include="tempDeclaration.h" />
     <ClInclude Include="tempMesh.h" />
+    <ClInclude Include="tempMyMesh.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

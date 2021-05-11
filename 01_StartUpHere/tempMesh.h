@@ -9,24 +9,12 @@
 #include <assimp\Importer.hpp>
 #include <assimp\scene.h>
 #include <assimp\postprocess.h>
+#include "tempDeclaration.h"
 
 namespace TEMP
 {
     HRESULT PrepareMeshD3D(ID3D11Device* dev,
         HWND wndHandle);
-
-    struct MESH_VERTEX
-    {
-        DirectX::XMFLOAT3 Position;
-        DirectX::XMFLOAT3 Normal;
-        DirectX::XMFLOAT2 TexCoord;
-    };
-    struct MESH_TEXTURE
-    {
-        std::string Type;
-        std::string Path;
-        ID3D11ShaderResourceView* TexResView;
-    };
 
     class SubMesh
     {

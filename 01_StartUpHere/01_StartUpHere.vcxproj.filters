@@ -30,6 +30,9 @@
     <ClCompile Include="tempMesh.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
+    <ClCompile Include="tempMyMesh.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tempD3d.h">
@@ -39,6 +42,12 @@
       <Filter>Temp</Filter>
     </ClInclude>
     <ClInclude Include="tempMesh.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="tempMyMesh.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="tempDeclaration.h">
       <Filter>Temp</Filter>
     </ClInclude>
   </ItemGroup>
