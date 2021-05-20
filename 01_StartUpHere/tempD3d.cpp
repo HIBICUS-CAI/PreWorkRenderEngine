@@ -90,6 +90,8 @@ namespace TEMP
     }
     void TempRenderBegin()
     {
+        gp_ImmediateContext->OMSetRenderTargets(
+            1, &gp_RenderTargetView, gp_DepthStencilView);
         gp_ImmediateContext->ClearRenderTargetView(
             gp_RenderTargetView, DirectX::Colors::Black);
         gp_ImmediateContext->ClearDepthStencilView(
@@ -97,7 +99,7 @@ namespace TEMP
     }
     void TempRenderEnd()
     {
-        gp_SwapChain->Present(0, 0);
+        gp_SwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
     }
     DirectX::XMFLOAT3 GetEyePos()
     {
@@ -232,6 +234,8 @@ namespace TEMP
             dc.SampleDesc.Quality = 0;
             dc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
             dc.BufferCount = 2;
+            dc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            dc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
             hr = dxgiFactory2->CreateSwapChainForHwnd(
                 gp_d3dDevice, wndHandle,
@@ -259,6 +263,8 @@ namespace TEMP
             dc.SampleDesc.Count = 1;
             dc.SampleDesc.Quality = 0;
             dc.Windowed = TRUE;
+            dc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            dc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
             hr = dxgiFactory1->CreateSwapChain(
                 gp_d3dDevice, &dc, &gp_SwapChain);
