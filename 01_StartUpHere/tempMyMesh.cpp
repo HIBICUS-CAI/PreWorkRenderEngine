@@ -222,10 +222,12 @@ void MyMesh::Draw(ID3D11DeviceContext* devContext)
             DirectX::XMMatrixTranslationFromVector(
                 DirectX::XMLoadFloat3(&mPosition)));
 
-    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
-        &DirectX::XMFLOAT4(
-            GetEyePos().x, GetEyePos().y,
-            GetEyePos().z, 0.f));
+    DirectX::XMFLOAT4 v4 = {
+            GetEyePos().x,
+            GetEyePos().y,
+            GetEyePos().z,
+            0.f };
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(&v4);
     DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
         GetEyePos().x + GetEyeLookat().x,
         GetEyePos().y + GetEyeLookat().y,

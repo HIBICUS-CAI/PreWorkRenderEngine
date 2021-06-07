@@ -310,12 +310,12 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
         g_MWorld,
         DirectX::XMMatrixTranslation(0.f, -2.f, 0.f)
     );
-    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
-        &DirectX::XMFLOAT4(
-            g_MCameraPosition.x,
-            g_MCameraPosition.y,
-            g_MCameraPosition.z,
-            0.f));
+    DirectX::XMFLOAT4 v4 = {
+                g_MCameraPosition.x,
+                g_MCameraPosition.y,
+                g_MCameraPosition.z,
+                0.f };
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(&v4);
     DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
         g_MCameraPosition.x + g_MCameraLookAt.x,
         g_MCameraPosition.y + g_MCameraLookAt.y,

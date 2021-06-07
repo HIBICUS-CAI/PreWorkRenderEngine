@@ -946,12 +946,12 @@ namespace TEMP
         }
 
         g_World = DirectX::XMMatrixRotationY(t);
-        DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(
-            &DirectX::XMFLOAT4(
+        DirectX::XMFLOAT4 v4 = {
                 g_CameraPosition.x,
                 g_CameraPosition.y,
                 g_CameraPosition.z,
-                0.f));
+                0.f };
+        DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(&v4);
         DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
             g_CameraPosition.x + g_CameraLookAt.x,
             g_CameraPosition.y + g_CameraLookAt.y,
@@ -977,10 +977,10 @@ namespace TEMP
             gp_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
         gp_ImmediateContext->IASetPrimitiveTopology(
             D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        
+
         gp_ImmediateContext->VSSetConstantBuffers(
             0, 1, &gp_ConstantBuffer);
-        
+
         gp_ImmediateContext->DrawIndexed(36, 0, 0);
     }
 }
