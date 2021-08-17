@@ -887,10 +887,10 @@ namespace TEMP
         DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
         //---------------------------
 
-        gp_ImmediateContext->VSSetShader(
+        /*gp_ImmediateContext->VSSetShader(
             gp_VertexShader, nullptr, 0);
         gp_ImmediateContext->PSSetShader(
-            gp_PixelShader, nullptr, 0);
+            gp_PixelShader, nullptr, 0);*/
         Light lb;
         AmbientLight alb;
         Material mb;
@@ -982,5 +982,21 @@ namespace TEMP
             0, 1, &gp_ConstantBuffer);
 
         gp_ImmediateContext->DrawIndexed(36, 0, 0);
+    }
+
+    void SetVPShaderForNormal()
+    {
+        gp_ImmediateContext->VSSetShader(
+            gp_VertexShader, nullptr, 0);
+        gp_ImmediateContext->PSSetShader(
+            gp_PixelShader, nullptr, 0);
+    }
+
+    void SetVPShaderForShadow()
+    {
+        gp_ImmediateContext->VSSetShader(
+            gp_VertexShader, nullptr, 0);
+        gp_ImmediateContext->PSSetShader(
+            nullptr, nullptr, 0);
     }
 }

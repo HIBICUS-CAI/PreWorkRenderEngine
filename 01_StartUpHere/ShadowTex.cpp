@@ -119,8 +119,8 @@ void ShadowTex::ClearAndStop()
 
 void ShadowTex::SetRenderTarget()
 {
-    mDeviceContext->OMSetRenderTargets(1,
-        &mRenderTargetView, mDepthStencilView);
+    mDeviceContext->OMSetRenderTargets(0,
+        nullptr, mDepthStencilView);
 }
 
 void ShadowTex::ClearRenderTarget(

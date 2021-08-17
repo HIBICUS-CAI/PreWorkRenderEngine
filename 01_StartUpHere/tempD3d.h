@@ -41,4 +41,8 @@ namespace TEMP
         ID3DBlob** ppBlobOut);
 
     HRESULT PrepareBasicRender(HWND wndHandle);
+
+    void SetVPShaderForNormal();
+
+    void SetVPShaderForShadow();
 }

@@ -96,11 +96,13 @@ int WINAPI WinMain(
 
             TEMP::UpdateLightAndSth();
 
+            TEMP::SetVPShaderForShadow();
             shadow->SetRenderTarget();
             shadow->ClearRenderTarget(0.f, 0.f, 0.f, 0.f);
             testMesh->Draw(TEMP::GetD3DDevContPointer());
             testmyMesh->Draw(TEMP::GetD3DDevContPointer());
 
+            TEMP::SetVPShaderForNormal();
             TEMP::TempRenderBegin();
             testMesh->Draw(TEMP::GetD3DDevContPointer());
             testmyMesh->Draw(TEMP::GetD3DDevContPointer());
