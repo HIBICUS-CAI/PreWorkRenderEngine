@@ -102,7 +102,8 @@ MySubMesh::MySubMesh(ID3D11Device* dev, MyMesh* myMesh,
 
     D3D11_BUFFER_DESC vbd;
     vbd.Usage = D3D11_USAGE_IMMUTABLE;
-    vbd.ByteWidth = sizeof(MESH_VERTEX) * mVertices.size();
+    vbd.ByteWidth = 
+        (UINT)(sizeof(MESH_VERTEX) * mVertices.size());
     vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vbd.CPUAccessFlags = 0;
     vbd.MiscFlags = 0;
@@ -118,7 +119,7 @@ MySubMesh::MySubMesh(ID3D11Device* dev, MyMesh* myMesh,
 
     D3D11_BUFFER_DESC ibd;
     ibd.Usage = D3D11_USAGE_IMMUTABLE;
-    ibd.ByteWidth = sizeof(UINT) * mIndices.size();
+    ibd.ByteWidth = (UINT)(sizeof(UINT) * mIndices.size());
     ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     ibd.CPUAccessFlags = 0;
     ibd.MiscFlags = 0;
@@ -164,7 +165,7 @@ void MySubMesh::Draw(ID3D11DeviceContext* devContext)
     devContext->PSSetShaderResources(0, 1,
         &mTextures[0].TexResView);
 
-    devContext->DrawIndexed(mIndices.size(), 0, 0);
+    devContext->DrawIndexed((UINT)mIndices.size(), 0, 0);
 }
 
 MyMesh::MyMesh(ID3D11Device* d3DDevice)
