@@ -591,8 +591,8 @@ namespace TEMP
 #endif // SHOW_CUBE
 
         g_World = DirectX::XMMatrixIdentity();
-        g_CameraPosition = { 0.f,0.f,-15.f };
-        g_CameraLookAt = { 0.f,0.f,1.f };
+        g_CameraPosition = { -15.f,0.f,-15.f };
+        g_CameraLookAt = { 1.f,0.f,1.f };
         g_CamearUpVec = { 0.f,1.f,0.f };
         g_LightDirection = g_CameraLookAt;
         DirectX::XMVECTOR eye = DirectX::XMVectorSet(
@@ -896,10 +896,10 @@ namespace TEMP
         Material mb;
         lb.Direction = g_LightDirection;
         lb.Position = { 0.f,0.f,-5.f };
-        lb.Strength = { 1.f,1.f,1.f };
-        lb.SpotPower = 64.f;
-        lb.FalloffStart = 1.f;
-        lb.FalloffEnd = 10.f;
+        lb.Strength = { 1.f,1.f,1.f };  // 颜色&光强
+        lb.SpotPower = 2.f;             // 光强
+        lb.FalloffStart = 5.f;
+        lb.FalloffEnd = 12.f;
         alb.ALight = { 1.f,1.f,1.f,1.f };
         mb.mDiffuseAlbedo = { 0.5f,0.5f,0.5f,1.f };
         mb.mFresnelR0 = { 0.95f,0.64f,0.54f };

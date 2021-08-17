@@ -16,6 +16,8 @@ void tempShowMousePos(LONG x, LONG y, LONG z)
 }
 //-----------------------------------------------
 
+//#define LIGHT_BY_KEY
+
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -121,10 +123,19 @@ int WINAPI WinMain(
                 tempShowMousePos(0, 0, 0);
             }
 
+#ifdef LIGHT_BY_KEY
             TEMP::setLightOffsetX(
                 (FLOAT)InputInterface::GetMouseOffset().x);
             TEMP::setLightOffsetY(
                 (FLOAT)InputInterface::GetMouseOffset().y);
+#else
+            TEMP::setLightOffsetX(
+                (FLOAT)InputInterface::RightStickOffset().x /
+                300.f);
+            TEMP::setLightOffsetY(
+                (FLOAT)InputInterface::RightStickOffset().y /
+                300.f);
+#endif // LIGHT_BY_KEY
         }
     }
 
