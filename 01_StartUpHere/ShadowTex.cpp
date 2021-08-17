@@ -98,8 +98,7 @@ void ShadowTex::SetRenderTarget()
         nullptr, mDepthStencilView);
 }
 
-void ShadowTex::ClearRenderTarget(
-    float _r, float _g, float _b, float _a)
+void ShadowTex::ClearRenderTarget()
 {
     mDeviceContext->ClearDepthStencilView(
         mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);

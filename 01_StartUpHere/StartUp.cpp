@@ -98,7 +98,7 @@ int WINAPI WinMain(
 
             TEMP::SetVPShaderForShadow();
             shadow->SetRenderTarget();
-            shadow->ClearRenderTarget(0.f, 0.f, 0.f, 0.f);
+            shadow->ClearRenderTarget();
             testMesh->Draw(TEMP::GetD3DDevContPointer());
             testmyMesh->Draw(TEMP::GetD3DDevContPointer());
 

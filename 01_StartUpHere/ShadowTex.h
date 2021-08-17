@@ -14,8 +14,7 @@ public:
         UINT _width, UINT _height);
     void ClearAndStop();
     void SetRenderTarget();
-    void ClearRenderTarget(
-        float _r, float _g, float _b, float _a);
+    void ClearRenderTarget();
     ID3D11ShaderResourceView* GetSRV();
 
 private:
