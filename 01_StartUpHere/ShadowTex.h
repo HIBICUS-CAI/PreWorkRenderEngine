@@ -1,6 +1,6 @@
 #pragma once
 
-#include <d3d11.h>
+#include <d3d11_1.h>
 
 class ShadowTex
 {
@@ -21,9 +21,7 @@ public:
 private:
     ID3D11Device* mDevice;
     ID3D11DeviceContext* mDeviceContext;
-    ID3D11Texture2D* mRenderTargetTexture;
     ID3D11Texture2D* mDepthStencilTexture;
-    ID3D11RenderTargetView* mRenderTargetView;
     ID3D11DepthStencilView* mDepthStencilView;
     ID3D11ShaderResourceView* mShaderResourceView;
 };
