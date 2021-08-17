@@ -86,6 +86,7 @@ int WINAPI WinMain(
             testMesh->Draw(TEMP::GetD3DDevContPointer());
             testmyMesh->Draw(TEMP::GetD3DDevContPointer());
             TEMP::TempRenderEnd();
+            
             //-------------------------
             if (InputInterface::IsKeyPushedInSingle(KB_ESCAPE))
             {
