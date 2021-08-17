@@ -4,6 +4,7 @@
 #include "tempD3d.h"
 #include "tempMesh.h"
 #include "tempMyMesh.h"
+#include "ShadowMap.h"
 //-----------------------------------------------
 #include <stdio.h>
 void tempShowMousePos(LONG x, LONG y, LONG z)
@@ -69,6 +70,16 @@ int WINAPI WinMain(
     testmyMesh->SetScale({ 4.f,4.f,4.f });
     //--------------------------------
 
+    //--------------------------------
+    static ShadowMap* shadow = nullptr;
+    shadow = new ShadowMap();
+    if (!shadow->Init(TEMP::GetD3DDevicePointer(),
+        TEMP::GetD3DDevContPointer(), 1280, 720))
+    {
+        return -4;
+    }
+    //--------------------------------
+
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
     {
@@ -81,12 +92,18 @@ int WINAPI WinMain(
         {
             InputInterface::PollDevices();
 
+            TEMP::UpdateLightAndSth();
+
+            shadow->SetRenderTarget();
+            shadow->ClearRenderTarget(0.f, 0.f, 0.f, 0.f);
+            testMesh->Draw(TEMP::GetD3DDevContPointer());
+            testmyMesh->Draw(TEMP::GetD3DDevContPointer());
+
             TEMP::TempRenderBegin();
-            TEMP::Render();
             testMesh->Draw(TEMP::GetD3DDevContPointer());
             testmyMesh->Draw(TEMP::GetD3DDevContPointer());
             TEMP::TempRenderEnd();
-            
+
             //-------------------------
             if (InputInterface::IsKeyPushedInSingle(KB_ESCAPE))
             {
@@ -110,6 +127,9 @@ int WINAPI WinMain(
                 (FLOAT)InputInterface::GetMouseOffset().y);
         }
     }
+
+    shadow->ClearAndStop();
+    delete shadow;
 
     testMesh->DeleteThisMesh();
     delete testMesh;

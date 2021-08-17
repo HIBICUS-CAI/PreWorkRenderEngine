@@ -32,7 +32,7 @@ namespace TEMP
 
     void CleanupDevice();
 
-    void Render();
+    void UpdateLightAndSth();
 
     void RenderCube();
 

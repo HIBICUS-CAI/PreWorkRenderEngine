@@ -865,7 +865,7 @@ namespace TEMP
         }
     }
 
-    void Render()
+    void UpdateLightAndSth()
     {
         //---------------------------
         DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
