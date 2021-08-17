@@ -12,9 +12,9 @@ namespace TEMP
     DirectX::XMMATRIX g_MWorld;
     DirectX::XMMATRIX g_MView;
     DirectX::XMMATRIX g_MProjection;
-    DirectX::XMFLOAT3 g_MCameraPosition;
+    /*DirectX::XMFLOAT3 g_MCameraPosition;
     DirectX::XMFLOAT3 g_MCameraLookAt;
-    DirectX::XMFLOAT3 g_MCamearUpVec;
+    DirectX::XMFLOAT3 g_MCamearUpVec;*/
     DirectX::XMFLOAT3 g_MLightDirection;
 
     struct WVPConstantBuffer
@@ -110,7 +110,7 @@ HRESULT TEMP::PrepareMeshD3D(ID3D11Device* dev,
     }
 
     g_MWorld = DirectX::XMMatrixIdentity();
-    g_MCameraPosition = { 0.f,0.f,-15.f };
+    /*g_MCameraPosition = { 0.f,0.f,-15.f };
     g_MCameraLookAt = { 0.f,0.f,1.f };
     g_MCamearUpVec = { 0.f,1.f,0.f };
     g_MLightDirection = g_MCameraLookAt;
@@ -129,7 +129,7 @@ HRESULT TEMP::PrepareMeshD3D(ID3D11Device* dev,
         g_MCamearUpVec.y,
         g_MCamearUpVec.z,
         0.f);
-    g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);
+    g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);*/
     RECT rc;
     GetClientRect(wndHandle, &rc);
     UINT width = rc.right - rc.left;
@@ -212,7 +212,7 @@ bool SubMesh::SetupSubMesh()
 
     D3D11_BUFFER_DESC vbd;
     vbd.Usage = D3D11_USAGE_IMMUTABLE;
-    vbd.ByteWidth = 
+    vbd.ByteWidth =
         (UINT)(sizeof(MESH_VERTEX) * mVertices.size());
     vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vbd.CPUAccessFlags = 0;
@@ -229,7 +229,7 @@ bool SubMesh::SetupSubMesh()
 
     D3D11_BUFFER_DESC ibd;
     ibd.Usage = D3D11_USAGE_IMMUTABLE;
-    ibd.ByteWidth = 
+    ibd.ByteWidth =
         (UINT)(sizeof(UINT) * mIndices.size());
     ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     ibd.CPUAccessFlags = 0;
@@ -313,20 +313,17 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
         DirectX::XMMatrixTranslation(0.f, -2.f, 0.f)
     );
     DirectX::XMFLOAT4 v4 = {
-                g_MCameraPosition.x,
-                g_MCameraPosition.y,
-                g_MCameraPosition.z,
-                0.f };
+            GetEyePos().x,
+            GetEyePos().y,
+            GetEyePos().z,
+            0.f };
     DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(&v4);
     DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
-        g_MCameraPosition.x + g_MCameraLookAt.x,
-        g_MCameraPosition.y + g_MCameraLookAt.y,
-        g_MCameraPosition.z + g_MCameraLookAt.z, 0.f);
+        GetEyePos().x + GetEyeLookat().x,
+        GetEyePos().y + GetEyeLookat().y,
+        GetEyePos().z + GetEyeLookat().z, 0.f);
     DirectX::XMVECTOR up = DirectX::XMVectorSet(
-        g_MCamearUpVec.x,
-        g_MCamearUpVec.y,
-        g_MCamearUpVec.z,
-        0.f);
+        GetEyeUp().x, GetEyeUp().y, GetEyeUp().z, 0.f);
     g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);
 
     g_WVPcb.mWorld = DirectX::XMMatrixTranspose(g_MWorld);
