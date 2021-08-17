@@ -2,11 +2,11 @@
 
 #include <d3d11.h>
 
-class ShadowMap
+class ShadowTex
 {
 public:
-    ShadowMap();
-    ~ShadowMap() {}
+    ShadowTex();
+    ~ShadowTex() {}
 
     bool Init(
         ID3D11Device* _device,

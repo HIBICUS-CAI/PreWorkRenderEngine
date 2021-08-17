@@ -33,7 +33,7 @@
     <ClCompile Include="tempMyMesh.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowMap.cpp">
+    <ClCompile Include="ShadowTex.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
   </ItemGroup>
@@ -53,7 +53,7 @@
     <ClInclude Include="tempDeclaration.h">
       <Filter>Temp</Filter>
     </ClInclude>
-    <ClInclude Include="ShadowMap.h">
+    <ClInclude Include="ShadowTex.h">
       <Filter>Temp</Filter>
     </ClInclude>
   </ItemGroup>

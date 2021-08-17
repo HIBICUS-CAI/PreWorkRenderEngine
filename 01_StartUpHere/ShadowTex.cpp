@@ -1,7 +1,7 @@
-#include "ShadowMap.h"
+#include "ShadowTex.h"
 #include <Windows.h>
 
-ShadowMap::ShadowMap() :
+ShadowTex::ShadowTex() :
     mDevice(nullptr),
     mDeviceContext(nullptr),
     mRenderTargetTexture(nullptr),
@@ -13,7 +13,7 @@ ShadowMap::ShadowMap() :
 
 }
 
-bool ShadowMap::Init(
+bool ShadowTex::Init(
     ID3D11Device* _device,
     ID3D11DeviceContext* _deviceContext,
     UINT _width, UINT _height)
@@ -96,7 +96,7 @@ bool ShadowMap::Init(
     return true;
 }
 
-void ShadowMap::ClearAndStop()
+void ShadowTex::ClearAndStop()
 {
     if (mShaderResourceView)
     {
@@ -117,13 +117,13 @@ void ShadowMap::ClearAndStop()
     }
 }
 
-void ShadowMap::SetRenderTarget()
+void ShadowTex::SetRenderTarget()
 {
     mDeviceContext->OMSetRenderTargets(1,
         &mRenderTargetView, mDepthStencilView);
 }
 
-void ShadowMap::ClearRenderTarget(
+void ShadowTex::ClearRenderTarget(
     float _r, float _g, float _b, float _a)
 {
     static FLOAT color[4] = {};
@@ -137,7 +137,7 @@ void ShadowMap::ClearRenderTarget(
         mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
 }
 
-ID3D11ShaderResourceView* ShadowMap::GetSRV()
+ID3D11ShaderResourceView* ShadowTex::GetSRV()
 {
     return mShaderResourceView;
 }

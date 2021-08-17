@@ -4,7 +4,7 @@
 #include "tempD3d.h"
 #include "tempMesh.h"
 #include "tempMyMesh.h"
-#include "ShadowMap.h"
+#include "ShadowTex.h"
 //-----------------------------------------------
 #include <stdio.h>
 void tempShowMousePos(LONG x, LONG y, LONG z)
@@ -73,8 +73,8 @@ int WINAPI WinMain(
     //--------------------------------
 
     //--------------------------------
-    static ShadowMap* shadow = nullptr;
-    shadow = new ShadowMap();
+    static ShadowTex* shadow = nullptr;
+    shadow = new ShadowTex();
     if (!shadow->Init(TEMP::GetD3DDevicePointer(),
         TEMP::GetD3DDevContPointer(), 1280, 720))
     {
