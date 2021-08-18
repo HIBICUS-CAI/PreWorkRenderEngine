@@ -2,6 +2,8 @@
 #include <Windows.h>
 
 ShadowTex* g_Shadow = nullptr;
+ID3D11RasterizerState* g_ShadowRS = nullptr;
+ID3D11RasterizerState* g_NormalRS = nullptr;
 
 ShadowTex* GetShadow()
 {
@@ -30,9 +32,13 @@ bool ShadowTex::Init(
     D3D11_TEXTURE2D_DESC texDesc = {};
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    D3D11_RASTERIZER_DESC shadowRasterDesc = {};
+    D3D11_RASTERIZER_DESC normalRasterDesc = {};
     ZeroMemory(&texDesc, sizeof(texDesc));
     ZeroMemory(&dsvDesc, sizeof(dsvDesc));
     ZeroMemory(&srvDesc, sizeof(srvDesc));
+    ZeroMemory(&shadowRasterDesc, sizeof(shadowRasterDesc));
+    ZeroMemory(&normalRasterDesc, sizeof(normalRasterDesc));
 
     texDesc.Width = _width;
     texDesc.Height = _height;
@@ -75,6 +81,42 @@ bool ShadowTex::Init(
         return false;
     }
 
+    normalRasterDesc.FillMode = D3D11_FILL_SOLID;
+    normalRasterDesc.CullMode = D3D11_CULL_BACK;
+    normalRasterDesc.FrontCounterClockwise = FALSE;
+    normalRasterDesc.DepthBias = 0;
+    normalRasterDesc.SlopeScaledDepthBias = 0.f;
+    normalRasterDesc.DepthBiasClamp = 0.f;
+    normalRasterDesc.DepthClipEnable = TRUE;
+    normalRasterDesc.ScissorEnable = FALSE;
+    normalRasterDesc.MultisampleEnable = FALSE;   
+    normalRasterDesc.AntialiasedLineEnable = FALSE;
+
+    hr = mDevice->CreateRasterizerState(&normalRasterDesc,
+        &g_NormalRS);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    shadowRasterDesc.FillMode = D3D11_FILL_SOLID;
+    shadowRasterDesc.CullMode = D3D11_CULL_BACK;
+    shadowRasterDesc.FrontCounterClockwise = FALSE;
+    shadowRasterDesc.DepthBias = 100000;
+    shadowRasterDesc.SlopeScaledDepthBias = 1.f;
+    shadowRasterDesc.DepthBiasClamp = 0.f;
+    shadowRasterDesc.DepthClipEnable = TRUE;
+    shadowRasterDesc.ScissorEnable = FALSE;
+    shadowRasterDesc.MultisampleEnable = FALSE;
+    shadowRasterDesc.AntialiasedLineEnable = FALSE;
+
+    hr = mDevice->CreateRasterizerState(&shadowRasterDesc,
+        &g_ShadowRS);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -97,10 +139,21 @@ void ShadowTex::ClearAndStop()
         mDepthStencilTexture->Release();
         mDepthStencilTexture = nullptr;
     }
+
+    if (g_NormalRS)
+    {
+        g_NormalRS->Release();
+    }
+
+    if (g_ShadowRS)
+    {
+        g_ShadowRS->Release();
+    }
 }
 
 void ShadowTex::SetRenderTarget()
 {
+    mDeviceContext->RSSetState(g_ShadowRS);
     mDeviceContext->OMSetRenderTargets(0,
         nullptr, mDepthStencilView);
 }
@@ -116,6 +169,7 @@ void ShadowTex::UnBoundDSV()
     static ID3D11RenderTargetView* nullRTV = nullptr;
     mDeviceContext->OMSetRenderTargets(0,
         &nullRTV, nullptr);
+    mDeviceContext->RSSetState(g_NormalRS);
 }
 
 ID3D11ShaderResourceView* ShadowTex::GetSRV()
