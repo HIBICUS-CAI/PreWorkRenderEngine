@@ -19,6 +19,9 @@ namespace TEMP
     DirectX::XMFLOAT3 GetEyeLookat();
     DirectX::XMFLOAT3 GetEyeUp();
     DirectX::XMMATRIX GetProjMat();
+    DirectX::XMMATRIX GetLughtWM();
+    DirectX::XMMATRIX GetLughtVM();
+    DirectX::XMMATRIX GetLughtOM();
 
     //------------------------
     void setLightOffsetX(FLOAT x);

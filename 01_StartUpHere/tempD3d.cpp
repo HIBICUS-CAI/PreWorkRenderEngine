@@ -69,6 +69,9 @@ DirectX::XMFLOAT3 g_CameraPosition;
 DirectX::XMFLOAT3 g_CameraLookAt;
 DirectX::XMFLOAT3 g_CamearUpVec;
 DirectX::XMFLOAT3 g_LightDirection;
+DirectX::XMMATRIX g_LightWorld;
+DirectX::XMMATRIX g_LightView;
+DirectX::XMMATRIX g_LightOrtho;
 
 namespace TEMP
 {
@@ -87,6 +90,18 @@ namespace TEMP
     IDXGISwapChain* GetSwapChain()
     {
         return gp_SwapChain;
+    }
+    DirectX::XMMATRIX GetLughtWM()
+    {
+        return g_LightWorld;
+    }
+    DirectX::XMMATRIX GetLughtVM()
+    {
+        return g_LightView;
+    }
+    DirectX::XMMATRIX GetLughtOM()
+    {
+        return g_LightOrtho;
     }
     void TempRenderBegin()
     {
@@ -594,7 +609,7 @@ namespace TEMP
         g_CameraPosition = { -15.f,0.f,-15.f };
         g_CameraLookAt = { 1.f,0.f,1.f };
         g_CamearUpVec = { 0.f,1.f,0.f };
-        g_LightDirection = g_CameraLookAt;
+        g_LightDirection = { 0.f,0.f,1.f };
         DirectX::XMVECTOR eye = DirectX::XMVectorSet(
             g_CameraPosition.x,
             g_CameraPosition.y,
@@ -867,16 +882,24 @@ namespace TEMP
 
     void UpdateLightAndSth()
     {
+        static DirectX::XMFLOAT3 lightUp = { 0.f,1.f,0.f };
         //---------------------------
         DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(
             &g_LightDirection);
+        DirectX::XMVECTOR lightUpV = DirectX::XMLoadFloat3(
+            &lightUp);
         DirectX::XMMATRIX rotate = DirectX::XMMatrixRotationX(
             0.0001f * (FLOAT)gy);
         DirectX::XMVECTOR newLightDir =
             DirectX::XMVector3TransformNormal(
                 lightDir, rotate
             );
+        DirectX::XMVECTOR newLightUpDir =
+            DirectX::XMVector3TransformNormal(
+                lightUpV, rotate
+            );
         DirectX::XMStoreFloat3(&g_LightDirection, newLightDir);
+        DirectX::XMStoreFloat3(&lightUp, newLightUpDir);
 
         lightDir = DirectX::XMLoadFloat3(
             &g_LightDirection);
@@ -899,7 +922,7 @@ namespace TEMP
         lb.Strength = { 1.f,1.f,1.f };  // 颜色&光强
         lb.SpotPower = 2.f;             // 光强
         lb.FalloffStart = 5.f;
-        lb.FalloffEnd = 12.f;
+        lb.FalloffEnd = 15.f;
         alb.ALight = { 1.f,1.f,1.f,1.f };
         mb.mDiffuseAlbedo = { 0.5f,0.5f,0.5f,1.f };
         mb.mFresnelR0 = { 0.95f,0.64f,0.54f };
@@ -919,10 +942,24 @@ namespace TEMP
             1, 1, &gp_AmbientLightConstantBuffer);
         gp_ImmediateContext->PSSetConstantBuffers(
             2, 1, &gp_MatConstantBuffer);
-        gp_ImmediateContext->PSSetShaderResources(
+        /*gp_ImmediateContext->PSSetShaderResources(
             0, 1, &gp_TextureRV);
         gp_ImmediateContext->PSSetSamplers(
-            0, 1, &gp_SamplerLinear);
+            0, 1, &gp_SamplerLinear);*/
+
+        static DirectX::XMVECTOR lightPos;
+        static DirectX::XMVECTOR lightAtX;
+        static DirectX::XMVECTOR lightUpX;
+        lightPos = DirectX::XMLoadFloat3(&lb.Position);
+        lightAtX = DirectX::XMLoadFloat3(&g_LightDirection);
+        lightUpX = DirectX::XMLoadFloat3(&lightUp);
+
+        g_LightWorld = DirectX::XMMatrixTranslationFromVector(
+            DirectX::XMLoadFloat3(&lb.Position));
+        g_LightView = DirectX::XMMatrixLookAtLH(
+            lightPos, lightAtX, lightUpX);
+        g_LightOrtho = DirectX::XMMatrixOrthographicLH(
+            12.8f * 2.f, 7.2f * 2.f, 0.001f, 40.f);
 
 #ifdef SHOW_CUBE
         RenderCube();

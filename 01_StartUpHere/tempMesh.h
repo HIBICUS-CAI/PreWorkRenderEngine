@@ -48,6 +48,7 @@ namespace TEMP
         ~Mesh();
 
         bool Load(std::string fileName);
+        void DrawShadowDepth(ID3D11DeviceContext* devContext);
         void Draw(ID3D11DeviceContext* devContext);
         void DeleteThisMesh();
 
