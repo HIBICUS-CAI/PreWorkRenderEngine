@@ -29,7 +29,7 @@ VS_OUTPUT main(VS_INPUT input)
     output.NormalW = mul(input.NormalL, (float3x3)World);
     output.PosH = mul(output.PosH, View);
     output.PosH = mul(output.PosH, Projection);
-    output.ShadowPosH = mul(float4(input.PosL, 1.0f), ShadowView);
+    output.ShadowPosH = mul(float4(output.PosW, 1.0f), ShadowView);
     output.ShadowPosH = mul(output.ShadowPosH, ShadowProj);
     output.TexCoordL = input.TexCoordL;
     return output;
