@@ -114,7 +114,8 @@ namespace TEMP
     }
     void TempRenderEnd()
     {
-        gp_SwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+        //gp_SwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+        gp_SwapChain->Present(0, 0);
         static ID3D11ShaderResourceView* nullSRV = nullptr;
         gp_ImmediateContext->PSSetShaderResources(1, 1, &nullSRV);
     }
@@ -247,12 +248,12 @@ namespace TEMP
             dc.Width = width;
             dc.Height = height;
             dc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            dc.SampleDesc.Count = 1;
+            dc.SampleDesc.Count = 8;
             dc.SampleDesc.Quality = 0;
             dc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
             dc.BufferCount = 2;
-            dc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-            dc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+            dc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+            //dc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
             hr = dxgiFactory2->CreateSwapChainForHwnd(
                 gp_d3dDevice, wndHandle,
@@ -277,11 +278,11 @@ namespace TEMP
             dc.BufferDesc.RefreshRate.Denominator = 1;
             dc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
             dc.OutputWindow = wndHandle;
-            dc.SampleDesc.Count = 1;
+            dc.SampleDesc.Count = 8;
             dc.SampleDesc.Quality = 0;
             dc.Windowed = TRUE;
-            dc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-            dc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+            dc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+            //dc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
             hr = dxgiFactory1->CreateSwapChain(
                 gp_d3dDevice, &dc, &gp_SwapChain);
@@ -315,7 +316,7 @@ namespace TEMP
         texDepSte.MipLevels = 1;
         texDepSte.ArraySize = 1;
         texDepSte.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-        texDepSte.SampleDesc.Count = 1;
+        texDepSte.SampleDesc.Count = 8;
         texDepSte.SampleDesc.Quality = 0;
         texDepSte.Usage = D3D11_USAGE_DEFAULT;
         texDepSte.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -330,7 +331,7 @@ namespace TEMP
 
         D3D11_DEPTH_STENCIL_VIEW_DESC desDSV = {};
         desDSV.Format = texDepSte.Format;
-        desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+        desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
         desDSV.Texture2D.MipSlice = 0;
         hr = gp_d3dDevice->CreateDepthStencilView(
             gp_DepthStencil, &desDSV, &gp_DepthStencilView);

@@ -89,8 +89,8 @@ bool ShadowTex::Init(
     normalRasterDesc.DepthBiasClamp = 0.f;
     normalRasterDesc.DepthClipEnable = TRUE;
     normalRasterDesc.ScissorEnable = FALSE;
-    normalRasterDesc.MultisampleEnable = FALSE;   
-    normalRasterDesc.AntialiasedLineEnable = FALSE;
+    normalRasterDesc.MultisampleEnable = TRUE;
+    normalRasterDesc.AntialiasedLineEnable = TRUE;
 
     hr = mDevice->CreateRasterizerState(&normalRasterDesc,
         &g_NormalRS);
