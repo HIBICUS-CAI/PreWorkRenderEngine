@@ -2,6 +2,8 @@
 
 #include <d3d11_1.h>
 
+class ShadowTex* GetShadow();
+
 class ShadowTex
 {
 public:
@@ -16,6 +18,7 @@ public:
     void SetRenderTarget();
     void ClearRenderTarget();
     ID3D11ShaderResourceView* GetSRV();
+    void UnBoundDSV();
 
 private:
     ID3D11Device* mDevice;

@@ -1,6 +1,7 @@
 #include <DirectXTK\WICTextureLoader.h>
 #include "tempMesh.h"
 #include "tempD3d.h"
+#include "ShadowTex.h"
 
 namespace TEMP
 {
@@ -9,6 +10,7 @@ namespace TEMP
     ID3D11InputLayout* gp_MVertexLayout = nullptr;
     ID3D11Buffer* gp_WVPConstantBuffer = nullptr;
     ID3D11SamplerState* gp_TexSamplerState = nullptr;
+    ID3D11SamplerState* gp_ShadowSamplerState = nullptr;
     DirectX::XMMATRIX g_MWorld;
     DirectX::XMMATRIX g_MView;
     DirectX::XMMATRIX g_MProjection;
@@ -22,6 +24,8 @@ namespace TEMP
         DirectX::XMMATRIX mWorld;
         DirectX::XMMATRIX mView;
         DirectX::XMMATRIX mProjection;
+        DirectX::XMMATRIX mShadowView;
+        DirectX::XMMATRIX mShadowProjection;
     };
 
     WVPConstantBuffer g_WVPcb;
@@ -149,6 +153,22 @@ HRESULT TEMP::PrepareMeshD3D(ID3D11Device* dev,
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = dev->CreateSamplerState(&sampDesc, &gp_TexSamplerState);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = dev->CreateSamplerState(&sampDesc, 
+        &gp_ShadowSamplerState);
     if (FAILED(hr))
     {
         return hr;
@@ -291,7 +311,7 @@ void Mesh::DeleteThisMesh()
 void Mesh::DrawShadowDepth(ID3D11DeviceContext* devContext)
 {
     static float time = 0.0f;
-    if (TEMP::GetDriverType() == D3D_DRIVER_TYPE_REFERENCE)
+    /*if (TEMP::GetDriverType() == D3D_DRIVER_TYPE_REFERENCE)
     {
         time += (float)DirectX::XM_PI * 0.0125f;
     }
@@ -302,7 +322,7 @@ void Mesh::DrawShadowDepth(ID3D11DeviceContext* devContext)
         if (timeStart == 0)
             timeStart = timeCur;
         time = (timeCur - timeStart) / 1000.0f;
-    }
+    }*/
 
     g_MWorld = DirectX::XMMatrixMultiply(
         DirectX::XMMatrixScaling(0.03f, 0.03f, 0.03f),
@@ -362,6 +382,9 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     g_WVPcb.mView = DirectX::XMMatrixTranspose(g_MView);
     g_WVPcb.mProjection = DirectX::XMMatrixTranspose(
         g_MProjection);
+    g_WVPcb.mShadowView = DirectX::XMMatrixTranspose(GetLughtVM());
+    g_WVPcb.mShadowProjection = DirectX::XMMatrixTranspose(
+        GetLughtOM());
 
     devContext->UpdateSubresource(
         gp_WVPConstantBuffer, 0, nullptr, &g_WVPcb, 0, 0);
@@ -369,6 +392,12 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     devContext->IASetPrimitiveTopology(
         D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     devContext->PSSetSamplers(0, 1, &gp_TexSamplerState);
+    devContext->PSSetSamplers(1, 1, &gp_ShadowSamplerState);
+
+    static ID3D11ShaderResourceView* shadow = nullptr;
+    shadow = GetShadow()->GetSRV();
+    devContext->PSSetShaderResources(1, 1, &shadow);
+
     for (int i = 0; i < mSubMeshes.size(); i++)
     {
         mSubMeshes[i].Draw(devContext);

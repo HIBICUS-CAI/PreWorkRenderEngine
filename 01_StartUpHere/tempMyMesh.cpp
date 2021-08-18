@@ -1,6 +1,7 @@
 #include <DirectXTK\WICTextureLoader.h>
 #include "tempMyMesh.h"
 #include "tempD3d.h"
+#include "ShadowTex.h"
 
 ID3D11ShaderResourceView* TEMP::CreateTextureView(
     const wchar_t* fileName)
@@ -102,7 +103,7 @@ MySubMesh::MySubMesh(ID3D11Device* dev, MyMesh* myMesh,
 
     D3D11_BUFFER_DESC vbd;
     vbd.Usage = D3D11_USAGE_IMMUTABLE;
-    vbd.ByteWidth = 
+    vbd.ByteWidth =
         (UINT)(sizeof(MESH_VERTEX) * mVertices.size());
     vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vbd.CPUAccessFlags = 0;
@@ -282,9 +283,16 @@ void MyMesh::Draw(ID3D11DeviceContext* devContext)
     mWVPcb.mWorld = DirectX::XMMatrixTranspose(world);
     mWVPcb.mView = DirectX::XMMatrixTranspose(view);
     mWVPcb.mProjection = DirectX::XMMatrixTranspose(proj);
+    mWVPcb.mShadowView = DirectX::XMMatrixTranspose(GetLughtVM());
+    mWVPcb.mShadowProjection = DirectX::XMMatrixTranspose(
+        GetLughtOM());
 
     devContext->UpdateSubresource(
         mWVPConstantBuffer, 0, nullptr, &mWVPcb, 0, 0);
+
+    static ID3D11ShaderResourceView* shadow = nullptr;
+    shadow = GetShadow()->GetSRV();
+    devContext->PSSetShaderResources(1, 1, &shadow);
 
     for (int i = 0; i < mSubMeshes.size(); i++)
     {

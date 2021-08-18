@@ -101,6 +101,7 @@ int WINAPI WinMain(
             shadow->ClearRenderTarget();
             testMesh->DrawShadowDepth(TEMP::GetD3DDevContPointer());
             testmyMesh->DrawShadowDepth(TEMP::GetD3DDevContPointer());
+            shadow->UnBoundDSV();
 
             TEMP::SetVPShaderForNormal();
             TEMP::TempRenderBegin();

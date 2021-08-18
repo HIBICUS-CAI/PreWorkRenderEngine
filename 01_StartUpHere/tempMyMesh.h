@@ -25,6 +25,8 @@ namespace TEMP
         DirectX::XMMATRIX mWorld;
         DirectX::XMMATRIX mView;
         DirectX::XMMATRIX mProjection;
+        DirectX::XMMATRIX mShadowView;
+        DirectX::XMMATRIX mShadowProjection;
     };
 
     class MySubMesh

@@ -115,6 +115,8 @@ namespace TEMP
     void TempRenderEnd()
     {
         gp_SwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+        static ID3D11ShaderResourceView* nullSRV = nullptr;
+        gp_ImmediateContext->PSSetShaderResources(1, 1, &nullSRV);
     }
     DirectX::XMFLOAT3 GetEyePos()
     {

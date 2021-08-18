@@ -1,6 +1,13 @@
 #include "ShadowTex.h"
 #include <Windows.h>
 
+ShadowTex* g_Shadow = nullptr;
+
+ShadowTex* GetShadow()
+{
+    return g_Shadow;
+}
+
 ShadowTex::ShadowTex() :
     mDevice(nullptr),
     mDeviceContext(nullptr),
@@ -8,7 +15,7 @@ ShadowTex::ShadowTex() :
     mDepthStencilView(nullptr),
     mShaderResourceView(nullptr)
 {
-
+    g_Shadow = this;
 }
 
 bool ShadowTex::Init(
@@ -102,6 +109,13 @@ void ShadowTex::ClearRenderTarget()
 {
     mDeviceContext->ClearDepthStencilView(
         mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
+}
+
+void ShadowTex::UnBoundDSV()
+{
+    static ID3D11RenderTargetView* nullRTV = nullptr;
+    mDeviceContext->OMSetRenderTargets(0,
+        &nullRTV, nullptr);
 }
 
 ID3D11ShaderResourceView* ShadowTex::GetSRV()
