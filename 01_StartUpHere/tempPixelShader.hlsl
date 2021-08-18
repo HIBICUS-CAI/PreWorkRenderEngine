@@ -55,6 +55,7 @@ float CalcShadowFactor(float4 shadowPosH)
     // Depth in NDC space.
     float depth = shadowPosH.z;
     float texDepth = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy).x;
+    texDepth += 0.00003f;
 
     if(depth > texDepth)
     {
