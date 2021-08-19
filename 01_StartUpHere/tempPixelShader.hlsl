@@ -52,17 +52,37 @@ float CalcShadowFactor(float4 shadowPosH)
     shadowPosH.x = 0.5f * shadowPosH.x + 0.5f;
     shadowPosH.y = -0.5f * shadowPosH.y + 0.5f;
 
+    static const float WIDTH = 1280.0f;
+    static const float DX = 1.0f / WIDTH;
+    static const float HEIGHT = 720.0f;
+    static const float DY = 1.0f / HEIGHT;
+
     // Depth in NDC space.
     float depth = shadowPosH.z;
-    float texDepth = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy).x;
-    texDepth += 0.00003f;
+    float texDepth0 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy).r;
+    float texDepth1 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(DX, 0)).r;
+    float texDepth2 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(0, DY)).r;
+    float texDepth3 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(DX, DY)).r;
 
-    if(depth > texDepth)
-    {
-        return 0.0f;
-    }
+    float result0 = depth <= texDepth0;
+    float result1 = depth <= texDepth1;
+    float result2 = depth <= texDepth2;
+    float result3 = depth <= texDepth3;
 
-    return 1.0f;
+    float2 texelPos = shadowPosH.xy;
+    texelPos.x *= WIDTH;
+    texelPos.y *= HEIGHT;
+
+    float2 t = frac(texelPos);
+
+    return lerp(lerp(result0, result1, t.x), lerp(result2, result3, t.x), t.y);
+
+    // if(depth > texDepth0)
+    // {
+    //     return 0.0f;
+    // }
+
+    // return 1.0f;
 }
 
 float4 main(VS_OUTPUT input) : SV_TARGET
