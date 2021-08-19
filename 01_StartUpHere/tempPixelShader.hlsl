@@ -14,6 +14,7 @@ Texture2D CubeTex : register(t0);
 SamplerState SamLiner : register(s0);
 Texture2D<float> ShadowMap : register(t1);
 SamplerState ShadowSamLiner : register(s1);
+SamplerComparisonState ShadowComSam : register(s2);
 cbuffer Light : register(b0)
 {
     float3 Strength;
@@ -52,30 +53,51 @@ float CalcShadowFactor(float4 shadowPosH)
     shadowPosH.x = 0.5f * shadowPosH.x + 0.5f;
     shadowPosH.y = -0.5f * shadowPosH.y + 0.5f;
 
-    static const float WIDTH = 1280.0f;
-    static const float DX = 1.0f / WIDTH;
-    static const float HEIGHT = 720.0f;
-    static const float DY = 1.0f / HEIGHT;
+    uint width, height, numMips;
+    ShadowMap.GetDimensions(0, width, height, numMips);
+
+    const float WIDTH = (float)width;
+    const float DX = 1.0f / WIDTH;
+    const float HEIGHT = (float)height;
+    const float DY = 1.0f / HEIGHT;
 
     // Depth in NDC space.
+    // float depth = shadowPosH.z;
+    // float texDepth0 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy).r;
+    // float texDepth1 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(DX, 0)).r;
+    // float texDepth2 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(0, DY)).r;
+    // float texDepth3 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(DX, DY)).r;
+
+    // float result0 = depth <= texDepth0;
+    // float result1 = depth <= texDepth1;
+    // float result2 = depth <= texDepth2;
+    // float result3 = depth <= texDepth3;
+
+    // float2 texelPos = shadowPosH.xy;
+    // texelPos.x *= WIDTH;
+    // texelPos.y *= HEIGHT;
+
+    // float2 t = frac(texelPos);
+
+    // return lerp(lerp(result0, result1, t.x), lerp(result2, result3, t.x), t.y);
+
     float depth = shadowPosH.z;
-    float texDepth0 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy).r;
-    float texDepth1 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(DX, 0)).r;
-    float texDepth2 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(0, DY)).r;
-    float texDepth3 = ShadowMap.Sample(ShadowSamLiner, shadowPosH.xy + float2(DX, DY)).r;
+    float percentLit = 0.0f;
+    const float2 offsets[9] =
+    {
+        float2(-DX,  -DY), float2(0.0f,  -DY), float2(DX,  -DY),
+        float2(-DX, 0.0f), float2(0.0f, 0.0f), float2(DX, 0.0f),
+        float2(-DX,  +DY), float2(0.0f,  +DY), float2(DX,  +DY)
+    };
+    
+    [unroll]
+    for(int i = 0; i < 9; ++i)
+    {
+        percentLit += ShadowMap.SampleCmpLevelZero(ShadowComSam,
+            shadowPosH.xy + offsets[i], depth).r;
+    }
 
-    float result0 = depth <= texDepth0;
-    float result1 = depth <= texDepth1;
-    float result2 = depth <= texDepth2;
-    float result3 = depth <= texDepth3;
-
-    float2 texelPos = shadowPosH.xy;
-    texelPos.x *= WIDTH;
-    texelPos.y *= HEIGHT;
-
-    float2 t = frac(texelPos);
-
-    return lerp(lerp(result0, result1, t.x), lerp(result2, result3, t.x), t.y);
+    return percentLit / 9.0f;
 
     // if(depth > texDepth0)
     // {

@@ -159,11 +159,11 @@ HRESULT TEMP::PrepareMeshD3D(ID3D11Device* dev,
     }
 
     ZeroMemory(&sampDesc, sizeof(sampDesc));
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
@@ -392,7 +392,7 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     devContext->IASetPrimitiveTopology(
         D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     devContext->PSSetSamplers(0, 1, &gp_TexSamplerState);
-    devContext->PSSetSamplers(1, 1, &gp_ShadowSamplerState);
+    devContext->PSSetSamplers(2, 1, &gp_ShadowSamplerState);
 
     static ID3D11ShaderResourceView* shadow = nullptr;
     shadow = GetShadow()->GetSRV();
