@@ -102,8 +102,8 @@ bool ShadowTex::Init(
     shadowRasterDesc.FillMode = D3D11_FILL_SOLID;
     shadowRasterDesc.CullMode = D3D11_CULL_BACK;
     shadowRasterDesc.FrontCounterClockwise = FALSE;
-    //shadowRasterDesc.DepthBias = 100000;
-    shadowRasterDesc.DepthBias = 600000;
+    shadowRasterDesc.DepthBias = 100000;
+    //shadowRasterDesc.DepthBias = 600000;
     shadowRasterDesc.SlopeScaledDepthBias = 1.f;
     shadowRasterDesc.DepthBiasClamp = 0.f;
     shadowRasterDesc.DepthClipEnable = TRUE;

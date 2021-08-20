@@ -330,7 +330,7 @@ void Mesh::DrawShadowDepth(ID3D11DeviceContext* devContext)
     );
     g_MWorld = DirectX::XMMatrixMultiply(
         g_MWorld,
-        DirectX::XMMatrixTranslation(0.f, -2.f, 0.f)
+        DirectX::XMMatrixTranslation(0.f, -3.f, -1.f)
     );
     /*DirectX::XMFLOAT4 v4 = {
             GetEyePos().x,
