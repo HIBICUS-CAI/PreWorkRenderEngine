@@ -5,6 +5,7 @@
 #include "tempMesh.h"
 #include "tempMyMesh.h"
 #include "ShadowTex.h"
+#include "SsaoTexs.h"
 //-----------------------------------------------
 #include <stdio.h>
 void tempShowMousePos(LONG x, LONG y, LONG z)
@@ -82,6 +83,17 @@ int WINAPI WinMain(
     }
     //--------------------------------
 
+    //--------------------------------
+    static SsaoTexs* ssao = nullptr;
+    static bool goSsao = false;
+    ssao = new SsaoTexs();
+    if (!ssao->Init(TEMP::GetD3DDevicePointer(),
+        TEMP::GetD3DDevContPointer(), 1280, 720))
+    {
+        return -5;
+    }
+    //--------------------------------
+
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
     {
@@ -94,6 +106,7 @@ int WINAPI WinMain(
         {
             InputInterface::PollDevices();
 
+            TEMP::SetVPShaderForShadow();
             TEMP::UpdateLightAndSth();
 
             TEMP::SetVPShaderForShadow();
@@ -102,6 +115,15 @@ int WINAPI WinMain(
             testMesh->DrawShadowDepth(TEMP::GetD3DDevContPointer());
             testmyMesh->DrawShadowDepth(TEMP::GetD3DDevContPointer());
             shadow->UnBoundDSV();
+
+            if (goSsao)
+            {
+                TEMP::SetVPShaderForAoNormal();
+                ssao->SetNormalRenderTarget();
+                testMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
+                testmyMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
+                shadow->UnBoundDSV();
+            }
 
             TEMP::SetVPShaderForNormal();
             TEMP::TempRenderBegin();
@@ -124,6 +146,11 @@ int WINAPI WinMain(
                 GP_LEFTDIRBTN))
             {
                 tempShowMousePos(0, 0, 0);
+            }
+            if (InputInterface::IsKeyPushedInSingle(
+                GP_RIGHTFORESHDBTN))
+            {
+                goSsao = !goSsao;
             }
 
 #ifdef LIGHT_BY_KEY

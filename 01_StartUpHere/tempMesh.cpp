@@ -404,6 +404,42 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     }
 }
 
+void Mesh::DrawSsaoNormal(ID3D11DeviceContext* devContext)
+{
+    DirectX::XMFLOAT4 v4 = {
+            GetEyePos().x,
+            GetEyePos().y,
+            GetEyePos().z,
+            0.f };
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(&v4);
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        GetEyePos().x + GetEyeLookat().x,
+        GetEyePos().y + GetEyeLookat().y,
+        GetEyePos().z + GetEyeLookat().z, 0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        GetEyeUp().x, GetEyeUp().y, GetEyeUp().z, 0.f);
+    g_MView = DirectX::XMMatrixLookAtLH(eye, lookat, up);
+
+    g_WVPcb.mWorld = DirectX::XMMatrixTranspose(g_MWorld);
+    g_WVPcb.mView = DirectX::XMMatrixTranspose(g_MView);
+    g_WVPcb.mProjection = DirectX::XMMatrixTranspose(
+        g_MProjection);
+    g_WVPcb.mShadowView = DirectX::XMMatrixTranspose(GetLughtVM());
+    g_WVPcb.mShadowProjection = DirectX::XMMatrixTranspose(
+        GetLughtOM());
+
+    devContext->UpdateSubresource(
+        gp_WVPConstantBuffer, 0, nullptr, &g_WVPcb, 0, 0);
+    devContext->IASetInputLayout(TEMP::gp_MVertexLayout);
+    devContext->IASetPrimitiveTopology(
+        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    for (int i = 0; i < mSubMeshes.size(); i++)
+    {
+        mSubMeshes[i].Draw(devContext);
+    }
+}
+
 void Mesh::ProcessNode(
     aiNode* node, const aiScene* scene)
 {

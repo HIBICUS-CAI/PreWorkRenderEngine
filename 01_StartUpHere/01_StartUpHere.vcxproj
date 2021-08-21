@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ShadowTex.cpp" />
+    <ClCompile Include="SsaoTexs.cpp" />
     <ClCompile Include="StartUp.cpp" />
     <ClCompile Include="tempD3d.cpp" />
     <ClCompile Include="tempDDSTextureLoader.cpp" />
@@ -168,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ShadowTex.h" />
+    <ClInclude Include="SsaoTexs.h" />
     <ClInclude Include="tempD3d.h" />
     <ClInclude Include="tempDDSTextureLoader.h" />
     <ClInclude Include="tempDeclaration.h" />

@@ -299,3 +299,45 @@ void MyMesh::Draw(ID3D11DeviceContext* devContext)
         mSubMeshes[i].Draw(devContext);
     }
 }
+
+void MyMesh::DrawSsaoNormal(ID3D11DeviceContext* devContext)
+{
+    DirectX::XMMATRIX world =
+        DirectX::XMMatrixMultiply(
+            DirectX::XMMatrixScalingFromVector(
+                DirectX::XMLoadFloat3(&mScale)),
+            DirectX::XMMatrixTranslationFromVector(
+                DirectX::XMLoadFloat3(&mPosition)));
+
+    DirectX::XMFLOAT4 v4 = {
+            GetEyePos().x,
+            GetEyePos().y,
+            GetEyePos().z,
+            0.f };
+    DirectX::XMVECTOR eye = DirectX::XMLoadFloat4(&v4);
+    DirectX::XMVECTOR lookat = DirectX::XMVectorSet(
+        GetEyePos().x + GetEyeLookat().x,
+        GetEyePos().y + GetEyeLookat().y,
+        GetEyePos().z + GetEyeLookat().z, 0.f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(
+        GetEyeUp().x, GetEyeUp().y, GetEyeUp().z, 0.f);
+    DirectX::XMMATRIX view =
+        DirectX::XMMatrixLookAtLH(eye, lookat, up);
+
+    DirectX::XMMATRIX proj = GetProjMat();
+
+    mWVPcb.mWorld = DirectX::XMMatrixTranspose(world);
+    mWVPcb.mView = DirectX::XMMatrixTranspose(view);
+    mWVPcb.mProjection = DirectX::XMMatrixTranspose(proj);
+    mWVPcb.mShadowView = DirectX::XMMatrixTranspose(GetLughtVM());
+    mWVPcb.mShadowProjection = DirectX::XMMatrixTranspose(
+        GetLughtOM());
+
+    devContext->UpdateSubresource(
+        mWVPConstantBuffer, 0, nullptr, &mWVPcb, 0, 0);
+
+    for (int i = 0; i < mSubMeshes.size(); i++)
+    {
+        mSubMeshes[i].Draw(devContext);
+    }
+}

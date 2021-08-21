@@ -48,4 +48,6 @@ namespace TEMP
     void SetVPShaderForNormal();
 
     void SetVPShaderForShadow();
+
+    void SetVPShaderForAoNormal();
 }

@@ -36,6 +36,9 @@
     <ClCompile Include="ShadowTex.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
+    <ClCompile Include="SsaoTexs.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tempD3d.h">
@@ -54,6 +57,9 @@
       <Filter>Temp</Filter>
     </ClInclude>
     <ClInclude Include="ShadowTex.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="SsaoTexs.h">
       <Filter>Temp</Filter>
     </ClInclude>
   </ItemGroup>
