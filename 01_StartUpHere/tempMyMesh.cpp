@@ -336,6 +336,9 @@ void MyMesh::DrawSsaoNormal(ID3D11DeviceContext* devContext)
     devContext->UpdateSubresource(
         mWVPConstantBuffer, 0, nullptr, &mWVPcb, 0, 0);
 
+    devContext->PSSetConstantBuffers(
+        0, 1, &mWVPConstantBuffer);
+
     for (int i = 0; i < mSubMeshes.size(); i++)
     {
         mSubMeshes[i].Draw(devContext);

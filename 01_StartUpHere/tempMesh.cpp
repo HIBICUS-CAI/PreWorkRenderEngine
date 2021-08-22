@@ -434,6 +434,9 @@ void Mesh::DrawSsaoNormal(ID3D11DeviceContext* devContext)
     devContext->IASetPrimitiveTopology(
         D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+    devContext->PSSetConstantBuffers(
+        0, 1, &gp_WVPConstantBuffer);
+
     for (int i = 0; i < mSubMeshes.size(); i++)
     {
         mSubMeshes[i].Draw(devContext);

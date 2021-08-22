@@ -106,6 +106,15 @@ int WINAPI WinMain(
         {
             InputInterface::PollDevices();
 
+            if (goSsao)
+            {
+                TEMP::SetVPShaderForAoNormal();
+                ssao->SetNormalRenderTarget();
+                testMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
+                testmyMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
+                shadow->UnBoundDSV();
+            }
+
             TEMP::SetVPShaderForShadow();
             TEMP::UpdateLightAndSth();
 
@@ -115,15 +124,6 @@ int WINAPI WinMain(
             testMesh->DrawShadowDepth(TEMP::GetD3DDevContPointer());
             testmyMesh->DrawShadowDepth(TEMP::GetD3DDevContPointer());
             shadow->UnBoundDSV();
-
-            if (goSsao)
-            {
-                TEMP::SetVPShaderForAoNormal();
-                ssao->SetNormalRenderTarget();
-                testMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
-                testmyMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
-                shadow->UnBoundDSV();
-            }
 
             TEMP::SetVPShaderForNormal();
             TEMP::TempRenderBegin();
