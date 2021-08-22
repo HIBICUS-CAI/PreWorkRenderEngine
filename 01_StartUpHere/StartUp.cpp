@@ -113,6 +113,10 @@ int WINAPI WinMain(
                 testMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
                 testmyMesh->DrawSsaoNormal(TEMP::GetD3DDevContPointer());
                 shadow->UnBoundDSV();
+
+                TEMP::SetVPShaderForAoTex();
+                ssao->SetSsaoRenderTarget();
+                shadow->UnBoundDSV();
             }
 
             TEMP::SetVPShaderForShadow();

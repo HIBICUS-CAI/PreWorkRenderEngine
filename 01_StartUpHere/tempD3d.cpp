@@ -76,6 +76,8 @@ DirectX::XMMATRIX g_LightOrtho;
 // SSAO
 ID3D11VertexShader* gp_AONormalVS = nullptr;
 ID3D11PixelShader* gp_AONormalPS = nullptr;
+ID3D11VertexShader* gp_AOTexVS = nullptr;
+ID3D11PixelShader* gp_AOTexPS = nullptr;
 // SSAO
 
 namespace TEMP
@@ -428,6 +430,21 @@ namespace TEMP
             return hr;
         }
 
+        hr = CompileShaderFromFile(
+            L"AOTex.hlsl", "VS", "vs_5_0", &pVSBlob);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        hr = gp_d3dDevice->CreateVertexShader(
+            pVSBlob->GetBufferPointer(),
+            pVSBlob->GetBufferSize(), nullptr, &gp_AOTexVS);
+        if (FAILED(hr))
+        {
+            pVSBlob->Release();
+            return hr;
+        }
+
         D3D11_INPUT_ELEMENT_DESC layout[] =
         {
             {
@@ -484,6 +501,21 @@ namespace TEMP
         hr = gp_d3dDevice->CreatePixelShader(
             pPSBlob->GetBufferPointer(),
             pPSBlob->GetBufferSize(), nullptr, &gp_AONormalPS);
+        pPSBlob->Release();
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        hr = CompileShaderFromFile(
+            L"AOTex.hlsl", "PS", "ps_5_0", &pPSBlob);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        hr = gp_d3dDevice->CreatePixelShader(
+            pPSBlob->GetBufferPointer(),
+            pPSBlob->GetBufferSize(), nullptr, &gp_AOTexPS);
         pPSBlob->Release();
         if (FAILED(hr))
         {
@@ -1081,5 +1113,13 @@ namespace TEMP
             gp_AONormalVS, nullptr, 0);
         gp_ImmediateContext->PSSetShader(
             gp_AONormalPS, nullptr, 0);
+    }
+
+    void SetVPShaderForAoTex()
+    {
+        gp_ImmediateContext->VSSetShader(
+            gp_AOTexVS, nullptr, 0);
+        gp_ImmediateContext->PSSetShader(
+            gp_AOTexPS, nullptr, 0);
     }
 }

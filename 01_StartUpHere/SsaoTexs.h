@@ -16,6 +16,7 @@ public:
         UINT _width, UINT _height);
     void ClearAndStop();
     void SetNormalRenderTarget();
+    void SetSsaoRenderTarget();
     //void ClearNormalRenderTarget();
     //ID3D11ShaderResourceView* GetNormalSRV();
 
@@ -24,8 +25,15 @@ private:
     ID3D11DeviceContext* mDeviceContext;
     ID3D11Texture2D* mNormalTexture;
     ID3D11Texture2D* mDepthTexture;
+    ID3D11Texture2D* mSsaoTexture;
     ID3D11RenderTargetView* mNormalRenderTargetView;
+    ID3D11RenderTargetView* mSsaoRenderTargetView;
     ID3D11DepthStencilView* mDepthStencilView;
     ID3D11ShaderResourceView* mNormalShaderResourceView;
+    ID3D11ShaderResourceView* mSsaoShaderResourceView;
     ID3D11ShaderResourceView* mDepthShaderResourceView;
+
+    ID3D11Buffer* mSsaoConstantBuffer;
+    ID3D11Buffer* mSsaoVertexBuffer;
+    ID3D11Buffer* mSsaoIndexBuffer;
 };
