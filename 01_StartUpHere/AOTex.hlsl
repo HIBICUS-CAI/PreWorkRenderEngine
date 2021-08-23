@@ -19,7 +19,7 @@ static const float2 gTexCoords[4] =
 
 Texture2D gNormalMap : register(t0);
 Texture2D gDepthMap : register(t1);
-Texture2D gRenderMap : register(t2);
+Texture2D gRandomMap : register(t2);
 
 SamplerState gSamPointClamp : register(s0);
 SamplerState gSamLinearClamp : register(s1);
@@ -42,6 +42,6 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     // return float4(0.0f, 1.0f, 1.0f, 1.0f);
 
-    float3 v = gNormalMap.Sample(gSamPointClamp, input.TexCoordL).rgb;
+    float3 v = gRandomMap.Sample(gSamLinearWrap, input.TexCoordL).rgb;
     return float4(v, 1.0f);
 }

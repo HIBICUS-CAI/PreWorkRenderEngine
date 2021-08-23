@@ -85,7 +85,7 @@ int WINAPI WinMain(
 
     //--------------------------------
     static SsaoTexs* ssao = nullptr;
-    static bool goSsao = false;
+    static bool goSsao = true;
     ssao = new SsaoTexs();
     if (!ssao->Init(TEMP::GetD3DDevicePointer(),
         TEMP::GetD3DDevContPointer(), 1280, 720))
