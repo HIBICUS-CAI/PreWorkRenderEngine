@@ -13,6 +13,11 @@ struct SSAOConstantBuffer
 {
     DirectX::XMMATRIX mProj;
     DirectX::XMMATRIX mInvProj;
+    DirectX::XMVECTOR mOffsetVec[14];
+    float mOcclusionRadius;
+    float mOcclusionFadeStart;
+    float mOcclusionFadeEnd;
+    float mSurfaceEpsilon;
 };
 
 SSAOConstantBuffer g_SSAOcb;
@@ -52,6 +57,10 @@ SsaoTexs::SsaoTexs() :
         DirectX::XMMatrixDeterminant(g_SSAOcb.mProj);
     g_SSAOcb.mInvProj = DirectX::XMMatrixTranspose(
         DirectX::XMMatrixInverse(&det, g_SSAOcb.mProj));
+    g_SSAOcb.mOcclusionRadius = 5.f;
+    g_SSAOcb.mOcclusionFadeStart = 5.f;
+    g_SSAOcb.mOcclusionFadeEnd = 5.f;
+    g_SSAOcb.mSurfaceEpsilon = 5.f;
 }
 
 bool SsaoTexs::Init(
@@ -315,6 +324,8 @@ bool SsaoTexs::Init(
         return false;
     }
 
+    BuildOffsetVectors();
+
     return true;
 }
 
@@ -342,15 +353,15 @@ bool SsaoTexs::BuildRandomTexture()
             std::srand((unsigned int)std::time(nullptr) +
                 (unsigned int)std::rand());
             v.y = (float)(std::rand() % range + basic) / 100.f;
-            std::srand((unsigned int)std::time(nullptr) + 
+            std::srand((unsigned int)std::time(nullptr) +
                 (unsigned int)std::rand());
             v.z = (float)(std::rand() % range + basic) / 100.f;
-            random[i * 256 + j] = 
+            random[i * 256 + j] =
                 DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, 0.f);
         }
     }
 
-    iniData.SysMemPitch = 256 * 
+    iniData.SysMemPitch = 256 *
         sizeof(DirectX::PackedVector::XMCOLOR);
     iniData.pSysMem = random;
 
@@ -386,6 +397,41 @@ bool SsaoTexs::BuildRandomTexture()
     }
 
     return true;
+}
+
+void SsaoTexs::BuildOffsetVectors()
+{
+    DirectX::XMFLOAT4 vec[14] = {};
+    vec[0] = DirectX::XMFLOAT4(+1.0f, +1.0f, +1.0f, 0.0f);
+    vec[1] = DirectX::XMFLOAT4(-1.0f, -1.0f, -1.0f, 0.0f);
+    vec[2] = DirectX::XMFLOAT4(-1.0f, +1.0f, +1.0f, 0.0f);
+    vec[3] = DirectX::XMFLOAT4(+1.0f, -1.0f, -1.0f, 0.0f);
+    vec[4] = DirectX::XMFLOAT4(+1.0f, +1.0f, -1.0f, 0.0f);
+    vec[5] = DirectX::XMFLOAT4(-1.0f, -1.0f, +1.0f, 0.0f);
+    vec[6] = DirectX::XMFLOAT4(-1.0f, +1.0f, -1.0f, 0.0f);
+    vec[7] = DirectX::XMFLOAT4(+1.0f, -1.0f, +1.0f, 0.0f);
+    vec[8] = DirectX::XMFLOAT4(-1.0f, 0.0f, 0.0f, 0.0f);
+    vec[9] = DirectX::XMFLOAT4(+1.0f, 0.0f, 0.0f, 0.0f);
+    vec[10] = DirectX::XMFLOAT4(0.0f, -1.0f, 0.0f, 0.0f);
+    vec[11] = DirectX::XMFLOAT4(0.0f, +1.0f, 0.0f, 0.0f);
+    vec[12] = DirectX::XMFLOAT4(0.0f, 0.0f, -1.0f, 0.0f);
+    vec[13] = DirectX::XMFLOAT4(0.0f, 0.0f, +1.0f, 0.0f);
+    const int basic = 25;
+    const int range = 75;
+    for (int i = 0; i < 14; i++)
+    {
+        std::srand((unsigned int)std::time(nullptr) +
+            (unsigned int)std::rand());
+        float s = (float)(std::rand() % range + basic) / 100.f;
+        DirectX::XMVECTOR v = DirectX::XMVector4Normalize(
+            DirectX::XMLoadFloat4(&vec[i]));
+        DirectX::XMStoreFloat4(&vec[i], v);
+        vec[i].x *= s;
+        vec[i].y *= s;
+        vec[i].z *= s;
+        v = DirectX::XMLoadFloat4(&vec[i]);
+        g_SSAOcb.mOffsetVec[i] = v;
+    }
 }
 
 void SsaoTexs::ClearAndStop()

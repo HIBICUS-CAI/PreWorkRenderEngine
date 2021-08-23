@@ -2,6 +2,11 @@ cbuffer ConstantBuffer : register(b0)
 {
     matrix Proj;
     matrix InvProj;
+    float4 OffsetVec[14];
+    float OcclusionRadius;
+    float OcclusionFadeStart;
+    float OcclusionFadeEnd;
+    float SurfaceEpsilon;
 };
 
 struct VS_OUTPUT
@@ -38,10 +43,27 @@ VS_OUTPUT VS(uint vid : SV_VertexID)
     return output;
 }
 
+float NdcDepthToViewDepth(float z_ndc)
+{
+    float viewZ = Proj[3][2] / (z_ndc - Proj[2][2]);
+    return viewZ;
+}
+
+float Occlusion(float deltaZ)
+{
+    float occlusion = 0.0f;
+    if (deltaZ > SurfaceEpsilon)
+    {
+        float fadeLen = OcclusionFadeEnd - OcclusionFadeStart;
+        occlusion = saturate((OcclusionFadeEnd - deltaZ) / fadeLen);
+    }
+    return occlusion;
+}
+
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     // return float4(0.0f, 1.0f, 1.0f, 1.0f);
 
     float3 v = gRandomMap.Sample(gSamLinearWrap, input.TexCoordL).rgb;
-    return float4(v, 1.0f);
+    return float4(v, 1.0f) + OffsetVec[5];
 }

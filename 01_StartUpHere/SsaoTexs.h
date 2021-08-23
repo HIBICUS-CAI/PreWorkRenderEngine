@@ -22,6 +22,7 @@ public:
 
 private:
     bool BuildRandomTexture();
+    void BuildOffsetVectors();
 
 private:
     ID3D11Device* mDevice;
