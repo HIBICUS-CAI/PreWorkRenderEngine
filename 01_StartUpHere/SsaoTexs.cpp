@@ -353,18 +353,14 @@ bool SsaoTexs::BuildRandomTexture()
     int basic = -100;
     int range = 200;
     DirectX::XMFLOAT3 v = { 0.f,0.f,0.f };
+    std::srand((unsigned int)std::time(nullptr) +
+        (unsigned int)std::rand());
     for (int i = 0; i < 256; i++)
     {
         for (int j = 0; j < 256; j++)
         {
-            std::srand((unsigned int)std::time(nullptr) +
-                (unsigned int)std::rand());
             v.x = (float)(std::rand() % range + basic) / 100.f;
-            std::srand((unsigned int)std::time(nullptr) +
-                (unsigned int)std::rand());
             v.y = (float)(std::rand() % range + basic) / 100.f;
-            std::srand((unsigned int)std::time(nullptr) +
-                (unsigned int)std::rand());
             v.z = (float)(std::rand() % range + basic) / 100.f;
             random[i * 256 + j] =
                 DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, 0.f);
