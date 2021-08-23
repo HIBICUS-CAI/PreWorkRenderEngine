@@ -33,7 +33,11 @@ SsaoTexs::SsaoTexs() :
     mDepthShaderResourceView(nullptr),
     mSsaoConstantBuffer(nullptr),
     mSsaoVertexBuffer(nullptr),
-    mSsaoIndexBuffer(nullptr)
+    mSsaoIndexBuffer(nullptr),
+    mSamplePointClamp(nullptr),
+    mSampleLinearClamp(nullptr),
+    mSampleDepthMap(nullptr),
+    mSampleLinearWrap(nullptr)
 {
     g_Ssao = this;
 
@@ -59,11 +63,13 @@ bool SsaoTexs::Init(
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     D3D11_BUFFER_DESC bufDesc = {};
+    D3D11_SAMPLER_DESC samDesc = {};
     ZeroMemory(&texDesc, sizeof(texDesc));
     ZeroMemory(&rtvDesc, sizeof(rtvDesc));
     ZeroMemory(&dsvDesc, sizeof(dsvDesc));
     ZeroMemory(&srvDesc, sizeof(srvDesc));
     ZeroMemory(&bufDesc, sizeof(bufDesc));
+    ZeroMemory(&samDesc, sizeof(samDesc));
 
     texDesc.Width = _width;
     texDesc.Height = _height;
@@ -143,8 +149,8 @@ bool SsaoTexs::Init(
         return false;
     }
 
-    texDesc.Width = _width / 2;
-    texDesc.Height = _height / 2;
+    texDesc.Width = _width;
+    texDesc.Height = _height;
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
@@ -243,6 +249,62 @@ bool SsaoTexs::Init(
         return false;
     }
 
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = mDevice->CreateSamplerState(&samDesc, 
+        &mSamplePointClamp);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = mDevice->CreateSamplerState(&samDesc,
+        &mSampleLinearClamp);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = mDevice->CreateSamplerState(&samDesc,
+        &mSampleDepthMap);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = mDevice->CreateSamplerState(&samDesc,
+        &mSampleLinearWrap);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -296,6 +358,22 @@ void SsaoTexs::ClearAndStop()
     {
         mSsaoIndexBuffer->Release();
     }
+    if (mSamplePointClamp)
+    {
+        mSamplePointClamp->Release();
+    }
+    if (mSampleLinearClamp)
+    {
+        mSampleLinearClamp->Release();
+    }
+    if (mSampleDepthMap)
+    {
+        mSampleDepthMap->Release();
+    }
+    if (mSampleLinearWrap)
+    {
+        mSampleLinearWrap->Release();
+    }
 }
 
 void SsaoTexs::SetNormalRenderTarget()
@@ -322,5 +400,15 @@ void SsaoTexs::SetSsaoRenderTarget()
         0, 1, &mSsaoConstantBuffer);
     mDeviceContext->PSSetConstantBuffers(
         0, 1, &mSsaoConstantBuffer);
+
+    mDeviceContext->PSSetSamplers(0, 1, &mSamplePointClamp);
+    mDeviceContext->PSSetSamplers(1, 1, &mSampleLinearClamp);
+    mDeviceContext->PSSetSamplers(2, 1, &mSampleDepthMap);
+    mDeviceContext->PSSetSamplers(3, 1, &mSampleLinearWrap);
+    mDeviceContext->PSSetShaderResources(0, 1, 
+        &mNormalShaderResourceView);
+    mDeviceContext->PSSetShaderResources(1, 1,
+        &mDepthShaderResourceView);
+
     mDeviceContext->DrawIndexed(6, 0, 0);
 }

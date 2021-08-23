@@ -36,4 +36,9 @@ private:
     ID3D11Buffer* mSsaoConstantBuffer;
     ID3D11Buffer* mSsaoVertexBuffer;
     ID3D11Buffer* mSsaoIndexBuffer;
+
+    ID3D11SamplerState* mSamplePointClamp;
+    ID3D11SamplerState* mSampleLinearClamp;
+    ID3D11SamplerState* mSampleDepthMap;
+    ID3D11SamplerState* mSampleLinearWrap;
 };
