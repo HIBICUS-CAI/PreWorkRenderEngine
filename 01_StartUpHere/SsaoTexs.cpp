@@ -67,10 +67,10 @@ SsaoTexs::SsaoTexs() :
     g_SSAOcb.mProjTex = DirectX::XMMatrixTranspose(
         TEMP::GetProjMat() * T);
 
-    g_SSAOcb.mOcclusionRadius = 0.25f;
-    g_SSAOcb.mOcclusionFadeStart = 0.1f;
-    g_SSAOcb.mOcclusionFadeEnd = 0.5f;
-    g_SSAOcb.mSurfaceEpsilon = 0.025f;
+    g_SSAOcb.mOcclusionRadius = 0.1f;
+    g_SSAOcb.mOcclusionFadeStart = 0.05f;
+    g_SSAOcb.mOcclusionFadeEnd = 1.0f;
+    g_SSAOcb.mSurfaceEpsilon = 0.0025f;
 }
 
 bool SsaoTexs::Init(
