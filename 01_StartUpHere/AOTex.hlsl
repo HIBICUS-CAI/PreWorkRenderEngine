@@ -19,6 +19,7 @@ static const float2 gTexCoords[4] =
 
 Texture2D gNormalMap : register(t0);
 Texture2D gDepthMap : register(t1);
+Texture2D gRenderMap : register(t2);
 
 SamplerState gSamPointClamp : register(s0);
 SamplerState gSamLinearClamp : register(s1);

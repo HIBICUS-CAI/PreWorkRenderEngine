@@ -3,6 +3,9 @@
 #include <DirectXMath.h>
 #include "tempDeclaration.h"
 #include "tempD3d.h"
+#include <DirectXPackedVector.h>
+#include <cstdlib>
+#include <ctime>
 
 SsaoTexs* g_Ssao = nullptr;
 
@@ -25,12 +28,14 @@ SsaoTexs::SsaoTexs() :
     mNormalTexture(nullptr),
     mDepthTexture(nullptr),
     mSsaoTexture(nullptr),
+    mRandomTexture(nullptr),
     mNormalRenderTargetView(nullptr),
     mSsaoRenderTargetView(nullptr),
     mDepthStencilView(nullptr),
     mNormalShaderResourceView(nullptr),
     mSsaoShaderResourceView(nullptr),
     mDepthShaderResourceView(nullptr),
+    mRandomShaderResourceView(nullptr),
     mSsaoConstantBuffer(nullptr),
     mSsaoVertexBuffer(nullptr),
     mSsaoIndexBuffer(nullptr),
@@ -256,7 +261,7 @@ bool SsaoTexs::Init(
     samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     samDesc.MinLOD = 0;
     samDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = mDevice->CreateSamplerState(&samDesc, 
+    hr = mDevice->CreateSamplerState(&samDesc,
         &mSamplePointClamp);
     if (FAILED(hr))
     {
@@ -305,6 +310,81 @@ bool SsaoTexs::Init(
         return false;
     }
 
+    if (!BuildRandomTexture())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool SsaoTexs::BuildRandomTexture()
+{
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    D3D11_SUBRESOURCE_DATA iniData = {};
+    ZeroMemory(&texDesc, sizeof(texDesc));
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    ZeroMemory(&iniData, sizeof(iniData));
+
+    DirectX::PackedVector::XMCOLOR* random = nullptr;
+    random = new DirectX::PackedVector::XMCOLOR[256 * 256];
+    int basic = -100;
+    int range = 200;
+    DirectX::XMFLOAT3 v = { 0.f,0.f,0.f };
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 256; j++)
+        {
+            std::srand((unsigned int)std::time(nullptr) +
+                (unsigned int)std::rand());
+            v.x = (float)(std::rand() % range + basic) / 100.f;
+            std::srand((unsigned int)std::time(nullptr) +
+                (unsigned int)std::rand());
+            v.y = (float)(std::rand() % range + basic) / 100.f;
+            std::srand((unsigned int)std::time(nullptr) + 
+                (unsigned int)std::rand());
+            v.z = (float)(std::rand() % range + basic) / 100.f;
+            random[i * 256 + j] = 
+                DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, 0.f);
+        }
+    }
+
+    iniData.SysMemPitch = 256 * 
+        sizeof(DirectX::PackedVector::XMCOLOR);
+    iniData.pSysMem = random;
+
+    texDesc.Width = 256;
+    texDesc.Height = 256;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    HRESULT hr = mDevice->CreateTexture2D(
+        &texDesc, &iniData, &mRandomTexture);
+
+    delete[] random;
+
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = mDevice->CreateShaderResourceView(mRandomTexture,
+        &srvDesc, &mRandomShaderResourceView);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -345,6 +425,14 @@ void SsaoTexs::ClearAndStop()
     if (mSsaoTexture)
     {
         mSsaoTexture->Release();
+    }
+    if (mRandomShaderResourceView)
+    {
+        mRandomShaderResourceView->Release();
+    }
+    if (mRandomTexture)
+    {
+        mRandomTexture->Release();
     }
     if (mSsaoConstantBuffer)
     {
@@ -405,10 +493,12 @@ void SsaoTexs::SetSsaoRenderTarget()
     mDeviceContext->PSSetSamplers(1, 1, &mSampleLinearClamp);
     mDeviceContext->PSSetSamplers(2, 1, &mSampleDepthMap);
     mDeviceContext->PSSetSamplers(3, 1, &mSampleLinearWrap);
-    mDeviceContext->PSSetShaderResources(0, 1, 
+    mDeviceContext->PSSetShaderResources(0, 1,
         &mNormalShaderResourceView);
     mDeviceContext->PSSetShaderResources(1, 1,
         &mDepthShaderResourceView);
+    mDeviceContext->PSSetShaderResources(2, 1,
+        &mRandomShaderResourceView);
 
     mDeviceContext->DrawIndexed(6, 0, 0);
 }
