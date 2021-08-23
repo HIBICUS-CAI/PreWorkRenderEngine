@@ -13,6 +13,7 @@ struct SSAOConstantBuffer
 {
     DirectX::XMMATRIX mProj;
     DirectX::XMMATRIX mInvProj;
+    DirectX::XMMATRIX mProjTex;
     DirectX::XMVECTOR mOffsetVec[14];
     float mOcclusionRadius;
     float mOcclusionFadeStart;
@@ -57,10 +58,19 @@ SsaoTexs::SsaoTexs() :
         DirectX::XMMatrixDeterminant(g_SSAOcb.mProj);
     g_SSAOcb.mInvProj = DirectX::XMMatrixTranspose(
         DirectX::XMMatrixInverse(&det, g_SSAOcb.mProj));
-    g_SSAOcb.mOcclusionRadius = 5.f;
-    g_SSAOcb.mOcclusionFadeStart = 5.f;
-    g_SSAOcb.mOcclusionFadeEnd = 5.f;
-    g_SSAOcb.mSurfaceEpsilon = 5.f;
+
+    DirectX::XMMATRIX T(
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f);
+    g_SSAOcb.mProjTex = DirectX::XMMatrixTranspose(
+        TEMP::GetProjMat() * T);
+
+    g_SSAOcb.mOcclusionRadius = 0.25f;
+    g_SSAOcb.mOcclusionFadeStart = 0.1f;
+    g_SSAOcb.mOcclusionFadeEnd = 0.5f;
+    g_SSAOcb.mSurfaceEpsilon = 0.025f;
 }
 
 bool SsaoTexs::Init(
