@@ -524,6 +524,9 @@ void SsaoTexs::SetNormalRenderTarget()
 {
     mDeviceContext->OMSetRenderTargets(1,
         &mNormalRenderTargetView, mDepthStencilView);
+    static float c[4] = { 0.f,0.f,0.f,0.f };
+    mDeviceContext->ClearRenderTargetView(
+        mNormalRenderTargetView, c);
     mDeviceContext->ClearDepthStencilView(
         mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
 }

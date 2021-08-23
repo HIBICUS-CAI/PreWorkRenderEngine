@@ -1,4 +1,5 @@
 #include <DirectXTK\WICTextureLoader.h>
+#include <DirectXTK\DDSTextureLoader.h>
 #include "tempMesh.h"
 #include "tempD3d.h"
 #include "ShadowTex.h"
@@ -330,7 +331,7 @@ void Mesh::DrawShadowDepth(ID3D11DeviceContext* devContext)
     );
     g_MWorld = DirectX::XMMatrixMultiply(
         g_MWorld,
-        DirectX::XMMatrixTranslation(0.f, -3.f, -1.f)
+        DirectX::XMMatrixTranslation(0.f, -1.5f, -2.5f)
     );
     /*DirectX::XMFLOAT4 v4 = {
             GetEyePos().x,
@@ -564,6 +565,7 @@ std::vector<MESH_TEXTURE> Mesh::LoadMaterialTextures(
                 std::string fileName = std::string(str.C_Str());
                 fileName = fileName.substr(
                     fileName.find_last_of("\\") + 1);
+                fileName = "dragon.png";
                 fileName = "Textures\\" + fileName;
                 std::wstring wFileName = std::wstring(
                     fileName.begin(), fileName.end());
