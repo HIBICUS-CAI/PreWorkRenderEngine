@@ -55,9 +55,9 @@ SsaoTexs::SsaoTexs() :
     g_SSAOcb.mProj = DirectX::XMMatrixTranspose(
         TEMP::GetProjMat());
     DirectX::XMVECTOR det =
-        DirectX::XMMatrixDeterminant(g_SSAOcb.mProj);
+        DirectX::XMMatrixDeterminant(TEMP::GetProjMat());
     g_SSAOcb.mInvProj = DirectX::XMMatrixTranspose(
-        DirectX::XMMatrixInverse(&det, g_SSAOcb.mProj));
+        DirectX::XMMatrixInverse(&det, TEMP::GetProjMat()));
 
     DirectX::XMMATRIX T(
         0.5f, 0.0f, 0.0f, 0.0f,
@@ -67,10 +67,10 @@ SsaoTexs::SsaoTexs() :
     g_SSAOcb.mProjTex = DirectX::XMMatrixTranspose(
         TEMP::GetProjMat() * T);
 
-    g_SSAOcb.mOcclusionRadius = 0.1f;
-    g_SSAOcb.mOcclusionFadeStart = 0.05f;
+    g_SSAOcb.mOcclusionRadius = 0.5f;
+    g_SSAOcb.mOcclusionFadeStart = 0.2f;
     g_SSAOcb.mOcclusionFadeEnd = 1.0f;
-    g_SSAOcb.mSurfaceEpsilon = 0.0025f;
+    g_SSAOcb.mSurfaceEpsilon = 0.05f;
 }
 
 bool SsaoTexs::Init(
@@ -350,8 +350,8 @@ bool SsaoTexs::BuildRandomTexture()
 
     DirectX::PackedVector::XMCOLOR* random = nullptr;
     random = new DirectX::PackedVector::XMCOLOR[256 * 256];
-    int basic = -100;
-    int range = 200;
+    int basic = 1;
+    int range = 100;
     DirectX::XMFLOAT3 v = { 0.f,0.f,0.f };
     std::srand((unsigned int)std::time(nullptr) +
         (unsigned int)std::rand());
@@ -379,7 +379,7 @@ bool SsaoTexs::BuildRandomTexture()
     texDesc.Usage = D3D11_USAGE_DEFAULT;
     texDesc.CPUAccessFlags = 0;
     texDesc.MiscFlags = 0;
-    texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     HRESULT hr = mDevice->CreateTexture2D(
         &texDesc, &iniData, &mRandomTexture);
@@ -391,7 +391,7 @@ bool SsaoTexs::BuildRandomTexture()
         return false;
     }
 
-    srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MostDetailedMip = 0;
     srvDesc.Texture2D.MipLevels = 1;
