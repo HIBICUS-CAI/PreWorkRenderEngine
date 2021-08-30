@@ -27,6 +27,7 @@ namespace TEMP
         DirectX::XMMATRIX mProjection;
         DirectX::XMMATRIX mShadowView;
         DirectX::XMMATRIX mShadowProjection;
+        DirectX::XMMATRIX mSsaoVPT;
     };
 
     class MySubMesh

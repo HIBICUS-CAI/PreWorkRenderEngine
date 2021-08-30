@@ -557,3 +557,8 @@ void SsaoTexs::SetSsaoRenderTarget()
 
     mDeviceContext->DrawIndexed(6, 0, 0);
 }
+
+ID3D11ShaderResourceView* SsaoTexs::GetSsaoMap()
+{
+    return mSsaoShaderResourceView;
+}

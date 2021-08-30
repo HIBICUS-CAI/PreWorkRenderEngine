@@ -2,6 +2,7 @@
 #include "tempMyMesh.h"
 #include "tempD3d.h"
 #include "ShadowTex.h"
+#include "SsaoTexs.h"
 
 ID3D11ShaderResourceView* TEMP::CreateTextureView(
     const wchar_t* fileName)
@@ -286,6 +287,13 @@ void MyMesh::Draw(ID3D11DeviceContext* devContext)
     mWVPcb.mShadowView = DirectX::XMMatrixTranspose(GetLughtVM());
     mWVPcb.mShadowProjection = DirectX::XMMatrixTranspose(
         GetLughtOM());
+    DirectX::XMMATRIX T(
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f);
+    mWVPcb.mSsaoVPT = DirectX::XMMatrixTranspose(
+        view * proj * T);
 
     devContext->UpdateSubresource(
         mWVPConstantBuffer, 0, nullptr, &mWVPcb, 0, 0);
@@ -293,6 +301,10 @@ void MyMesh::Draw(ID3D11DeviceContext* devContext)
     static ID3D11ShaderResourceView* shadow = nullptr;
     shadow = GetShadow()->GetSRV();
     devContext->PSSetShaderResources(1, 1, &shadow);
+
+    static ID3D11ShaderResourceView* ssao = nullptr;
+    ssao = GetSsao()->GetSsaoMap();
+    devContext->PSSetShaderResources(2, 1, &ssao);
 
     for (int i = 0; i < mSubMeshes.size(); i++)
     {

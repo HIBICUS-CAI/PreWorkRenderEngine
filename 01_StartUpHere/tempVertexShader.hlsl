@@ -5,6 +5,7 @@ cbuffer ConstantBuffer : register(b0)
     matrix Projection;
     matrix ShadowView;
     matrix ShadowProj;
+    matrix SsaoVPT;
 };
 struct VS_INPUT
 {
@@ -17,6 +18,7 @@ struct VS_OUTPUT
     float4 PosH : SV_POSITION;
     float3 PosW : POSITION0;
     float4 ShadowPosH : POSITION1;
+    float4 SsaoPosH : POSITION2;
     float3 NormalW : NORMAL;
     float2 TexCoordL : TEXCOORD;
 };
@@ -31,6 +33,7 @@ VS_OUTPUT main(VS_INPUT input)
     output.PosH = mul(output.PosH, Projection);
     output.ShadowPosH = mul(float4(output.PosW, 1.0f), ShadowView);
     output.ShadowPosH = mul(output.ShadowPosH, ShadowProj);
+    output.SsaoPosH = mul(float4(output.PosW, 1.0f), SsaoVPT);
     output.TexCoordL = input.TexCoordL;
     return output;
 }

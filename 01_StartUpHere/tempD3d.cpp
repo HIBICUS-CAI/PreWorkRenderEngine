@@ -125,6 +125,7 @@ namespace TEMP
         gp_SwapChain->Present(0, 0);
         static ID3D11ShaderResourceView* nullSRV = nullptr;
         gp_ImmediateContext->PSSetShaderResources(1, 1, &nullSRV);
+        gp_ImmediateContext->PSSetShaderResources(2, 1, &nullSRV);
     }
     DirectX::XMFLOAT3 GetEyePos()
     {

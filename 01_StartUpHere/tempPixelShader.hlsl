@@ -15,6 +15,8 @@ SamplerState SamLiner : register(s0);
 Texture2D<float> ShadowMap : register(t1);
 SamplerState ShadowSamLiner : register(s1);
 SamplerComparisonState ShadowComSam : register(s2);
+Texture2D SsaoMap : register(t2);
+
 cbuffer Light : register(b0)
 {
     float3 Strength;
@@ -40,6 +42,7 @@ struct VS_OUTPUT
     float4 PosH : SV_POSITION;
     float3 PosW : POSITION0;
     float4 ShadowPosH : POSITION1;
+    float4 SsaoPosH : POSITION2;
     float3 NormalW : NORMAL;
     float2 TexCoordL : TEXCOORD;
 };
@@ -119,7 +122,9 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 toEyeW = normalize(float3(0.0f, 0.0f, -5.0f) - input.PosW);
 
     // ��ӹ���?
-    float4 ambientL = AmbientLight * DiffuseAlbedo;
+    input.SsaoPosH /= input.SsaoPosH.w;
+    float access = SsaoMap.SampleLevel(SamLiner, input.SsaoPosH.xy, 0.0f).r;
+    float4 ambientL = AmbientLight * DiffuseAlbedo * access;
 
     // ֱ�ӹ���
     Light l = { Strength,FalloffStart,Direction,FalloffEnd,Position,SpotPower };

@@ -17,6 +17,7 @@ public:
     void ClearAndStop();
     void SetNormalRenderTarget();
     void SetSsaoRenderTarget();
+    ID3D11ShaderResourceView* GetSsaoMap();
     //void ClearNormalRenderTarget();
     //ID3D11ShaderResourceView* GetNormalSRV();
 

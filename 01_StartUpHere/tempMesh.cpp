@@ -3,6 +3,7 @@
 #include "tempMesh.h"
 #include "tempD3d.h"
 #include "ShadowTex.h"
+#include "SsaoTexs.h"
 
 namespace TEMP
 {
@@ -27,6 +28,7 @@ namespace TEMP
         DirectX::XMMATRIX mProjection;
         DirectX::XMMATRIX mShadowView;
         DirectX::XMMATRIX mShadowProjection;
+        DirectX::XMMATRIX mSsaoVPT;
     };
 
     WVPConstantBuffer g_WVPcb;
@@ -386,6 +388,13 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     g_WVPcb.mShadowView = DirectX::XMMatrixTranspose(GetLughtVM());
     g_WVPcb.mShadowProjection = DirectX::XMMatrixTranspose(
         GetLughtOM());
+    DirectX::XMMATRIX T(
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f);
+    g_WVPcb.mSsaoVPT = DirectX::XMMatrixTranspose(
+        g_MView * g_MProjection * T);
 
     devContext->UpdateSubresource(
         gp_WVPConstantBuffer, 0, nullptr, &g_WVPcb, 0, 0);
@@ -398,6 +407,10 @@ void Mesh::Draw(ID3D11DeviceContext* devContext)
     static ID3D11ShaderResourceView* shadow = nullptr;
     shadow = GetShadow()->GetSRV();
     devContext->PSSetShaderResources(1, 1, &shadow);
+
+    static ID3D11ShaderResourceView* ssao = nullptr;
+    ssao = GetSsao()->GetSsaoMap();
+    devContext->PSSetShaderResources(2, 1, &ssao);
 
     for (int i = 0; i < mSubMeshes.size(); i++)
     {
