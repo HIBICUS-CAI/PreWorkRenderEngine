@@ -66,7 +66,7 @@ float Occlusion(float deltaZ)
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     float3 n = normalize(gNormalMap.SampleLevel(gSamPointClamp, input.TexCoordL, 0.0f).xyz);
-    float pz = gDepthMap.SampleLevel(gSamDepthMap, input.TexCoordL, 0.0f),r;
+    float pz = gDepthMap.SampleLevel(gSamDepthMap, input.TexCoordL, 0.0f).r;
     pz = NdcDepthToViewDepth(pz);
 
     float3 p = (pz / input.PosV.z) * input.PosV;
