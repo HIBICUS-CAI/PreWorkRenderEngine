@@ -78,6 +78,7 @@ ID3D11VertexShader* gp_AONormalVS = nullptr;
 ID3D11PixelShader* gp_AONormalPS = nullptr;
 ID3D11VertexShader* gp_AOTexVS = nullptr;
 ID3D11PixelShader* gp_AOTexPS = nullptr;
+ID3D11ComputeShader* gp_BlurCS = nullptr;
 // SSAO
 
 namespace TEMP
@@ -517,6 +518,21 @@ namespace TEMP
         hr = gp_d3dDevice->CreatePixelShader(
             pPSBlob->GetBufferPointer(),
             pPSBlob->GetBufferSize(), nullptr, &gp_AOTexPS);
+        pPSBlob->Release();
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        hr = CompileShaderFromFile(
+            L"SsaoBlur.hlsl", "main", "cs_5_0", &pPSBlob);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        hr = gp_d3dDevice->CreateComputeShader(
+            pPSBlob->GetBufferPointer(),
+            pPSBlob->GetBufferSize(), nullptr, &gp_BlurCS);
         pPSBlob->Release();
         if (FAILED(hr))
         {
@@ -1122,5 +1138,10 @@ namespace TEMP
             gp_AOTexVS, nullptr, 0);
         gp_ImmediateContext->PSSetShader(
             gp_AOTexPS, nullptr, 0);
+    }
+
+    void SetComputeShaderForSsaoBlur()
+    {
+        gp_ImmediateContext->CSSetShader(gp_BlurCS, nullptr, 0);
     }
 }

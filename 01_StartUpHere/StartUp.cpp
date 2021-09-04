@@ -117,6 +117,9 @@ int WINAPI WinMain(
                 TEMP::SetVPShaderForAoTex();
                 ssao->SetSsaoRenderTarget();
                 shadow->UnBoundDSV();
+
+                TEMP::SetComputeShaderForSsaoBlur();
+                TEMP::GetD3DDevContPointer()->Dispatch(1, 1, 1);
             }
 
             TEMP::SetVPShaderForShadow();
