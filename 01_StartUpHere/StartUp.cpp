@@ -118,8 +118,13 @@ int WINAPI WinMain(
                 ssao->SetSsaoRenderTarget();
                 shadow->UnBoundDSV();
 
-                TEMP::SetComputeShaderForSsaoBlur();
-                ssao->RunBlurComputeShader();
+                for (int i = 0; i < 4; i++)
+                {
+                    TEMP::SetHComputeShaderForSsaoBlur();
+                    ssao->RunHBlurComputeShader();
+                    TEMP::SetVComputeShaderForSsaoBlur();
+                    ssao->RunVBlurComputeShader();
+                }
             }
 
             TEMP::SetVPShaderForShadow();

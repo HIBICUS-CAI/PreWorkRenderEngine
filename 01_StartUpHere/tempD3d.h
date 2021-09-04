@@ -53,5 +53,7 @@ namespace TEMP
 
     void SetVPShaderForAoTex();
 
-    void SetComputeShaderForSsaoBlur();
+    void SetHComputeShaderForSsaoBlur();
+
+    void SetVComputeShaderForSsaoBlur();
 }

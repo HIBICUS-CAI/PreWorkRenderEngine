@@ -581,11 +581,21 @@ ID3D11ShaderResourceView* SsaoTexs::GetSsaoMap()
     return mSsaoShaderResourceView;
 }
 
-void SsaoTexs::RunBlurComputeShader()
+void SsaoTexs::RunHBlurComputeShader()
 {
     mDeviceContext->CSSetUnorderedAccessViews(0, 1, 
         &mSsaoUnorderedAccessView, nullptr);
-    mDeviceContext->Dispatch(80, 45, 1);
+    mDeviceContext->Dispatch(5, 720, 1);
+    static ID3D11UnorderedAccessView* nullUav = nullptr;
+    mDeviceContext->CSSetUnorderedAccessViews(0, 1,
+        &nullUav, nullptr);
+}
+
+void SsaoTexs::RunVBlurComputeShader()
+{
+    mDeviceContext->CSSetUnorderedAccessViews(0, 1,
+        &mSsaoUnorderedAccessView, nullptr);
+    mDeviceContext->Dispatch(1280, 3, 1);
     static ID3D11UnorderedAccessView* nullUav = nullptr;
     mDeviceContext->CSSetUnorderedAccessViews(0, 1,
         &nullUav, nullptr);

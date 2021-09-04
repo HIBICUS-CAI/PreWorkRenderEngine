@@ -18,7 +18,8 @@ public:
     void SetNormalRenderTarget();
     void SetSsaoRenderTarget();
     ID3D11ShaderResourceView* GetSsaoMap();
-    void RunBlurComputeShader();
+    void RunHBlurComputeShader();
+    void RunVBlurComputeShader();
     //void ClearNormalRenderTarget();
     //ID3D11ShaderResourceView* GetNormalSRV();
 
