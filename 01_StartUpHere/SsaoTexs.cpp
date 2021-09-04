@@ -583,20 +583,42 @@ ID3D11ShaderResourceView* SsaoTexs::GetSsaoMap()
 
 void SsaoTexs::RunHBlurComputeShader()
 {
-    mDeviceContext->CSSetUnorderedAccessViews(0, 1, 
+    mDeviceContext->CSSetUnorderedAccessViews(0, 1,
         &mSsaoUnorderedAccessView, nullptr);
+    ID3D11ShaderResourceView* srv[] =
+    {
+        mNormalShaderResourceView,
+        mDepthShaderResourceView
+    };
+    mDeviceContext->CSSetShaderResources(0, 2, srv);
     mDeviceContext->Dispatch(5, 720, 1);
     static ID3D11UnorderedAccessView* nullUav = nullptr;
+    static ID3D11ShaderResourceView* nullSrv[] =
+    {
+        nullptr, nullptr
+    };
     mDeviceContext->CSSetUnorderedAccessViews(0, 1,
         &nullUav, nullptr);
+    mDeviceContext->CSSetShaderResources(0, 2, nullSrv);
 }
 
 void SsaoTexs::RunVBlurComputeShader()
 {
     mDeviceContext->CSSetUnorderedAccessViews(0, 1,
         &mSsaoUnorderedAccessView, nullptr);
+    ID3D11ShaderResourceView* srv[] =
+    {
+        mNormalShaderResourceView,
+        mDepthShaderResourceView
+    };
+    mDeviceContext->CSSetShaderResources(0, 2, srv);
     mDeviceContext->Dispatch(1280, 3, 1);
     static ID3D11UnorderedAccessView* nullUav = nullptr;
+    static ID3D11ShaderResourceView* nullSrv[] =
+    {
+        nullptr, nullptr
+    };
     mDeviceContext->CSSetUnorderedAccessViews(0, 1,
         &nullUav, nullptr);
+    mDeviceContext->CSSetShaderResources(0, 2, nullSrv);
 }
