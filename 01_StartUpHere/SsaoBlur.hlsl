@@ -1,7 +1,7 @@
-[numthreads(1, 1, 1)]
+RWTexture2D<unorm float4> SsaoTex : register(u0);
+
+[numthreads(16, 16, 1)]
 void main(int3 dispatchThreadId : SV_DispatchThreadID)
 {
-    int a = 1;
-    int b = 2;
-    int c = a + b;
+    SsaoTex[dispatchThreadId.xy] = 1.0f - SsaoTex[dispatchThreadId.xy];
 }

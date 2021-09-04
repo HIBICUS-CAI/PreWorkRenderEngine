@@ -40,6 +40,7 @@ SsaoTexs::SsaoTexs() :
     mDepthStencilView(nullptr),
     mNormalShaderResourceView(nullptr),
     mSsaoShaderResourceView(nullptr),
+    mSsaoUnorderedAccessView(nullptr),
     mDepthShaderResourceView(nullptr),
     mRandomShaderResourceView(nullptr),
     mSsaoConstantBuffer(nullptr),
@@ -86,12 +87,14 @@ bool SsaoTexs::Init(
     D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
     D3D11_BUFFER_DESC bufDesc = {};
     D3D11_SAMPLER_DESC samDesc = {};
     ZeroMemory(&texDesc, sizeof(texDesc));
     ZeroMemory(&rtvDesc, sizeof(rtvDesc));
     ZeroMemory(&dsvDesc, sizeof(dsvDesc));
     ZeroMemory(&srvDesc, sizeof(srvDesc));
+    ZeroMemory(&uavDesc, sizeof(uavDesc));
     ZeroMemory(&bufDesc, sizeof(bufDesc));
     ZeroMemory(&samDesc, sizeof(samDesc));
 
@@ -183,7 +186,8 @@ bool SsaoTexs::Init(
     texDesc.MiscFlags = 0;
     texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.BindFlags =
-        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE |
+        D3D11_BIND_UNORDERED_ACCESS;
     hr = mDevice->CreateTexture2D(
         &texDesc, nullptr, &mSsaoTexture);
     if (FAILED(hr))
@@ -207,6 +211,16 @@ bool SsaoTexs::Init(
     srvDesc.Texture2D.MipLevels = 1;
     hr = mDevice->CreateShaderResourceView(mSsaoTexture,
         &srvDesc, &mSsaoShaderResourceView);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+    hr = mDevice->CreateUnorderedAccessView(mSsaoTexture,
+        &uavDesc, &mSsaoUnorderedAccessView);
     if (FAILED(hr))
     {
         return false;
@@ -474,6 +488,10 @@ void SsaoTexs::ClearAndStop()
     {
         mSsaoRenderTargetView->Release();
     }
+    if (mSsaoUnorderedAccessView)
+    {
+        mSsaoUnorderedAccessView->Release();
+    }
     if (mSsaoTexture)
     {
         mSsaoTexture->Release();
@@ -561,4 +579,14 @@ void SsaoTexs::SetSsaoRenderTarget()
 ID3D11ShaderResourceView* SsaoTexs::GetSsaoMap()
 {
     return mSsaoShaderResourceView;
+}
+
+void SsaoTexs::RunBlurComputeShader()
+{
+    mDeviceContext->CSSetUnorderedAccessViews(0, 1, 
+        &mSsaoUnorderedAccessView, nullptr);
+    mDeviceContext->Dispatch(80, 45, 1);
+    static ID3D11UnorderedAccessView* nullUav = nullptr;
+    mDeviceContext->CSSetUnorderedAccessViews(0, 1,
+        &nullUav, nullptr);
 }

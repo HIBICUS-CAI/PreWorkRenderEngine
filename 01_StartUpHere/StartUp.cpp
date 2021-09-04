@@ -119,7 +119,7 @@ int WINAPI WinMain(
                 shadow->UnBoundDSV();
 
                 TEMP::SetComputeShaderForSsaoBlur();
-                TEMP::GetD3DDevContPointer()->Dispatch(1, 1, 1);
+                ssao->RunBlurComputeShader();
             }
 
             TEMP::SetVPShaderForShadow();

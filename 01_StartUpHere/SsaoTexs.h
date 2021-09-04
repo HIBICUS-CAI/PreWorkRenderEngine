@@ -18,6 +18,7 @@ public:
     void SetNormalRenderTarget();
     void SetSsaoRenderTarget();
     ID3D11ShaderResourceView* GetSsaoMap();
+    void RunBlurComputeShader();
     //void ClearNormalRenderTarget();
     //ID3D11ShaderResourceView* GetNormalSRV();
 
@@ -39,6 +40,7 @@ private:
     ID3D11ShaderResourceView* mSsaoShaderResourceView;
     ID3D11ShaderResourceView* mDepthShaderResourceView;
     ID3D11ShaderResourceView* mRandomShaderResourceView;
+    ID3D11UnorderedAccessView* mSsaoUnorderedAccessView;
 
     ID3D11Buffer* mSsaoConstantBuffer;
     ID3D11Buffer* mSsaoVertexBuffer;
