@@ -151,13 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ShadowTex.cpp" />
-    <ClCompile Include="SsaoTexs.cpp" />
     <ClCompile Include="StartUp.cpp" />
-    <ClCompile Include="tempD3d.cpp" />
-    <ClCompile Include="tempDDSTextureLoader.cpp" />
-    <ClCompile Include="tempMesh.cpp" />
-    <ClCompile Include="tempMyMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\03_InputDevice\03_InputDevice.vcxproj">
@@ -166,15 +160,6 @@
     <ProjectReference Include="..\04_WindowManager\04_WindowManager.vcxproj">
       <Project>{948ff8dd-8fb2-4e3e-8ab2-f9f702f9c501}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ShadowTex.h" />
-    <ClInclude Include="SsaoTexs.h" />
-    <ClInclude Include="tempD3d.h" />
-    <ClInclude Include="tempDDSTextureLoader.h" />
-    <ClInclude Include="tempDeclaration.h" />
-    <ClInclude Include="tempMesh.h" />
-    <ClInclude Include="tempMyMesh.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
