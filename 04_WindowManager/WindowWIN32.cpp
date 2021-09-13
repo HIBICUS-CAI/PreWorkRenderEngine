@@ -3,7 +3,8 @@
 #include <string.h>
 
 WindowWIN32::WindowWIN32() :
-    mInstance(nullptr), mWndHandle(nullptr), mbFullScr(false)
+    mInstance(nullptr), mWndHandle(nullptr), mbFullScr(false),
+    mWndWidth(0), mWndHeight(0)
 {
 
 }
@@ -12,6 +13,8 @@ HRESULT WindowWIN32::CreateMyWindow(
     const char* wndName,
     HINSTANCE hInstance,
     int cmdShow,
+    UINT wndWidth,
+    UINT wndHeight,
     bool inFullScr)
 {
     char className[128] = "";
@@ -38,12 +41,15 @@ HRESULT WindowWIN32::CreateMyWindow(
 
     this->mInstance = hInstance;
 
+    mWndWidth = wndWidth;
+    mWndHeight = wndHeight;
+
     RECT rc = {
-        0,0,1280,720
+        0,0,(LONG)mWndWidth,(LONG)mWndHeight
     };
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
     this->mWndHandle = CreateWindow(
-        className,wndName,
+        className, wndName,
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT,
         rc.right - rc.left, rc.bottom - rc.top,
@@ -61,11 +67,11 @@ HRESULT WindowWIN32::CreateMyWindow(
     GetWindowRect(hDesk, &rc);
     UINT offsetX = rc.right / 2;
     UINT offsetY = rc.bottom / 2;
-    UINT width = 1280;
-    UINT height = 720;
+    UINT width = mWndWidth;
+    UINT height = mWndHeight;
     SetWindowLong(this->mWndHandle, GWL_STYLE,
         WS_OVERLAPPED);
-    SetWindowPos(this->mWndHandle, HWND_NOTOPMOST, 
+    SetWindowPos(this->mWndHandle, HWND_NOTOPMOST,
         offsetX - width / 2, offsetY - height / 2,
         width, height, SWP_SHOWWINDOW);
 
@@ -114,11 +120,11 @@ HRESULT WindowWIN32::SwitchWindowSize()
         GetWindowRect(hDesk, &rc);
         UINT offsetX = rc.right / 2;
         UINT offsetY = rc.bottom / 2;
-        UINT width = 1280;
-        UINT height = 720;
+        UINT width = mWndWidth;
+        UINT height = mWndHeight;
         SetWindowLong(this->mWndHandle, GWL_STYLE,
             WS_OVERLAPPED);
-        SetWindowPos(this->mWndHandle, HWND_NOTOPMOST, 
+        SetWindowPos(this->mWndHandle, HWND_NOTOPMOST,
             offsetX - width / 2, offsetY - height / 2,
             width, height, SWP_SHOWWINDOW);
     }

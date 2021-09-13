@@ -10,6 +10,8 @@ public:
         const char* wndName,
         HINSTANCE hInstance,
         int cmdShow,
+        UINT wndWidth,
+        UINT wndHeight,
         bool inFullScr
     );
     static LRESULT CALLBACK MyWndProc(
@@ -27,4 +29,6 @@ private:
     HINSTANCE mInstance;
     HWND mWndHandle;
     bool mbFullScr;
+    UINT mWndWidth;
+    UINT mWndHeight;
 };

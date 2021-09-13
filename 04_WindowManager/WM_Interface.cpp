@@ -16,6 +16,8 @@ namespace WindowInterface
         const char* wndName,
         HINSTANCE hInstance,
         int cmdShow,
+        UINT wndWidth,
+        UINT wndHeight,
         bool inFullScr
     )
     {
@@ -25,7 +27,8 @@ namespace WindowInterface
         }
 
         HRESULT hr = g_Wnd->CreateMyWindow(
-            wndName, hInstance, cmdShow, inFullScr);
+            wndName, hInstance, cmdShow, 
+            wndWidth, wndHeight, inFullScr);
         if (FAILED(hr))
         {
             delete g_Wnd;
