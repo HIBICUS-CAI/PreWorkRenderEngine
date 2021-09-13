@@ -18,9 +18,15 @@
     <ClInclude Include="RSRoot_DX11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RSDevices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSRoot_DX11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RSDevices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

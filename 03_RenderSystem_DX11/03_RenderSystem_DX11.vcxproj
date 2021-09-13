@@ -19,9 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="RSDevices.h" />
     <ClInclude Include="RSRoot_DX11.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="RSDevices.cpp" />
     <ClCompile Include="RSRoot_DX11.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
