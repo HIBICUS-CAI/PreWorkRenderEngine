@@ -19,7 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="03_RenderSystem_DX11.cpp" />
+    <ClInclude Include="RSRoot_DX11.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="RSRoot_DX11.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
