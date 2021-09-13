@@ -26,10 +26,13 @@
     <ClInclude Include="RSLight.h" />
     <ClInclude Include="RSLightsContainer.h" />
     <ClInclude Include="RSMeshHelper.h" />
+    <ClInclude Include="RSPass_Base.h" />
+    <ClInclude Include="RSPipeline.h" />
     <ClInclude Include="RSPipelinesManager.h" />
     <ClInclude Include="RSRoot_DX11.h" />
     <ClInclude Include="RSStaticResources.h" />
     <ClInclude Include="RSTexturesManager.h" />
+    <ClInclude Include="RSTopic.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSCamera.cpp" />
@@ -39,10 +42,13 @@
     <ClCompile Include="RSLight.cpp" />
     <ClCompile Include="RSLightsContainer.cpp" />
     <ClCompile Include="RSMeshHelper.cpp" />
+    <ClCompile Include="RSPass_Base.cpp" />
+    <ClCompile Include="RSPipeline.cpp" />
     <ClCompile Include="RSPipelinesManager.cpp" />
     <ClCompile Include="RSRoot_DX11.cpp" />
     <ClCompile Include="RSStaticResources.cpp" />
     <ClCompile Include="RSTexturesManager.cpp" />
+    <ClCompile Include="RSTopic.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

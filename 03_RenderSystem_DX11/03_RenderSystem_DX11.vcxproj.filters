@@ -1,87 +1,106 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Root">
+      <UniqueIdentifier>{28271718-a871-469f-9a50-5047207eed57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pipeline">
+      <UniqueIdentifier>{0c06e334-1037-4b9b-b09d-43171565c828}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SubSystem">
+      <UniqueIdentifier>{fc3be1eb-b730-4669-881f-43cab770cce9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RSRoot_DX11.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RSDevices.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RSPipelinesManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RSTexturesManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RSDrawCallsPool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RSStaticResources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RSCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RSLight.h">
-      <Filter>Header Files</Filter>
+      <Filter>SubSystem</Filter>
     </ClInclude>
     <ClInclude Include="RSCamerasContainer.h">
-      <Filter>Header Files</Filter>
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSDevices.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSDrawCallsPool.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSLight.h">
+      <Filter>SubSystem</Filter>
     </ClInclude>
     <ClInclude Include="RSLightsContainer.h">
-      <Filter>Header Files</Filter>
+      <Filter>SubSystem</Filter>
     </ClInclude>
     <ClInclude Include="RSMeshHelper.h">
-      <Filter>Header Files</Filter>
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSPipelinesManager.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSStaticResources.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSTexturesManager.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSRoot_DX11.h">
+      <Filter>Root</Filter>
+    </ClInclude>
+    <ClInclude Include="RSPass_Base.h">
+      <Filter>Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="RSPipeline.h">
+      <Filter>Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="RSTopic.h">
+      <Filter>Pipeline</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RSRoot_DX11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RSDevices.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RSPipelinesManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RSTexturesManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RSDrawCallsPool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RSStaticResources.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RSCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RSLight.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>SubSystem</Filter>
     </ClCompile>
     <ClCompile Include="RSCamerasContainer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSDevices.cpp">
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSDrawCallsPool.cpp">
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSLight.cpp">
+      <Filter>SubSystem</Filter>
     </ClCompile>
     <ClCompile Include="RSLightsContainer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>SubSystem</Filter>
     </ClCompile>
     <ClCompile Include="RSMeshHelper.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSPipelinesManager.cpp">
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSStaticResources.cpp">
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSTexturesManager.cpp">
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSRoot_DX11.cpp">
+      <Filter>Root</Filter>
+    </ClCompile>
+    <ClCompile Include="RSPass_Base.cpp">
+      <Filter>Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="RSPipeline.cpp">
+      <Filter>Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="RSTopic.cpp">
+      <Filter>Pipeline</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
