@@ -53,7 +53,7 @@ void RSDevices::PresentSwapChain()
 
 }
 
-bool RSDevices::CreateDevices(HWND _wnd, 
+bool RSDevices::CreateDevices(HWND _wnd,
     UINT _width, UINT _height)
 {
     // TEMP----------------------
