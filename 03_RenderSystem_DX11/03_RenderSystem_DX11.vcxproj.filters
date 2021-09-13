@@ -21,12 +21,30 @@
     <ClInclude Include="RSDevices.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RSPipelinesManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RSTexturesManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RSDrawCallsPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSRoot_DX11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RSDevices.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RSPipelinesManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RSTexturesManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RSDrawCallsPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
