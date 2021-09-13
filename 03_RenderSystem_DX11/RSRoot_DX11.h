@@ -6,4 +6,3 @@ public:
     RSRoot_DX11();
     ~RSRoot_DX11();
 };
-
