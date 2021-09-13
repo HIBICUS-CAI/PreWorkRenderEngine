@@ -23,6 +23,7 @@
     <ClInclude Include="RSDrawCallsPool.h" />
     <ClInclude Include="RSPipelinesManager.h" />
     <ClInclude Include="RSRoot_DX11.h" />
+    <ClInclude Include="RSStaticResources.h" />
     <ClInclude Include="RSTexturesManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +31,7 @@
     <ClCompile Include="RSDrawCallsPool.cpp" />
     <ClCompile Include="RSPipelinesManager.cpp" />
     <ClCompile Include="RSRoot_DX11.cpp" />
+    <ClCompile Include="RSStaticResources.cpp" />
     <ClCompile Include="RSTexturesManager.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -30,6 +30,9 @@
     <ClInclude Include="RSDrawCallsPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RSStaticResources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSRoot_DX11.cpp">
@@ -45,6 +48,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RSDrawCallsPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RSStaticResources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
