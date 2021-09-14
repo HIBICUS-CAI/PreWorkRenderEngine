@@ -9,6 +9,7 @@
 
 #include "RSCamerasContainer.h"
 #include "RSRoot_DX11.h"
+#include "RSCamera.h"
 
 RSCamerasContainer::RSCamerasContainer() :
     mRootPtr(nullptr), mCameraMap({})
@@ -23,40 +24,69 @@ RSCamerasContainer::~RSCamerasContainer()
 
 bool RSCamerasContainer::StartUp(RSRoot_DX11* _root)
 {
-    // TEMP----------------------
+    if (!_root) { return false; }
+
+    mRootPtr = _root;
+
     return true;
-    // TEMP----------------------
 }
 
 void RSCamerasContainer::CleanAndStop()
 {
-
+    for (auto& cam : mCameraMap)
+    {
+        delete cam.second;
+    }
+    mCameraMap.clear();
 }
 
 RSCamera* RSCamerasContainer::CreateRSCamera(
     std::string& _name, CAM_INFO* _info)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    if (!_info) { return nullptr; }
+
+    if (mCameraMap.find(_name) == mCameraMap.end())
+    {
+        RSCamera* cam = new RSCamera(_info);
+        mCameraMap.insert({ _name,cam });
+    }
+
+    return mCameraMap[_name];
 }
 
 RSCamera* RSCamerasContainer::GetRSCamera(std::string& _name)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    auto found = mCameraMap.find(_name);
+    if (found != mCameraMap.end())
+    {
+        return found->second;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 RS_CAM_INFO* RSCamerasContainer::GetRSCameraInfo(
     std::string& _name)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    auto found = mCameraMap.find(_name);
+    if (found != mCameraMap.end())
+    {
+        return found->second->GetRSCameraInfo();
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 void RSCamerasContainer::DeleteRSCamera(std::string& _name)
 {
-
+    auto found = mCameraMap.find(_name);
+    if (found != mCameraMap.end())
+    {
+        delete found->second;
+        mCameraMap.erase(found);
+    }
 }

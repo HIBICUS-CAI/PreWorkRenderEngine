@@ -17,6 +17,8 @@
 #include "RSDrawCallsPool.h"
 #include "RSTexturesManager.h"
 #include "RSStaticResources.h"
+#include "RSLightsContainer.h"
+#include "RSCamerasContainer.h"
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -64,11 +66,37 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
+    mLightsContainerPtr = new RSLightsContainer();
+    if (!mLightsContainerPtr->StartUp(this))
+    {
+        return false;
+    }
+
+    mCamerasContainerPtr = new RSCamerasContainer();
+    if (!mCamerasContainerPtr->StartUp(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void RSRoot_DX11::CleanAndStop()
 {
+    if (mCamerasContainerPtr)
+    {
+        mCamerasContainerPtr->CleanAndStop();
+        delete mCamerasContainerPtr;
+        mCamerasContainerPtr = nullptr;
+    }
+
+    if (mLightsContainerPtr)
+    {
+        mLightsContainerPtr->CleanAndStop();
+        delete mLightsContainerPtr;
+        mLightsContainerPtr = nullptr;
+    }
+
     if (mStaticResourcesPtr)
     {
         mStaticResourcesPtr->CleanAndStop();

@@ -9,6 +9,7 @@
 
 #include "RSLightsContainer.h"
 #include "RSRoot_DX11.h"
+#include "RSLight.h"
 
 RSLightsContainer::RSLightsContainer() :
     mRootPtr(nullptr), mLightMap({})
@@ -23,40 +24,69 @@ RSLightsContainer::~RSLightsContainer()
 
 bool RSLightsContainer::StartUp(RSRoot_DX11* _root)
 {
-    // TEMP----------------------
+    if (!_root) { return false; }
+
+    mRootPtr = _root;
+
     return true;
-    // TEMP----------------------
 }
 
 void RSLightsContainer::CleanAndStop()
 {
-
+    for (auto& light : mLightMap)
+    {
+        delete light.second;
+    }
+    mLightMap.clear();
 }
 
 RSLight* RSLightsContainer::CreateRSLight(
     std::string& _name, LIGHT_INFO* _info)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    if (!_info) { return nullptr; }
+
+    if (mLightMap.find(_name) == mLightMap.end())
+    {
+        RSLight* light = new RSLight(_info);
+        mLightMap.insert({ _name,light });
+    }
+
+    return mLightMap[_name];
 }
 
 RSLight* RSLightsContainer::GetRSLight(std::string& _name)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    auto found = mLightMap.find(_name);
+    if (found != mLightMap.end())
+    {
+        return found->second;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 RS_LIGHT_INFO* RSLightsContainer::GetRSLightInfo(
     std::string& _name)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    auto found = mLightMap.find(_name);
+    if (found != mLightMap.end())
+    {
+        return found->second->GetRSLightInfo();
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 void RSLightsContainer::DeleteRSLight(std::string& _name)
 {
-
+    auto found = mLightMap.find(_name);
+    if (found != mLightMap.end())
+    {
+        delete found->second;
+        mLightMap.erase(found);
+    }
 }

@@ -12,7 +12,6 @@
 #include "RSCommon.h"
 #include <string>
 #include <unordered_map>
-#include "RSLight.h"
 
 class RSLightsContainer
 {
@@ -23,14 +22,14 @@ public:
     bool StartUp(class RSRoot_DX11* _root);
     void CleanAndStop();
 
-    RSLight* CreateRSLight(std::string& _name, LIGHT_INFO* _info);
-    RSLight* GetRSLight(std::string& _name);
+    class RSLight* CreateRSLight(std::string& _name, LIGHT_INFO* _info);
+    class RSLight* GetRSLight(std::string& _name);
     RS_LIGHT_INFO* GetRSLightInfo(std::string& _name);
     void DeleteRSLight(std::string& _name);
 
 private:
     class RSRoot_DX11* mRootPtr;
 
-    std::unordered_map<std::string, RSLight> mLightMap;
+    std::unordered_map<std::string, class RSLight*> mLightMap;
 };
 
