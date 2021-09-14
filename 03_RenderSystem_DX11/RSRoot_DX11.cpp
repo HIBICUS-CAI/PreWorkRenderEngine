@@ -13,6 +13,7 @@
 
 #include "RSRoot_DX11.h"
 #include "RSDevices.h"
+#include "RSPipelinesManager.h"
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -36,15 +37,29 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
+    mPipelinesManagerPtr = new RSPipelinesManager();
+    if (!mPipelinesManagerPtr->StartUp(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void RSRoot_DX11::CleanAndStop()
 {
+    if (mPipelinesManagerPtr)
+    {
+        mPipelinesManagerPtr->CleanAndStop();
+        delete mPipelinesManagerPtr;
+        mPipelinesManagerPtr = nullptr;
+    }
+
     if (mDevicesPtr)
     {
         mDevicesPtr->CleanAndStop();
         delete mDevicesPtr;
+        mDevicesPtr = nullptr;
     }
 }
 

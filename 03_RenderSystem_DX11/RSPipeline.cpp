@@ -68,3 +68,8 @@ void RSPipeline::ExecuatePipeline()
 {
 
 }
+
+void RSPipeline::ReleasePipeline()
+{
+
+}

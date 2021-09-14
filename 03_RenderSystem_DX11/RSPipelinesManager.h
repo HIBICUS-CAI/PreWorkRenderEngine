@@ -28,7 +28,7 @@ public:
 
     void SetPipeline(std::string& _name);
     void SetPipeline(class RSPipeline* _pipeline);
-    void ClearCurrentPipeline();
+    void ClearCurrentPipelineState();
 
     void ExecuateCurrentPipeline();
     void ProcessNextPipeline();

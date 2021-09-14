@@ -33,6 +33,8 @@ public:
 
     void ExecuatePipeline();
 
+    void ReleasePipeline();
+
 private:
     const std::string mName;
     bool mAssemblyFinishFlag;
