@@ -23,60 +23,113 @@ RSTexturesManager::~RSTexturesManager()
 
 bool RSTexturesManager::StartUp(RSRoot_DX11* _root)
 {
-    // TEMP----------------------
+    if (!_root) { return false; }
+
+    mRootPtr = _root;
+
     return true;
-    // TEMP----------------------
 }
 
 void RSTexturesManager::CleanAndStop()
 {
-
+    for (auto& meshSrv : mMeshSrvMap)
+    {
+        SAFE_RELEASE(meshSrv.second);
+    }
+    for (auto& dataTex : mDataTexMap)
+    {
+        // TEMP------------------
+        dataTex.second.a = 0;
+        // TEMP------------------
+    }
+    mMeshSrvMap.clear();
+    mDataTexMap.clear();
 }
 
 void RSTexturesManager::AddDataTexture(
-    std::string& _name, DATA_TEXTURE_INFO&)
+    std::string& _name, DATA_TEXTURE_INFO& _tex)
 {
-
+    if (mDataTexMap.find(_name) == mDataTexMap.end())
+    {
+        mDataTexMap.insert({ _name,_tex });
+    }
 }
 
 void RSTexturesManager::AddMeshSrv(
     std::string& _name, ID3D11ShaderResourceView* _srv)
 {
-
+    if (mMeshSrvMap.find(_name) == mMeshSrvMap.end())
+    {
+        mMeshSrvMap.insert({ _name,_srv });
+    }
 }
 
 DATA_TEXTURE_INFO* RSTexturesManager::GetDataTexInfo(
     std::string& _name)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    auto found = mDataTexMap.find(_name);
+    if (found != mDataTexMap.end())
+    {
+        return &(found->second);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 ID3D11ShaderResourceView* RSTexturesManager::GetMeshSrv(
     std::string& _name)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    auto found = mMeshSrvMap.find(_name);
+    if (found != mMeshSrvMap.end())
+    {
+        return found->second;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 void RSTexturesManager::DeleteDataTex(std::string& _name)
 {
-
+    auto found = mDataTexMap.find(_name);
+    if (found != mDataTexMap.end())
+    {
+        // TEMP----------------
+        found->second.a = 0;
+        // TEMP----------------
+        mDataTexMap.erase(found);
+    }
 }
 
 void RSTexturesManager::DeleteMeshSrv(std::string& _name)
 {
-
+    auto found = mMeshSrvMap.find(_name);
+    if (found != mMeshSrvMap.end())
+    {
+        SAFE_RELEASE(found->second);
+        mMeshSrvMap.erase(found);
+    }
 }
 
 void RSTexturesManager::ClearDataTexs()
 {
-
+    for (auto& dataTex : mDataTexMap)
+    {
+        // TEMP------------------
+        dataTex.second.a = 0;
+        // TEMP------------------
+    }
+    mDataTexMap.clear();
 }
 
 void RSTexturesManager::ClearMeshSrvs()
 {
-
+    for (auto& meshSrv : mMeshSrvMap)
+    {
+        SAFE_RELEASE(meshSrv.second);
+    }
+    mMeshSrvMap.clear();
 }

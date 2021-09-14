@@ -59,7 +59,7 @@ RSPipeline* RSPipelinesManager::GetPipeline(
     auto found = mPipelineMap.find(_name);
     if (found != mPipelineMap.end())
     {
-        return (*found).second;
+        return found->second;
     }
     else
     {

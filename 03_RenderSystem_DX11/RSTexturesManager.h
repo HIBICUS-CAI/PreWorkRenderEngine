@@ -23,7 +23,8 @@ public:
     bool StartUp(class RSRoot_DX11* _root);
     void CleanAndStop();
 
-    void AddDataTexture(std::string& _name, DATA_TEXTURE_INFO&);
+    void AddDataTexture(
+        std::string& _name, DATA_TEXTURE_INFO& _tex);
     void AddMeshSrv(
         std::string& _name, ID3D11ShaderResourceView* _srv);
     DATA_TEXTURE_INFO* GetDataTexInfo(std::string& _name);
