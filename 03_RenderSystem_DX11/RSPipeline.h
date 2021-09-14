@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <string>
 #include <vector>
 #include <Windows.h>
