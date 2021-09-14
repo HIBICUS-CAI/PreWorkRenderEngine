@@ -18,7 +18,7 @@ public:
     RSCamera(CAM_INFO* _info);
     ~RSCamera();
 
-    RS_CAM_INFO* GetRSCameraInfo() const;
+    RS_CAM_INFO* GetRSCameraInfo();
     void ResetRSCamera(CAM_INFO* _info);
 
     void TranslateRSCamera(DirectX::XMFLOAT3 _delta);

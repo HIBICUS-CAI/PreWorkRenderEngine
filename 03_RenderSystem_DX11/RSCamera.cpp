@@ -34,7 +34,9 @@ RSCamera::RSCamera(CAM_INFO* _info) :
         0.f,0.f,0.f,0.f
         })
 {
-
+    // TEMP---------------------
+    _info->a = 0;
+    // TEMP---------------------
 }
 
 RSCamera::~RSCamera()
@@ -42,39 +44,54 @@ RSCamera::~RSCamera()
 
 }
 
-RS_CAM_INFO* RSCamera::GetRSCameraInfo() const
+RS_CAM_INFO* RSCamera::GetRSCameraInfo()
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    return &mRSCameraInfo;
 }
 
 void RSCamera::ResetRSCamera(CAM_INFO* _info)
 {
-
+    // TEMP---------------------
+    _info->a = 0;
+    // TEMP---------------------
 }
 
 void RSCamera::TranslateRSCamera(DirectX::XMFLOAT3 _delta)
 {
-
+    mCamPosition.x += _delta.x;
+    mCamPosition.y += _delta.y;
+    mCamPosition.z += _delta.z;
+    CalcRSCameraInfo();
 }
 
 void RSCamera::RotateRSCamera(DirectX::XMFLOAT3 _deltaAngle)
 {
-
+    // TEMP---------------------
+    mCamLookAt.x += _deltaAngle.x;
+    mCamLookAt.y += _deltaAngle.y;
+    mCamLookAt.z += _deltaAngle.z;
+    // TEMP---------------------
+    CalcRSCameraInfo();
 }
 
 void RSCamera::ChangeRSCameraFovY(float _angle)
 {
-
+    // TEMP---------------------
+    mFovAngleYPersp = _angle;
+    // TEMP---------------------
+    CalcRSCameraInfo();
 }
 
 void RSCamera::ChangeRSCameraNearFarZ(float _near, float _far)
 {
-
+    mNearZ = _near;
+    mFarZ = _far;
+    CalcRSCameraInfo();
 }
 
 void RSCamera::CalcRSCameraInfo()
 {
-
+    // TEMP---------------------
+    mRSCameraInfo.a = 0;
+    // TEMP---------------------
 }
