@@ -9,16 +9,10 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <d3d11_1.h>
 #include <string>
 #include <unordered_map>
-
-// TEMP------------------
-struct RSMaterial
-{
-    double a = 0.0;
-};
-// TEMP------------------
 
 class RSStaticResources
 {
@@ -51,7 +45,7 @@ public:
         std::string& _pipelineName);
     class RSTopic* GetStaticTopic(
         std::string& _topicName);
-    RSMaterial* GetStaticMaterial(
+    RS_MATERIAL_INFO* GetStaticMaterial(
         std::string& _materialName);
 
 private:
@@ -92,6 +86,6 @@ private:
     std::unordered_map<std::string, class RSTopic*>
         mStaticTopicMap;
 
-    std::unordered_map<std::string, RSMaterial>
+    std::unordered_map<std::string, RS_MATERIAL_INFO>
         mMaterialMap;
 };

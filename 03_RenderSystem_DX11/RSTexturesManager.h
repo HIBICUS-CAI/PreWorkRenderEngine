@@ -9,16 +9,10 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <string>
 #include <unordered_map>
 #include <d3d11_1.h>
-
-// TEMP-----------------
-struct DATA_TEXTURE_INFO
-{
-    int a = 0;
-};
-// TEMP-----------------
 
 class RSTexturesManager
 {

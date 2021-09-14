@@ -9,39 +9,10 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <string>
 #include <vector>
 #include <d3d11_1.h>
-
-// NEED TO MOVE-----------
-struct RSMaterialNeedToMove
-{
-    int a = 0;
-};
-// NEED TO MOVE-----------
-
-// TEMP-------------
-struct SUBMESH_INFO
-{
-    int a = 0;
-};
-
-struct RS_SUBMESH_DATA
-{
-    int a = 0;
-};
-
-struct MATERIAL_INFO
-{
-    int a = 0;
-};
-
-enum class LAYOUT_TYPE
-{
-    WITH_TANGENT,
-    WITHOUT_TANGENT
-};
-// TEMP-------------
 
 class RSMeshHelper
 {
@@ -64,9 +35,9 @@ private:
         std::vector<void*>* _vertices);
     std::string CreateTexSrv(
         std::vector<std::string>* _textures);
-    RSMaterialNeedToMove CreateSubMeshMaterial(
+    RS_MATERIAL_INFO CreateSubMeshMaterial(
         MATERIAL_INFO* _info);
-    RSMaterialNeedToMove RefStaticMaterial(
+    RS_MATERIAL_INFO RefStaticMaterial(
         std::string& _materialName);
 
 private:

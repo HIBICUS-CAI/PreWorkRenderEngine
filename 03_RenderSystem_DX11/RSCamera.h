@@ -9,25 +9,8 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <DirectXMath.h>
-
-// TEMP------------
-struct CAM_INFO
-{
-    double a = 0.0;
-};
-
-struct RS_CAM_INFO
-{
-    double a = 0.0;
-};
-
-enum class LENS_TYPE
-{
-    PERSPECTIVE,
-    ORTHOGRAPHIC
-};
-// TEMP------------
 
 class RSCamera
 {

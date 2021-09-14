@@ -9,26 +9,8 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <DirectXMath.h>
-
-// TEMP-------------------
-struct LIGHT_INFO
-{
-    double a = 0.0;
-};
-
-struct RS_LIGHT_INFO
-{
-    double a = 0.0;
-};
-
-enum class LIGHT_TYPE
-{
-    DIRECT,
-    POINT,
-    SPOT
-};
-// TEMP-------------------
 
 class RSLight
 {

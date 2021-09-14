@@ -9,23 +9,8 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <array>
-
-// TEMP------------
-enum class DRAWCALL_TYPE
-{
-    DEFAULT,
-    MAX
-};
-// TEMP------------
-
-// TEMP---------------
-#include <vector>
-struct RSDrawCallsPipe
-{
-    std::vector<double> mDouble = {};
-};
-// TEMP---------------
 
 class RSDrawCallsPool
 {

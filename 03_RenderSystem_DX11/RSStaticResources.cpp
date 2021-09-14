@@ -168,7 +168,7 @@ RSTopic* RSStaticResources::GetStaticTopic(
     // TEMP----------------------
 }
 
-RSMaterial* RSStaticResources::GetStaticMaterial(
+RS_MATERIAL_INFO* RSStaticResources::GetStaticMaterial(
     std::string& _materialName)
 {
     // TEMP----------------------

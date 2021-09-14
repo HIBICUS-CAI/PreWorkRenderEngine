@@ -9,18 +9,9 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <string>
 #include <Windows.h>
-
-// TEMP--------------
-enum class PASS_TYPE
-{
-    RENDER,
-    COMPUTE
-};
-
-constexpr UINT RS_INVALID_ORDER = 0;
-// TEMP--------------
 
 class RSPass_Base
 {

@@ -67,7 +67,7 @@ std::string RSMeshHelper::CreateTexSrv(
     // TEMP----------------------
 }
 
-RSMaterialNeedToMove RSMeshHelper::CreateSubMeshMaterial(
+RS_MATERIAL_INFO RSMeshHelper::CreateSubMeshMaterial(
     MATERIAL_INFO* _info)
 {
     // TEMP----------------------
@@ -75,7 +75,7 @@ RSMaterialNeedToMove RSMeshHelper::CreateSubMeshMaterial(
     // TEMP----------------------
 }
 
-RSMaterialNeedToMove RSMeshHelper::RefStaticMaterial(
+RS_MATERIAL_INFO RSMeshHelper::RefStaticMaterial(
     std::string& _materialName)
 {
     // TEMP----------------------

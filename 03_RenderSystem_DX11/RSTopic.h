@@ -9,13 +9,10 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <string>
 #include <vector>
 #include <Windows.h>
-
-// TEMP------------------
-constexpr UINT RS_INVALID_ORDER = 0;
-// TEMP------------------
 
 class RSTopic
 {
