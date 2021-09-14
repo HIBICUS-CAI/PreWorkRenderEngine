@@ -44,6 +44,7 @@ void RSRoot_DX11::CleanAndStop()
     if (mDevicesPtr)
     {
         mDevicesPtr->CleanAndStop();
+        delete mDevicesPtr;
     }
 }
 
