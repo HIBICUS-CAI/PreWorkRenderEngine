@@ -14,6 +14,9 @@
     <Filter Include="SubSystem">
       <UniqueIdentifier>{fc3be1eb-b730-4669-881f-43cab770cce9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{0bcc8651-2a40-4202-b33e-262dba9f0cc3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RSCamera.h">
@@ -57,6 +60,12 @@
     </ClInclude>
     <ClInclude Include="RSTopic.h">
       <Filter>Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="RSCommon.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="RSExtraMacro.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
