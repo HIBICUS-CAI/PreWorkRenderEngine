@@ -4,7 +4,7 @@
 // Info: 描述一个具体的主题并提供执行与操作方式
 // Date: 2021.9.13
 // Mail: cai_genkan@outlook.com
-// Comt: NULL
+// Comt: 创建主题时一定不能直接使用指针，一定要新构造一个对象
 //---------------------------------------------------------------
 
 #pragma once
@@ -18,6 +18,7 @@ class RSTopic
 {
 public:
     RSTopic(std::string& _name);
+    RSTopic(const RSTopic& _source);
     ~RSTopic();
 
     const std::string& GetTopicName() const;
@@ -26,7 +27,7 @@ public:
     void SetExecuateOrder(UINT _order);
     UINT GetExecuateOrder() const;
 
-    void InsertPass(class RSPass_Base* _pass, UINT _execOrder);
+    void InsertPass(class RSPass_Base* _pass);
     void ErasePass(class RSPass_Base* _pass);
     void ErasePass(std::string& _passName);
     bool HasPass(std::string& _passName);
