@@ -14,6 +14,7 @@
 #include "RSRoot_DX11.h"
 #include "RSDevices.h"
 #include "RSPipelinesManager.h"
+#include "RSDrawCallsPool.h"
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -43,11 +44,24 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
+    mDrawCallsPoolPtr = new RSDrawCallsPool();
+    if (!mDrawCallsPoolPtr->StartUp(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void RSRoot_DX11::CleanAndStop()
 {
+    if (mDrawCallsPoolPtr)
+    {
+        mDrawCallsPoolPtr->CleanAndStop();
+        delete mDrawCallsPoolPtr;
+        mDrawCallsPoolPtr = nullptr;
+    }
+
     if (mPipelinesManagerPtr)
     {
         mPipelinesManagerPtr->CleanAndStop();

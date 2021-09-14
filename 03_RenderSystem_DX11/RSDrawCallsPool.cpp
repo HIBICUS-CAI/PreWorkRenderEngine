@@ -23,31 +23,44 @@ RSDrawCallsPool::~RSDrawCallsPool()
 
 bool RSDrawCallsPool::StartUp(RSRoot_DX11* _root)
 {
-    // TEMP----------------------
+    if (!_root) { return false; }
+
+    mRootPtr = _root;
+
     return true;
-    // TEMP----------------------
 }
 
 void RSDrawCallsPool::CleanAndStop()
 {
-
+    // TEMP----------------------
+    for (auto& pipe : mDrawCallsArray)
+    {
+        pipe.mDouble.clear();
+    }
+    // TEMP----------------------
 }
 
 void RSDrawCallsPool::AddDrawCallToPipe(
     DRAWCALL_TYPE _type, void* _data)
 {
-
+    // TEMP----------------------
+    mDrawCallsArray[(size_t)_type].mDouble.push_back(
+        *(double*)_data);
+    // TEMP----------------------
 }
 
 RSDrawCallsPipe* RSDrawCallsPool::GetDrawCallsPipe(
     DRAWCALL_TYPE _type)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    return &mDrawCallsArray[(size_t)_type];
 }
 
 void RSDrawCallsPool::ClearAllDrawCallsInPipes()
 {
-
+    // TEMP----------------------
+    for (auto& pipe : mDrawCallsArray)
+    {
+        pipe.mDouble.clear();
+    }
+    // TEMP----------------------
 }
