@@ -96,6 +96,7 @@ void RSStaticResources::CleanAndStop()
     for (auto& pipeline : mStaticPipelineMap)
     {
         pipeline.second->ReleasePipeline();
+        delete pipeline.second;
         pipeline.second = nullptr;
     }
     mStaticPipelineMap.clear();
@@ -103,6 +104,7 @@ void RSStaticResources::CleanAndStop()
     for (auto& topic : mStaticTopicMap)
     {
         topic.second->ReleaseTopic();
+        delete topic.second;
         topic.second = nullptr;
     }
     mStaticTopicMap.clear();
@@ -278,7 +280,7 @@ ID3D11InputLayout* RSStaticResources::GetStaticInputLayout(
     }
 }
 
-RSPipeline* RSStaticResources::GetStaticPipeline(
+const RSPipeline* const RSStaticResources::GetStaticPipeline(
     std::string& _pipelineName)
 {
     auto found = mStaticPipelineMap.find(_pipelineName);
@@ -292,7 +294,7 @@ RSPipeline* RSStaticResources::GetStaticPipeline(
     }
 }
 
-RSTopic* RSStaticResources::GetStaticTopic(
+const RSTopic* const RSStaticResources::GetStaticTopic(
     std::string& _topicName)
 {
     auto found = mStaticTopicMap.find(_topicName);

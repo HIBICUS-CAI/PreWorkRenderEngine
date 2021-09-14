@@ -41,9 +41,9 @@ public:
         std::string& _samplerName);
     ID3D11InputLayout* GetStaticInputLayout(
         std::string& _layoutName);
-    class RSPipeline* GetStaticPipeline(
+    const class RSPipeline* const GetStaticPipeline(
         std::string& _pipelineName);
-    class RSTopic* GetStaticTopic(
+    const class RSTopic* const GetStaticTopic(
         std::string& _topicName);
     RS_MATERIAL_INFO* GetStaticMaterial(
         std::string& _materialName);

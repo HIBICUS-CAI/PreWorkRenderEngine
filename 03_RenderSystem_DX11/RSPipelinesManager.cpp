@@ -10,7 +10,6 @@
 #include "RSPipelinesManager.h"
 #include "RSRoot_DX11.h"
 #include "RSPipeline.h"
-#include "RSStaticResources.h"
 
 RSPipelinesManager::RSPipelinesManager() :
     mRootPtr(nullptr), mCurrentPipeline(nullptr),
@@ -64,8 +63,7 @@ RSPipeline* RSPipelinesManager::GetPipeline(
     }
     else
     {
-        return mRootPtr->StaticResources()->
-            GetStaticPipeline(_name);
+        return nullptr;
     }
 }
 
@@ -75,11 +73,6 @@ void RSPipelinesManager::SetPipeline(std::string& _name)
     if (found != mPipelineMap.end())
     {
         mNextPipeline = (*found).second;
-    }
-    else
-    {
-        mNextPipeline = mRootPtr->StaticResources()->
-            GetStaticPipeline(_name);
     }
 }
 
