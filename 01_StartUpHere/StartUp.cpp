@@ -16,7 +16,7 @@ int WINAPI WinMain(
     InputInterface::StartUp();
 
     TempMesh* mesh = new TempMesh();
-    if (!mesh->Load("Dragon.FBX.json", MESH_FILE_TYPE::JSON))
+    if (!mesh->Load("Dragon.FBX.meshdata", MESH_FILE_TYPE::BIN))
     {
         return -1;
     }

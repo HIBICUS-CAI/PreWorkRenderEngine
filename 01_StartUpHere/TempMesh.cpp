@@ -3,6 +3,7 @@
 #include "TempMesh.h"
 #include <fstream>
 #include <cstdio>
+#include <cstring>
 #include <rapidjson\filereadstream.h>
 #include <rapidjson\writer.h>
 #include <rapidjson\document.h>
@@ -166,5 +167,125 @@ bool TempMesh::LoadByJson(const std::string& _path)
 
 bool TempMesh::LoadByBinary(const std::string& _path)
 {
+    std::ifstream inFile(_path, std::ios::in | std::ios::binary);
+
+    if (!inFile.is_open()) { return false; }
+
+    // directory
+    {
+        int size = 0;
+        char str[128] = "";
+        inFile.read((char*)&size, sizeof(size));
+        inFile.read(str, size);
+        mDirectory = str;
+    }
+
+    // texture-type
+    {
+        int size = 0;
+        char str[128] = "";
+        inFile.read((char*)&size, sizeof(size));
+        inFile.read(str, size);
+        mTextureType = str;
+    }
+
+    // sub-model-size
+    int subSize = 0;
+    inFile.read((char*)&subSize, sizeof(subSize));
+    mSubMeshes.reserve((size_t)subSize);
+
+    std::vector<UINT> index = {};
+    std::vector<VERTEX_INFO> vertex = {};
+    std::vector<TEXTURE_INFO> texture = {};
+    int indexSize = 0;
+    int vertexSize = 0;
+    int textureSize = 0;
+    for (int i = 0; i < subSize; i++)
+    {
+        index.clear();
+        vertex.clear();
+        texture.clear();
+
+        // each-sub-sizes
+        inFile.read((char*)&indexSize, sizeof(indexSize));
+        inFile.read((char*)&vertexSize, sizeof(vertexSize));
+        inFile.read((char*)&textureSize, sizeof(textureSize));
+
+        // each-sub-index
+        UINT ind = 0;
+        VERTEX_INFO ver = {};
+        TEXTURE_INFO tex = {};
+        for (int j = 0; j < indexSize; j++)
+        {
+            inFile.read((char*)&ind, sizeof(ind));
+            index.push_back(ind);
+        }
+
+        // each-sub-vertex
+        {
+            double temp = 0.0;
+            for (int j = 0; j < vertexSize; j++)
+            {
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mPosition.x = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mPosition.y = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mPosition.z = (float)temp;
+
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mNormal.x = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mNormal.y = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mNormal.z = (float)temp;
+
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mTangent.x = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mTangent.y = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mTangent.z = (float)temp;
+
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mTexCoord.x = (float)temp;
+                inFile.read((char*)(&temp),
+                    sizeof(double));
+                ver.mTexCoord.y = (float)temp;
+
+                vertex.push_back(ver);
+            }
+        }
+
+        // each-sub-texture
+        for (int j = 0; j < textureSize; j++)
+        {
+            int len = 0;
+            char str[1024] = "";
+            inFile.read((char*)(&len), sizeof(len));
+            inFile.read(str, len);
+            tex.mType = str;
+            std::strcpy(str, "");
+            inFile.read((char*)(&len), sizeof(len));
+            inFile.read(str, len);
+            tex.mPath = str;
+            texture.push_back(tex);
+        }
+
+        mSubMeshes.push_back(TempSubMesh(index, vertex, texture));
+    }
+
+    inFile.close();
+
     return true;
 }
