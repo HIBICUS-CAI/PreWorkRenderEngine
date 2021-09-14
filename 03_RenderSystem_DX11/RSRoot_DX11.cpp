@@ -16,6 +16,7 @@
 #include "RSPipelinesManager.h"
 #include "RSDrawCallsPool.h"
 #include "RSTexturesManager.h"
+#include "RSStaticResources.h"
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -57,11 +58,24 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
+    mStaticResourcesPtr = new RSStaticResources();
+    if (!mStaticResourcesPtr->StartUp(this))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void RSRoot_DX11::CleanAndStop()
 {
+    if (mStaticResourcesPtr)
+    {
+        mStaticResourcesPtr->CleanAndStop();
+        delete mStaticResourcesPtr;
+        mStaticResourcesPtr = nullptr;
+    }
+
     if (mTexturesManagerPtr)
     {
         mTexturesManagerPtr->CleanAndStop();

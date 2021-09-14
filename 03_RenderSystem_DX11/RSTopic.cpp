@@ -81,3 +81,8 @@ void RSTopic::ExecuateTopic()
 {
 
 }
+
+void RSTopic::ReleaseTopic()
+{
+
+}

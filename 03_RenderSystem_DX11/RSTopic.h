@@ -35,6 +35,8 @@ public:
 
     void ExecuateTopic();
 
+    void ReleaseTopic();
+
 private:
     const std::string mName;
     bool mAssemblyFinishFlag;
