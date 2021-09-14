@@ -21,5 +21,13 @@
     <ClCompile Include="StartUp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TempMesh.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TempMesh.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

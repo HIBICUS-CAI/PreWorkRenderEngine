@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "WM_Interface.h"
 #include "ID_Interface.h"
+#include "TempMesh.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -13,6 +14,12 @@ int WINAPI WinMain(
     WindowInterface::CreateInitWindow("a test window",
         hInstance, iCmdShow);
     InputInterface::StartUp();
+
+    TempMesh* mesh = new TempMesh();
+    if (!mesh->Load("Dragon.FBX.json", MESH_FILE_TYPE::JSON))
+    {
+        return -1;
+    }
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
@@ -32,6 +39,8 @@ int WINAPI WinMain(
             }
         }
     }
+
+    delete mesh;
 
     return (int)msg.wParam;
 }
