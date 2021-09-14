@@ -7,7 +7,12 @@
 // Comt: NULL
 //---------------------------------------------------------------
 
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxguid.lib")
+
 #include "RSRoot_DX11.h"
+#include "RSDevices.h"
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -25,14 +30,21 @@ RSRoot_DX11::~RSRoot_DX11()
 
 bool RSRoot_DX11::StartUp(HWND _wndHandle)
 {
-    // TEMP----------------------
+    mDevicesPtr = new RSDevices();
+    if (!mDevicesPtr->StartUp(this, _wndHandle))
+    {
+        return false;
+    }
+
     return true;
-    // TEMP----------------------
 }
 
 void RSRoot_DX11::CleanAndStop()
 {
-
+    if (mDevicesPtr)
+    {
+        mDevicesPtr->CleanAndStop();
+    }
 }
 
 RSDevices* RSRoot_DX11::Devices() const

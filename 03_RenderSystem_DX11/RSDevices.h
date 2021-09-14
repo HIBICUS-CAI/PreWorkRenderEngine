@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "RSCommon.h"
 #include <Windows.h>
 #include <d3d11_1.h>
 
@@ -38,8 +39,11 @@ private:
 
     ID3D11Device* mDevice;
     ID3D11DeviceContext* mImmediateContext;
+    ID3D11Device1* mDevice1;
+    ID3D11DeviceContext1* mImmediateContext1;
 
     IDXGISwapChain* mDXGISwapChain;
+    IDXGISwapChain1* mDXGISwapChain1;
     ID3D11RenderTargetView* mSwapChainRtv;
     D3D11_VIEWPORT mFullWindowViewPort;
 };

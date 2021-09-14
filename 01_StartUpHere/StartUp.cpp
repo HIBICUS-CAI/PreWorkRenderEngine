@@ -2,6 +2,7 @@
 #include "WM_Interface.h"
 #include "ID_Interface.h"
 #include "TempMesh.h"
+#include "RSRoot_DX11.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -19,6 +20,13 @@ int WINAPI WinMain(
     if (!mesh->Load("Dragon.FBX.meshdata", MESH_FILE_TYPE::BIN))
     {
         return -1;
+    }
+
+    RSRoot_DX11* root = new RSRoot_DX11();
+    if (!root->StartUp(
+        WindowInterface::GetWindowPtr()->GetWndHandle()))
+    {
+        return -2;
     }
 
     MSG msg = { 0 };
@@ -40,6 +48,8 @@ int WINAPI WinMain(
         }
     }
 
+    root->CleanAndStop();
+    delete root;
     delete mesh;
 
     return (int)msg.wParam;

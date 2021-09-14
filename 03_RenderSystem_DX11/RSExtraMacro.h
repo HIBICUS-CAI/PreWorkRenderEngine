@@ -8,3 +8,8 @@
 //---------------------------------------------------------------
 
 #pragma once
+
+#include <Windows.h>
+
+#define FAIL_HR_RETURN(r) { if (FAILED((r))) { return false; } }
+#define SAFE_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
