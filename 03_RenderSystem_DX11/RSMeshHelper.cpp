@@ -25,9 +25,12 @@ RSMeshHelper::~RSMeshHelper()
 bool RSMeshHelper::StartUp(
     RSRoot_DX11* _root, RSTexturesManager* _texManager)
 {
-    // TEMP----------------------
+    if (!_root || !_texManager) { return false; }
+
+    mRootPtr = _root;
+    mTexManagerPtr = _texManager;
+
     return true;
-    // TEMP----------------------
 }
 
 void RSMeshHelper::CleanAndStop()

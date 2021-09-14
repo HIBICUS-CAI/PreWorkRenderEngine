@@ -19,6 +19,7 @@
 #include "RSStaticResources.h"
 #include "RSLightsContainer.h"
 #include "RSCamerasContainer.h"
+#include "RSMeshHelper.h"
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -78,11 +79,24 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
+    mMeshHelperPtr = new RSMeshHelper();
+    if (!mMeshHelperPtr->StartUp(this, mTexturesManagerPtr))
+    {
+        return false;
+    }
+
     return true;
 }
 
 void RSRoot_DX11::CleanAndStop()
 {
+    if (mMeshHelperPtr)
+    {
+        mMeshHelperPtr->CleanAndStop();
+        delete mMeshHelperPtr;
+        mMeshHelperPtr = nullptr;
+    }
+
     if (mCamerasContainerPtr)
     {
         mCamerasContainerPtr->CleanAndStop();
