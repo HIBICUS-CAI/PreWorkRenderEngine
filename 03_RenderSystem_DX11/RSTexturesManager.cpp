@@ -38,9 +38,11 @@ void RSTexturesManager::CleanAndStop()
     }
     for (auto& dataTex : mDataTexMap)
     {
-        // TEMP------------------
-        dataTex.second.a = 0;
-        // TEMP------------------
+        SAFE_RELEASE(dataTex.second.mUav);
+        SAFE_RELEASE(dataTex.second.mSrv);
+        SAFE_RELEASE(dataTex.second.mDsv);
+        SAFE_RELEASE(dataTex.second.mRtv);
+        SAFE_RELEASE(dataTex.second.mTexture);
     }
     mMeshSrvMap.clear();
     mDataTexMap.clear();
@@ -97,9 +99,11 @@ void RSTexturesManager::DeleteDataTex(std::string& _name)
     auto found = mDataTexMap.find(_name);
     if (found != mDataTexMap.end())
     {
-        // TEMP----------------
-        found->second.a = 0;
-        // TEMP----------------
+        SAFE_RELEASE(found->second.mUav);
+        SAFE_RELEASE(found->second.mSrv);
+        SAFE_RELEASE(found->second.mDsv);
+        SAFE_RELEASE(found->second.mRtv);
+        SAFE_RELEASE(found->second.mTexture);
         mDataTexMap.erase(found);
     }
 }
@@ -118,9 +122,11 @@ void RSTexturesManager::ClearDataTexs()
 {
     for (auto& dataTex : mDataTexMap)
     {
-        // TEMP------------------
-        dataTex.second.a = 0;
-        // TEMP------------------
+        SAFE_RELEASE(dataTex.second.mUav);
+        SAFE_RELEASE(dataTex.second.mSrv);
+        SAFE_RELEASE(dataTex.second.mDsv);
+        SAFE_RELEASE(dataTex.second.mRtv);
+        SAFE_RELEASE(dataTex.second.mTexture);
     }
     mDataTexMap.clear();
 }

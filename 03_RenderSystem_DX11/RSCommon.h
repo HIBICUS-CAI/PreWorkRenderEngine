@@ -161,7 +161,11 @@ struct RSDrawCallsPipe
 
 struct DATA_TEXTURE_INFO
 {
-    int a = 0;
+    ID3D11Texture2D* mTexture = nullptr;
+    ID3D11RenderTargetView* mRtv = nullptr;
+    ID3D11DepthStencilView* mDsv = nullptr;
+    ID3D11ShaderResourceView* mSrv = nullptr;
+    ID3D11UnorderedAccessView* mUav = nullptr;
 };
 
 #ifdef _RS_DX11
