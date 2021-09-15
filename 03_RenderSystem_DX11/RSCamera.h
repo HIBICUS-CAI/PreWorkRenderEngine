@@ -26,7 +26,8 @@ public:
     void ChangeRSCameraNearFarZ(float _near, float _far);
 
 private:
-    void CalcRSCameraInfo();
+    void CalcRSViewMat();
+    void CalcRSProjMat();
 
 private:
     LENS_TYPE mLensType;
@@ -36,15 +37,11 @@ private:
     DirectX::XMFLOAT3 mCamLookAt;
 
     float mFovAngleYPersp;
-    float mAspectRatioPersp;
+    float mAspectRatio;
     float mWidthOrtho;
     float mHeightOrtho;
     float mNearZ;
     float mFarZ;
-
-    DirectX::XMFLOAT4X4 mProjMatrix;
-    DirectX::XMFLOAT4X4 mInvProjMatrix;
-    DirectX::XMFLOAT4X4 mViewMatrix;
 
     RS_CAM_INFO mRSCameraInfo;
 };

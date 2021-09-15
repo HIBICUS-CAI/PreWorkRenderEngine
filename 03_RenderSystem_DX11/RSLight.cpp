@@ -10,14 +10,19 @@
 #include "RSLight.h"
 
 RSLight::RSLight(LIGHT_INFO* _info) :
-    mLightType(LIGHT_TYPE::DIRECT), mLightStrength({ 0.f,0.f,0.f }),
-    mLightDirection({ 0.f,0.f,0.f }), mLightPosition({ 0.f,0.f,0.f }),
-    mLightFallOffStart(0.f), mLightFallOffEnd(0.f),
-    mLightSpotPower(0.f), mRSLightInfo({})
+    mLightType(_info->mType),
+    mLightStrength(_info->mStrength),
+    mLightDirection(_info->mDirection),
+    mLightPosition(_info->mPosition),
+    mLightFallOffStart(_info->mFalloffStart),
+    mLightFallOffEnd(_info->mFalloffEnd),
+    mLightSpotPower(_info->mSpotPower),
+    mRSLightInfo({
+        mLightStrength, mLightFallOffStart, mLightDirection,
+        mLightFallOffEnd, mLightPosition, mLightSpotPower
+        })
 {
-    // TEMP---------------------
-    _info->a = 0;
-    // TEMP---------------------
+
 }
 
 RSLight::~RSLight()
@@ -32,48 +37,42 @@ RS_LIGHT_INFO* RSLight::GetRSLightInfo()
 
 void RSLight::ResetRSLight(LIGHT_INFO* _info)
 {
-    // TEMP---------------------
-    _info->a = 0;
-    // TEMP---------------------
+    mLightType = _info->mType;
+    SetRSLightStrength(_info->mStrength);
+    SetRSLightDirection(_info->mDirection);
+    SetRSLightPosition(_info->mPosition);
+    SetRSLightFallOff(_info->mFalloffStart, _info->mFalloffEnd);
+    SetRSLightSpotPower(_info->mSpotPower);
 }
 
 void RSLight::SetRSLightStrength(DirectX::XMFLOAT3 _strength)
 {
     mLightStrength = _strength;
-    // TEMP---------------------
-    mRSLightInfo.a = 0;
-    // TEMP---------------------
+    mRSLightInfo.mStrength = _strength;
 }
 
 void RSLight::SetRSLightDirection(DirectX::XMFLOAT3 _direction)
 {
     mLightDirection = _direction;
-    // TEMP---------------------
-    mRSLightInfo.a = 0;
-    // TEMP---------------------
+    mRSLightInfo.mDirection = _direction;
 }
 
 void RSLight::SetRSLightPosition(DirectX::XMFLOAT3 _position)
 {
     mLightPosition = _position;
-    // TEMP---------------------
-    mRSLightInfo.a = 0;
-    // TEMP---------------------
+    mRSLightInfo.mPosition = _position;
 }
 
 void RSLight::SetRSLightFallOff(float _start, float _end)
 {
     mLightFallOffStart = _start;
     mLightFallOffEnd = _end;
-    // TEMP---------------------
-    mRSLightInfo.a = 0;
-    // TEMP---------------------
+    mRSLightInfo.mFalloffStart = _start;
+    mRSLightInfo.mFalloffEnd = _end;
 }
 
 void RSLight::SetRSLightSpotPower(float _power)
 {
     mLightSpotPower = _power;
-    // TEMP---------------------
-    mRSLightInfo.a = 0;
-    // TEMP---------------------
+    mRSLightInfo.mSpotPower = _power;
 }

@@ -9,30 +9,14 @@
 
 #include "RSCamera.h"
 
+using namespace DirectX;
+
 RSCamera::RSCamera(CAM_INFO* _info) :
     mLensType(LENS_TYPE::ORTHOGRAPHIC),
     mCamPosition({ 0.f,0.f,0.f }), mCamUpVec({ 0.f,0.f,0.f }),
     mCamLookAt({ 0.f,0.f,0.f }), mFovAngleYPersp(0.f),
-    mAspectRatioPersp(0.f), mWidthOrtho(0.f), mHeightOrtho(0.f),
-    mNearZ(0.f), mFarZ(0.f), mRSCameraInfo({}),
-    mProjMatrix({
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f
-        }),
-    mInvProjMatrix({
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f
-        }),
-    mViewMatrix({
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f,
-        0.f,0.f,0.f,0.f
-        })
+    mAspectRatio(0.f), mWidthOrtho(0.f), mHeightOrtho(0.f),
+    mNearZ(0.f), mFarZ(0.f), mRSCameraInfo({})
 {
     // TEMP---------------------
     _info->a = 0;
@@ -56,42 +40,108 @@ void RSCamera::ResetRSCamera(CAM_INFO* _info)
     // TEMP---------------------
 }
 
-void RSCamera::TranslateRSCamera(DirectX::XMFLOAT3 _delta)
+void RSCamera::TranslateRSCamera(XMFLOAT3 _delta)
 {
-    mCamPosition.x += _delta.x;
-    mCamPosition.y += _delta.y;
-    mCamPosition.z += _delta.z;
-    CalcRSCameraInfo();
+    XMVECTOR pos = XMLoadFloat3(&mCamPosition);
+    XMVECTOR delta = XMLoadFloat3(&_delta);
+    pos += delta;
+    XMStoreFloat3(&mCamPosition, pos);
+
+    CalcRSViewMat();
 }
 
-void RSCamera::RotateRSCamera(DirectX::XMFLOAT3 _deltaAngle)
+void RSCamera::RotateRSCamera(XMFLOAT3 _deltaAngle)
 {
-    // TEMP---------------------
-    mCamLookAt.x += _deltaAngle.x;
-    mCamLookAt.y += _deltaAngle.y;
-    mCamLookAt.z += _deltaAngle.z;
-    // TEMP---------------------
-    CalcRSCameraInfo();
+    XMVECTOR lookat = XMLoadFloat3(&mCamLookAt);
+    XMVECTOR up = XMLoadFloat3(&mCamUpVec);
+    XMVECTOR pos = XMLoadFloat3(&mCamPosition);
+    lookat -= pos;
+    lookat = XMVector3Rotate(lookat,
+        XMQuaternionRotationRollPitchYaw(
+            _deltaAngle.x, _deltaAngle.y, _deltaAngle.z));
+    lookat += pos;
+    up = XMVector3Rotate(up,
+        XMQuaternionRotationRollPitchYaw(
+            _deltaAngle.x, _deltaAngle.y, _deltaAngle.z));
+    XMStoreFloat3(&mCamLookAt, lookat);
+    XMStoreFloat3(&mCamUpVec, up);
+
+    CalcRSViewMat();
 }
 
-void RSCamera::ChangeRSCameraFovY(float _angle)
+void RSCamera::ChangeRSCameraFovY(float _p_angle_o_height)
 {
-    // TEMP---------------------
-    mFovAngleYPersp = _angle;
-    // TEMP---------------------
-    CalcRSCameraInfo();
+    switch (mLensType)
+    {
+    case LENS_TYPE::PERSPECTIVE:
+        mFovAngleYPersp = _p_angle_o_height;
+        break;
+    case LENS_TYPE::ORTHOGRAPHIC:
+        mHeightOrtho = _p_angle_o_height;
+        mWidthOrtho = mAspectRatio * mHeightOrtho;
+        break;
+    default:
+        return;
+    }
+
+    CalcRSProjMat();
 }
 
 void RSCamera::ChangeRSCameraNearFarZ(float _near, float _far)
 {
     mNearZ = _near;
     mFarZ = _far;
-    CalcRSCameraInfo();
+
+    CalcRSProjMat();
 }
 
-void RSCamera::CalcRSCameraInfo()
+void RSCamera::CalcRSViewMat()
 {
-    // TEMP---------------------
-    mRSCameraInfo.a = 0;
-    // TEMP---------------------
+    XMMATRIX view = XMMatrixLookAtLH(
+        XMLoadFloat3(&mCamPosition),
+        XMLoadFloat3(&mCamLookAt),
+        XMLoadFloat3(&mCamUpVec));
+    XMVECTOR det = XMMatrixDeterminant(view);
+    XMMATRIX invview = XMMatrixInverse(&det, view);
+    XMMATRIX viewproj = XMMatrixMultiply(view,
+        XMLoadFloat4x4(&mRSCameraInfo.mProjMat));
+    XMStoreFloat4x4(&mRSCameraInfo.mViewMat, view);
+    XMStoreFloat4x4(&mRSCameraInfo.mInvViewMat, invview);
+    XMStoreFloat4x4(&mRSCameraInfo.mViewProjMat, viewproj);
+    mRSCameraInfo.mEyePosition = mCamPosition;
+}
+
+void RSCamera::CalcRSProjMat()
+{
+    XMMATRIX proj = {};
+    XMVECTOR det = {};
+    XMMATRIX invproj = {};
+    XMMATRIX viewproj = {};
+    switch (mLensType)
+    {
+    case LENS_TYPE::PERSPECTIVE:
+        proj = XMMatrixPerspectiveFovLH(
+            mFovAngleYPersp, mAspectRatio, mNearZ, mFarZ);
+        det = XMMatrixDeterminant(proj);
+        invproj = XMMatrixInverse(&det, proj);
+        viewproj = XMMatrixMultiply(
+            XMLoadFloat4x4(&mRSCameraInfo.mViewMat), proj);
+        XMStoreFloat4x4(&mRSCameraInfo.mProjMat, proj);
+        XMStoreFloat4x4(&mRSCameraInfo.mInvProjMat, invproj);
+        XMStoreFloat4x4(&mRSCameraInfo.mViewProjMat, viewproj);
+        return;
+    case LENS_TYPE::ORTHOGRAPHIC:
+        proj = XMMatrixOrthographicLH(
+            mWidthOrtho, mHeightOrtho, mNearZ, mFarZ);
+        det = XMMatrixDeterminant(proj);
+        invproj = XMMatrixInverse(&det, proj);
+        viewproj = XMMatrixMultiply(
+            XMLoadFloat4x4(&mRSCameraInfo.mViewMat), proj);
+        XMStoreFloat4x4(&mRSCameraInfo.mProjMat, proj);
+        XMStoreFloat4x4(&mRSCameraInfo.mInvProjMat, invproj);
+        XMStoreFloat4x4(&mRSCameraInfo.mViewProjMat, viewproj);
+        return;
+    default:
+        return;
+    }
 }

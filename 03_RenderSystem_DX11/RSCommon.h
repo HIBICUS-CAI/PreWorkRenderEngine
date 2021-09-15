@@ -55,7 +55,12 @@ struct CAM_INFO
 
 struct RS_CAM_INFO
 {
-    double a = 0.0;
+    DirectX::XMFLOAT4X4 mViewMat = {};
+    DirectX::XMFLOAT4X4 mInvViewMat = {};
+    DirectX::XMFLOAT4X4 mProjMat = {};
+    DirectX::XMFLOAT4X4 mInvProjMat = {};
+    DirectX::XMFLOAT4X4 mViewProjMat = {};
+    DirectX::XMFLOAT3 mEyePosition = {};
 };
 
 enum class LIGHT_TYPE
@@ -67,12 +72,23 @@ enum class LIGHT_TYPE
 
 struct LIGHT_INFO
 {
-    double a = 0.0;
+    LIGHT_TYPE mType = LIGHT_TYPE::DIRECT;
+    DirectX::XMFLOAT3 mStrength = {};
+    float mFalloffStart = 0.f;
+    DirectX::XMFLOAT3 mDirection = {};
+    float mFalloffEnd = 0.f;
+    DirectX::XMFLOAT3 mPosition = {};
+    float mSpotPower = 0.f;
 };
 
 struct RS_LIGHT_INFO
 {
-    double a = 0.0;
+    DirectX::XMFLOAT3 mStrength = {};
+    float mFalloffStart = 0.f;
+    DirectX::XMFLOAT3 mDirection = {};
+    float mFalloffEnd = 0.f;
+    DirectX::XMFLOAT3 mPosition = {};
+    float mSpotPower = 0.f;
 };
 
 struct MATERIAL_INFO
