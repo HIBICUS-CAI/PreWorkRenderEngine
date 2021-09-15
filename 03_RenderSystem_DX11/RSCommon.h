@@ -99,17 +99,25 @@ struct RS_LIGHT_INFO
 
 struct MATERIAL_INFO
 {
-    int a = 0;
+    DirectX::XMFLOAT4 mDiffuseAlbedo = {};
+    DirectX::XMFLOAT3 mFresnelR0 = {};
+    float mShininess = 0.f;
 };
 
 struct RS_MATERIAL_INFO
 {
-    double a = 0.0;
+    DirectX::XMFLOAT4 mDiffuseAlbedo = {};
+    DirectX::XMFLOAT3 mFresnelR0 = {};
+    float mShininess = 0.f;
 };
 
 struct SUBMESH_INFO
 {
-    int a = 0;
+    const std::vector<UINT>* const mIndeices = nullptr;
+    const std::vector<void*>* const mVerteices = nullptr;
+    const std::vector<std::string>* const mTextures = nullptr;
+    const MATERIAL_INFO* const mMaterial = nullptr;
+    std::string mStaticMaterial = "";
 };
 
 struct RS_SUBMESH_DATA

@@ -27,13 +27,14 @@ public:
 
 private:
     ID3D11Buffer* CreateIndexBuffer(
-        std::vector<UINT>* _indices);
+        const std::vector<UINT>* const _indices);
     ID3D11Buffer* CreateVertexBuffer(
-        std::vector<void*>* _vertices);
-    std::string CreateTexSrv(
-        std::vector<std::string>* _textures);
+        const std::vector<void*>* const _vertices,
+        LAYOUT_TYPE _layoutType);
+    std::vector<std::string> CreateTexSrv(
+        const std::vector<std::string>* const _textures);
     RS_MATERIAL_INFO CreateSubMeshMaterial(
-        MATERIAL_INFO* _info);
+        const MATERIAL_INFO* const _info);
     RS_MATERIAL_INFO RefStaticMaterial(
         std::string& _materialName);
 

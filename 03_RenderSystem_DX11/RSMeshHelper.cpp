@@ -10,6 +10,8 @@
 #include "RSMeshHelper.h"
 #include "RSRoot_DX11.h"
 #include "RSTexturesManager.h"
+#include "RSStaticResources.h"
+#include <assert.h>
 
 RSMeshHelper::RSMeshHelper() :
     mRootPtr(nullptr), mTexManagerPtr(nullptr)
@@ -41,13 +43,29 @@ void RSMeshHelper::CleanAndStop()
 RS_SUBMESH_DATA RSMeshHelper::ProcessSubMesh(
     SUBMESH_INFO* _info, LAYOUT_TYPE _layoutType)
 {
+    assert(_info);
+
+    auto indexBuffer = CreateIndexBuffer(_info->mIndeices);
+    auto vertexBuffer = CreateVertexBuffer(_info->mVerteices,
+        _layoutType);
+    auto texData = CreateTexSrv(_info->mTextures);
+    auto material = RS_MATERIAL_INFO();
+    if (_info->mMaterial)
+    {
+        material = CreateSubMeshMaterial(_info->mMaterial);
+    }
+    else
+    {
+        material = RefStaticMaterial(_info->mStaticMaterial);
+    }
+
     // TEMP----------------------
     return {};
     // TEMP----------------------
 }
 
 ID3D11Buffer* RSMeshHelper::CreateIndexBuffer(
-    std::vector<UINT>* _indices)
+    const std::vector<UINT>* const _indices)
 {
     // TEMP----------------------
     return nullptr;
@@ -55,15 +73,16 @@ ID3D11Buffer* RSMeshHelper::CreateIndexBuffer(
 }
 
 ID3D11Buffer* RSMeshHelper::CreateVertexBuffer(
-    std::vector<void*>* _vertices)
+    const std::vector<void*>* const _vertices,
+    LAYOUT_TYPE _layoutType)
 {
     // TEMP----------------------
     return nullptr;
     // TEMP----------------------
 }
 
-std::string RSMeshHelper::CreateTexSrv(
-    std::vector<std::string>* _textures)
+std::vector<std::string> RSMeshHelper::CreateTexSrv(
+    const std::vector<std::string>* const _textures)
 {
     // TEMP----------------------
     return {};
@@ -71,17 +90,22 @@ std::string RSMeshHelper::CreateTexSrv(
 }
 
 RS_MATERIAL_INFO RSMeshHelper::CreateSubMeshMaterial(
-    MATERIAL_INFO* _info)
+    const MATERIAL_INFO* const _info)
 {
-    // TEMP----------------------
-    return {};
-    // TEMP----------------------
+    RS_MATERIAL_INFO material = {};
+    material.mDiffuseAlbedo = _info->mDiffuseAlbedo;
+    material.mFresnelR0 = _info->mFresnelR0;
+    material.mShininess = _info->mShininess;
+
+    return material;
 }
 
 RS_MATERIAL_INFO RSMeshHelper::RefStaticMaterial(
     std::string& _materialName)
 {
-    // TEMP----------------------
-    return {};
-    // TEMP----------------------
+    auto material = mRootPtr->StaticResources()->
+        GetStaticMaterial(_materialName);
+    assert(material);
+
+    return *material;
 }
