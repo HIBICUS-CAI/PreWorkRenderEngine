@@ -18,9 +18,26 @@ RSCamera::RSCamera(CAM_INFO* _info) :
     mAspectRatio(0.f), mWidthOrtho(0.f), mHeightOrtho(0.f),
     mNearZ(0.f), mFarZ(0.f), mRSCameraInfo({})
 {
-    // TEMP---------------------
-    _info->a = 0;
-    // TEMP---------------------
+    mLensType = _info->mType;
+    mCamPosition = _info->mPosition;
+    mCamUpVec = _info->mUpVec;
+    mCamLookAt = _info->mLookAt;
+    mFovAngleYPersp = _info->mPFovyAndRatio.x;
+    mWidthOrtho = _info->mOWidthAndheight.x;
+    mHeightOrtho = _info->mOWidthAndheight.y;
+    mNearZ = _info->mNearFarZ.x;
+    mFarZ = _info->mNearFarZ.y;
+    switch (mLensType)
+    {
+    case LENS_TYPE::PERSPECTIVE:
+        mAspectRatio = _info->mPFovyAndRatio.y;
+        break;
+    case LENS_TYPE::ORTHOGRAPHIC:
+        mAspectRatio = mWidthOrtho / mHeightOrtho;
+        break;
+    default:
+        break;
+    }
 }
 
 RSCamera::~RSCamera()
@@ -35,9 +52,26 @@ RS_CAM_INFO* RSCamera::GetRSCameraInfo()
 
 void RSCamera::ResetRSCamera(CAM_INFO* _info)
 {
-    // TEMP---------------------
-    _info->a = 0;
-    // TEMP---------------------
+    mLensType = _info->mType;
+    mCamPosition = _info->mPosition;
+    mCamUpVec = _info->mUpVec;
+    mCamLookAt = _info->mLookAt;
+    mFovAngleYPersp = _info->mPFovyAndRatio.x;
+    mWidthOrtho = _info->mOWidthAndheight.x;
+    mHeightOrtho = _info->mOWidthAndheight.y;
+    mNearZ = _info->mNearFarZ.x;
+    mFarZ = _info->mNearFarZ.y;
+    switch (mLensType)
+    {
+    case LENS_TYPE::PERSPECTIVE:
+        mAspectRatio = _info->mPFovyAndRatio.y;
+        break;
+    case LENS_TYPE::ORTHOGRAPHIC:
+        mAspectRatio = mWidthOrtho / mHeightOrtho;
+        break;
+    default:
+        break;
+    }
 }
 
 void RSCamera::TranslateRSCamera(XMFLOAT3 _delta)

@@ -50,7 +50,13 @@ enum class LENS_TYPE
 
 struct CAM_INFO
 {
-    double a = 0.0;
+    LENS_TYPE mType = LENS_TYPE::PERSPECTIVE;
+    DirectX::XMFLOAT3 mPosition = {};
+    DirectX::XMFLOAT3 mLookAt = {};
+    DirectX::XMFLOAT3 mUpVec = {};
+    DirectX::XMFLOAT2 mPFovyAndRatio = {};
+    DirectX::XMFLOAT2 mOWidthAndheight = {};
+    DirectX::XMFLOAT2 mNearFarZ = {};
 };
 
 struct RS_CAM_INFO
