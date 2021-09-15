@@ -9,12 +9,15 @@
 
 #include "RSMeshHelper.h"
 #include "RSRoot_DX11.h"
+#include "RSDevices.h"
 #include "RSTexturesManager.h"
 #include "RSStaticResources.h"
 #include <assert.h>
+#include <DirectXTK\WICTextureLoader.h>
+#include <DirectXTK\DDSTextureLoader.h>
 
 RSMeshHelper::RSMeshHelper() :
-    mRootPtr(nullptr), mTexManagerPtr(nullptr)
+    mRootPtr(nullptr), mTexManagerPtr(nullptr), mDevicesPtr(nullptr)
 {
 
 }
@@ -31,6 +34,7 @@ bool RSMeshHelper::StartUp(
 
     mRootPtr = _root;
     mTexManagerPtr = _texManager;
+    mDevicesPtr = _root->Devices();
 
     return true;
 }
@@ -125,26 +129,171 @@ ID3D11InputLayout* RSMeshHelper::RefStaticInputLayout(
 ID3D11Buffer* RSMeshHelper::CreateIndexBuffer(
     const std::vector<UINT>* const _indices)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    ID3D11Buffer* indexBuffer = nullptr;
+    D3D11_BUFFER_DESC ibd = {};
+    D3D11_SUBRESOURCE_DATA initData = {};
+    ZeroMemory(&ibd, sizeof(ibd));
+    ZeroMemory(&initData, sizeof(initData));
+    ibd.Usage = D3D11_USAGE_IMMUTABLE;
+    ibd.ByteWidth =
+        (UINT)(sizeof(UINT) * _indices->size());
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    ibd.CPUAccessFlags = 0;
+    ibd.MiscFlags = 0;
+
+    initData.pSysMem = &((*_indices)[0]);
+
+    HRESULT hr = S_OK;
+    hr = mDevicesPtr->GetDevice()->
+        CreateBuffer(&ibd, &initData, &indexBuffer);
+    if (SUCCEEDED(hr))
+    {
+        return indexBuffer;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 ID3D11Buffer* RSMeshHelper::CreateVertexBuffer(
     const std::vector<void*>* const _vertices,
     LAYOUT_TYPE _layoutType)
 {
-    // TEMP----------------------
-    return nullptr;
-    // TEMP----------------------
+    std::vector<VertexType::BasicVertex> basic = {};
+    std::vector<VertexType::ColorVertex> color = {};
+    std::vector<VertexType::TangentVertex> tangent = {};
+
+    switch (_layoutType)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+        for (auto& vert : *_vertices)
+        {
+            color.emplace_back(*(VertexType::ColorVertex*)vert);
+        }
+        break;
+    case LAYOUT_TYPE::NORMAL_TEX:
+        for (auto& vert : *_vertices)
+        {
+            basic.emplace_back(*(VertexType::BasicVertex*)vert);
+        }
+        break;
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+        for (auto& vert : *_vertices)
+        {
+            tangent.emplace_back(*(VertexType::TangentVertex*)vert);
+        }
+        break;
+    default:
+        return nullptr;
+    }
+
+    ID3D11Buffer* vertexBuffer = nullptr;
+    D3D11_BUFFER_DESC vbd = {};
+    D3D11_SUBRESOURCE_DATA initData = {};
+    ZeroMemory(&vbd, sizeof(vbd));
+    ZeroMemory(&initData, sizeof(initData));
+    vbd.Usage = D3D11_USAGE_IMMUTABLE;
+    switch (_layoutType)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+        vbd.ByteWidth =
+            (UINT)(sizeof(VertexType::ColorVertex) * color.size());
+        break;
+    case LAYOUT_TYPE::NORMAL_TEX:
+        vbd.ByteWidth =
+            (UINT)(sizeof(VertexType::BasicVertex) * basic.size());
+        break;
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+        vbd.ByteWidth =
+            (UINT)(sizeof(VertexType::TangentVertex) * tangent.size());
+        break;
+    default:
+        return nullptr;
+    }
+    vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vbd.CPUAccessFlags = 0;
+    vbd.MiscFlags = 0;
+
+    switch (_layoutType)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+        initData.pSysMem = &color[0];
+        break;
+    case LAYOUT_TYPE::NORMAL_TEX:
+        initData.pSysMem = &basic[0];
+        break;
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+        initData.pSysMem = &tangent[0];
+        break;
+    default:
+        return nullptr;
+    }
+
+    HRESULT hr = S_OK;
+    hr = mDevicesPtr->GetDevice()->
+        CreateBuffer(&vbd, &initData, &vertexBuffer);
+    if (SUCCEEDED(hr))
+    {
+        return vertexBuffer;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 std::vector<std::string> RSMeshHelper::CreateTexSrv(
     const std::vector<std::string>* const _textures)
 {
-    // TEMP----------------------
-    return {};
-    // TEMP----------------------
+    std::vector<std::string> texVec = {};
+    std::wstring wstr = L"";
+    std::string name = "";
+    HRESULT hr = S_OK;
+    ID3D11ShaderResourceView* srv = nullptr;
+
+    for (auto& tex : *_textures)
+    {
+        wstr = std::wstring(tex.begin(), tex.end());
+        wstr = L".\\Textures\\" + wstr;
+        if (tex.find(".dds") != std::string::npos ||
+            tex.find(".DDS") != std::string::npos)
+        {
+            hr = DirectX::CreateDDSTextureFromFile(
+                mDevicesPtr->GetDevice(),
+                wstr.c_str(), nullptr, &srv);
+            if (SUCCEEDED(hr))
+            {
+                name = tex;
+                mTexManagerPtr->AddMeshSrv(name, srv);
+                texVec.emplace_back(name);
+            }
+            else
+            {
+                bool texture_load_fail = true;
+                assert(texture_load_fail);
+            }
+        }
+        else
+        {
+            hr = DirectX::CreateWICTextureFromFile(
+                mDevicesPtr->GetDevice(),
+                wstr.c_str(), nullptr, &srv);
+            if (SUCCEEDED(hr))
+            {
+                name = tex;
+                mTexManagerPtr->AddMeshSrv(name, srv);
+                texVec.emplace_back(name);
+            }
+            else
+            {
+                bool texture_load_fail = true;
+                assert(texture_load_fail);
+            }
+        }
+    }
+
+    return texVec;
 }
 
 RS_MATERIAL_INFO RSMeshHelper::CreateSubMeshMaterial(

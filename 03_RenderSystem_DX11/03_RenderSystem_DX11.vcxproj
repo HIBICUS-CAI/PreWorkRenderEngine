@@ -35,6 +35,7 @@
     <ClInclude Include="RSStaticResources.h" />
     <ClInclude Include="RSTexturesManager.h" />
     <ClInclude Include="RSTopic.h" />
+    <ClInclude Include="RSVertexType.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSCamera.cpp" />

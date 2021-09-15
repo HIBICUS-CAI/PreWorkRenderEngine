@@ -183,4 +183,5 @@ struct DATA_TEXTURE_INFO
 
 #ifdef _RS_DX11
 #include "RSExtraMacro.h"
+#include "RSVertexType.h"
 #endif // _RS_DX11

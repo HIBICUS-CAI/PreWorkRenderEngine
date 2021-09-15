@@ -67,6 +67,9 @@
     <ClInclude Include="RSExtraMacro.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="RSVertexType.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSCamera.cpp">

@@ -43,5 +43,6 @@ private:
 private:
     class RSRoot_DX11* mRootPtr;
     class RSTexturesManager* mTexManagerPtr;
+    class RSDevices* mDevicesPtr;
 };
 
