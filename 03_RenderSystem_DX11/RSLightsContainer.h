@@ -10,7 +10,6 @@
 #pragma once
 
 #include "RSCommon.h"
-#include <string>
 #include <unordered_map>
 
 class RSLightsContainer

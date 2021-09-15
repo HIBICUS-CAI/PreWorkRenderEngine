@@ -10,7 +10,6 @@
 #pragma once
 
 #include "RSCommon.h"
-#include <Windows.h>
 
 class RSRoot_DX11
 {

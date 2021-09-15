@@ -10,8 +10,6 @@
 #pragma once
 
 #include "RSCommon.h"
-#include <string>
-#include <Windows.h>
 
 class RSPass_Base
 {

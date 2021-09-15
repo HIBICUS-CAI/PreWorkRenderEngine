@@ -10,7 +10,6 @@
 #pragma once
 
 #include "RSCommon.h"
-#include <DirectXMath.h>
 
 class RSLight
 {

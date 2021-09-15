@@ -10,8 +10,6 @@
 #pragma once
 
 #include "RSCommon.h"
-#include <d3d11_1.h>
-#include <string>
 #include <unordered_map>
 
 class RSStaticResources

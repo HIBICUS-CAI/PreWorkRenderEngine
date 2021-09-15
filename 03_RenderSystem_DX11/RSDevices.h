@@ -10,8 +10,6 @@
 #pragma once
 
 #include "RSCommon.h"
-#include <Windows.h>
-#include <d3d11_1.h>
 
 class RSDevices
 {
