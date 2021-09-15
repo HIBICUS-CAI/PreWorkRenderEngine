@@ -4,6 +4,8 @@
 #include <string>
 #include <Windows.h>
 #include <DirectXMath.h>
+#include "RSCommon.h"
+#include "RSMeshHelper.h"
 
 enum class MESH_FILE_TYPE
 {
@@ -34,7 +36,37 @@ public:
         std::vector<TEXTURE_INFO>& _tex);
     ~TempSubMesh();
 
+    void Process(RSMeshHelper* _helper)
+    {
+        SUBMESH_INFO si = {};
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mIndeices = &mIndeices;
+        std::vector<void*> p = {};
+        for (auto& vert : mVerteices)
+        {
+            p.push_back(&vert);
+        }
+        si.mVerteices = &p;
+        std::vector<std::string> t = {};
+        for (auto& tex : mTextures)
+        {
+            t.emplace_back(tex.mPath);
+        }
+        si.mTextures = &t;
+        si.mStaticMaterial = "";
+        MATERIAL_INFO mi = {};
+        mi.mDiffuseAlbedo = {};
+        mi.mFresnelR0 = {};
+        mi.mShininess = 5.f;
+        si.mMaterial = &mi;
+        mData = _helper->ProcessSubMesh(
+            &si, LAYOUT_TYPE::NORMAL_TANGENT_TEX);
+        //mData=_helper->ProcessSubMesh()
+    }
+
 private:
+    RS_SUBMESH_DATA mData;
+
     std::vector<UINT> mIndeices;
     std::vector<VERTEX_INFO> mVerteices;
     std::vector<TEXTURE_INFO> mTextures;
@@ -47,6 +79,14 @@ public:
     ~TempMesh();
 
     bool Load(const std::string& _filePath, MESH_FILE_TYPE _type);
+
+    void Process(RSMeshHelper* _helper)
+    {
+        for (auto& sub : mSubMeshes)
+        {
+            sub.Process(_helper);
+        }
+    }
 
 private:
     bool LoadByJson(const std::string& _path);

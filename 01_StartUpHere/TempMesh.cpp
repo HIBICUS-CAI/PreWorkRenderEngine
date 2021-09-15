@@ -12,7 +12,11 @@ TempSubMesh::TempSubMesh(
     std::vector<UINT>& _index,
     std::vector<VERTEX_INFO>& _vertex,
     std::vector<TEXTURE_INFO>& _tex) :
-    mIndeices(_index), mVerteices(_vertex), mTextures(_tex) {}
+    mIndeices(_index), mVerteices(_vertex), mTextures(_tex) ,
+    mData({})
+{
+
+}
 
 TempSubMesh::~TempSubMesh() {}
 

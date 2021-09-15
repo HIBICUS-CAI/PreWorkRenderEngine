@@ -124,10 +124,10 @@ enum class TOPOLOGY_TYPE
 struct SUBMESH_INFO
 {
     TOPOLOGY_TYPE mTopologyType = TOPOLOGY_TYPE::NONE;
-    const std::vector<UINT>* const mIndeices = nullptr;
-    const std::vector<void*>* const mVerteices = nullptr;
-    const std::vector<std::string>* const mTextures = nullptr;
-    const MATERIAL_INFO* const mMaterial = nullptr;
+    std::vector<UINT>* mIndeices = nullptr;
+    std::vector<void*>* mVerteices = nullptr;
+    std::vector<std::string>* mTextures = nullptr;
+    MATERIAL_INFO* mMaterial = nullptr;
     std::string mStaticMaterial = "";
 };
 

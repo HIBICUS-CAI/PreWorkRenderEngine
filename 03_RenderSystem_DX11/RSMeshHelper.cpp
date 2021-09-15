@@ -270,7 +270,7 @@ std::vector<std::string> RSMeshHelper::CreateTexSrv(
             }
             else
             {
-                bool texture_load_fail = true;
+                bool texture_load_fail = false;
                 assert(texture_load_fail);
             }
         }
@@ -287,7 +287,7 @@ std::vector<std::string> RSMeshHelper::CreateTexSrv(
             }
             else
             {
-                bool texture_load_fail = true;
+                bool texture_load_fail = false;
                 assert(texture_load_fail);
             }
         }

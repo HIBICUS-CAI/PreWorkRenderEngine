@@ -17,7 +17,8 @@ int WINAPI WinMain(
     InputInterface::StartUp();
 
     TempMesh* mesh = new TempMesh();
-    if (!mesh->Load("Dragon.FBX.meshdata", MESH_FILE_TYPE::BIN))
+    if (!mesh->Load("phong_cube.fbx.meshdata",
+        MESH_FILE_TYPE::BIN))
     {
         return -1;
     }
@@ -28,6 +29,8 @@ int WINAPI WinMain(
     {
         return -2;
     }
+
+    mesh->Process(root->MeshHelper());
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
