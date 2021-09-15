@@ -47,6 +47,28 @@ RS_SUBMESH_DATA RSMeshHelper::ProcessSubMesh(
 
     RS_SUBMESH_DATA data = {};
 
+    auto type = _info->mTopologyType;
+    switch (type)
+    {
+    case TOPOLOGY_TYPE::POINTLIST:
+        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+        break;
+    case TOPOLOGY_TYPE::LINELIST:
+        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+        break;
+    case TOPOLOGY_TYPE::LINESTRIP:
+        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        break;
+    case TOPOLOGY_TYPE::TRIANGLELIST:
+        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        break;
+    case TOPOLOGY_TYPE::TRIANGLESTRIP:
+        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        break;
+    default:
+        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        break;
+    }
     data.mLayout = RefStaticInputLayout(_layoutType);
     data.mIndexBuffer = CreateIndexBuffer(_info->mIndeices);
     data.mVertexBuffer = CreateVertexBuffer(_info->mVerteices,

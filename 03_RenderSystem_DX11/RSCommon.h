@@ -111,8 +111,19 @@ struct RS_MATERIAL_INFO
     float mShininess = 0.f;
 };
 
+enum class TOPOLOGY_TYPE
+{
+    NONE,
+    POINTLIST,
+    LINELIST,
+    LINESTRIP,
+    TRIANGLELIST,
+    TRIANGLESTRIP
+};
+
 struct SUBMESH_INFO
 {
+    TOPOLOGY_TYPE mTopologyType = TOPOLOGY_TYPE::NONE;
     const std::vector<UINT>* const mIndeices = nullptr;
     const std::vector<void*>* const mVerteices = nullptr;
     const std::vector<std::string>* const mTextures = nullptr;
@@ -122,6 +133,8 @@ struct SUBMESH_INFO
 
 struct RS_SUBMESH_DATA
 {
+    D3D_PRIMITIVE_TOPOLOGY mTopologyType =
+        D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     ID3D11InputLayout* mLayout = nullptr;
     ID3D11Buffer* mIndexBuffer = nullptr;
     ID3D11Buffer* mVertexBuffer = nullptr;
