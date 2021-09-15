@@ -21,7 +21,8 @@ public:
     bool StartUp(class RSRoot_DX11* _root);
     void CleanAndStop();
 
-    void AddDrawCallToPipe(DRAWCALL_TYPE _type, void* _data);
+    void AddDrawCallToPipe(
+        DRAWCALL_TYPE _type, RS_DRAWCALL_DATA& _data);
     RSDrawCallsPipe* GetDrawCallsPipe(DRAWCALL_TYPE _type);
 
     void ClearAllDrawCallsInPipes();

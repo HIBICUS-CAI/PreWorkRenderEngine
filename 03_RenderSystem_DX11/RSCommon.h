@@ -10,6 +10,10 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <d3d11_1.h>
+#include <DirectXMath.h>
+#include <Windows.h>
 
 enum class PASS_TYPE
 {
@@ -17,48 +21,23 @@ enum class PASS_TYPE
     COMPUTE
 };
 
-constexpr unsigned int RS_INVALID_ORDER = 0;
+constexpr UINT RS_INVALID_ORDER = 0;
 
 enum class LAYOUT_TYPE
 {
-    WITH_TANGENT,
-    WITHOUT_TANGENT
+    NORMAL_COLOR,
+    NORMAL_TEX,
+    NORMAL_TANGENT_TEX
 };
 
 enum class DRAWCALL_TYPE
 {
-    DEFAULT,
+    OPACITY,
+    TRANSPARENCY,
+    MIRROR_SELF,
+    MIRRO_INSIDE,
+
     MAX
-};
-
-struct RSDrawCallsPipe
-{
-    std::vector<double> mDouble = {};
-};
-
-struct MATERIAL_INFO
-{
-    int a = 0;
-};
-
-struct RS_MATERIAL_INFO
-{
-    double a = 0.0;
-};
-
-struct SUBMESH_INFO
-{
-    int a = 0;
-};
-
-struct RS_SUBMESH_DATA
-{
-    int a = 0;
-};
-
-struct DATA_TEXTURE_INFO
-{
-    int a = 0;
 };
 
 enum class LENS_TYPE
@@ -92,6 +71,61 @@ struct LIGHT_INFO
 struct RS_LIGHT_INFO
 {
     double a = 0.0;
+};
+
+struct MATERIAL_INFO
+{
+    int a = 0;
+};
+
+struct RS_MATERIAL_INFO
+{
+    double a = 0.0;
+};
+
+struct SUBMESH_INFO
+{
+    int a = 0;
+};
+
+struct RS_SUBMESH_DATA
+{
+    int a = 0;
+};
+
+constexpr UINT MESH_TEX_MAX = 10;
+
+struct RS_MESH_TEXTURE_INFO
+{
+    bool mUse = false;
+    int a = 0;
+};
+
+struct RS_MISC_INFO
+{
+    DirectX::XMFLOAT2 mRtvSize;
+    DirectX::XMFLOAT2 mInvRtvSize;
+    float mDeltaTime;
+};
+
+// 不包含光照信息，之后从相关地方调取
+struct RS_DRAWCALL_DATA
+{
+    RS_SUBMESH_DATA mMeshData = {};
+    RS_CAM_INFO mCameraData = {};
+    RS_MATERIAL_INFO mMaterialData = {};
+    RS_MESH_TEXTURE_INFO mTextureDatas[MESH_TEX_MAX] = { {} };
+    RS_MISC_INFO mMiscData = {};
+};
+
+struct RSDrawCallsPipe
+{
+    std::vector<RS_DRAWCALL_DATA> mDatas = {};
+};
+
+struct DATA_TEXTURE_INFO
+{
+    int a = 0;
 };
 
 #ifdef _RS_DX11

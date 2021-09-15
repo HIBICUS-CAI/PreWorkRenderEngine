@@ -32,21 +32,16 @@ bool RSDrawCallsPool::StartUp(RSRoot_DX11* _root)
 
 void RSDrawCallsPool::CleanAndStop()
 {
-    // TEMP----------------------
     for (auto& pipe : mDrawCallsArray)
     {
-        pipe.mDouble.clear();
+        pipe.mDatas.clear();
     }
-    // TEMP----------------------
 }
 
 void RSDrawCallsPool::AddDrawCallToPipe(
-    DRAWCALL_TYPE _type, void* _data)
+    DRAWCALL_TYPE _type, RS_DRAWCALL_DATA& _data)
 {
-    // TEMP----------------------
-    mDrawCallsArray[(size_t)_type].mDouble.push_back(
-        *(double*)_data);
-    // TEMP----------------------
+    mDrawCallsArray[(size_t)_type].mDatas.emplace_back(_data);
 }
 
 RSDrawCallsPipe* RSDrawCallsPool::GetDrawCallsPipe(
@@ -57,10 +52,8 @@ RSDrawCallsPipe* RSDrawCallsPool::GetDrawCallsPipe(
 
 void RSDrawCallsPool::ClearAllDrawCallsInPipes()
 {
-    // TEMP----------------------
     for (auto& pipe : mDrawCallsArray)
     {
-        pipe.mDouble.clear();
+        pipe.mDatas.clear();
     }
-    // TEMP----------------------
 }
