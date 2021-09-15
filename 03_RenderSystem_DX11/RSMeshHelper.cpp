@@ -45,23 +45,59 @@ RS_SUBMESH_DATA RSMeshHelper::ProcessSubMesh(
 {
     assert(_info);
 
-    auto indexBuffer = CreateIndexBuffer(_info->mIndeices);
-    auto vertexBuffer = CreateVertexBuffer(_info->mVerteices,
+    RS_SUBMESH_DATA data = {};
+
+    data.mLayout = RefStaticInputLayout(_layoutType);
+    data.mIndexBuffer = CreateIndexBuffer(_info->mIndeices);
+    data.mVertexBuffer = CreateVertexBuffer(_info->mVerteices,
         _layoutType);
-    auto texData = CreateTexSrv(_info->mTextures);
-    auto material = RS_MATERIAL_INFO();
+    data.mTextures = CreateTexSrv(_info->mTextures);
+    data.mMaterial = RS_MATERIAL_INFO();
     if (_info->mMaterial)
     {
-        material = CreateSubMeshMaterial(_info->mMaterial);
+        data.mMaterial = CreateSubMeshMaterial(_info->mMaterial);
     }
     else
     {
-        material = RefStaticMaterial(_info->mStaticMaterial);
+        data.mMaterial = RefStaticMaterial(_info->mStaticMaterial);
     }
 
-    // TEMP----------------------
-    return {};
-    // TEMP----------------------
+    return data;
+}
+
+ID3D11InputLayout* RSMeshHelper::RefStaticInputLayout(
+    LAYOUT_TYPE _layoutType)
+{
+    ID3D11InputLayout* layout = nullptr;
+    static std::string name = "";
+    switch (_layoutType)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+        // TEMP--------------------
+        name = "";
+        // TEMP--------------------
+        layout = mRootPtr->StaticResources()->
+            GetStaticInputLayout(name);
+        break;
+    case LAYOUT_TYPE::NORMAL_TEX:
+        // TEMP--------------------
+        name = "";
+        // TEMP--------------------
+        layout = mRootPtr->StaticResources()->
+            GetStaticInputLayout(name);
+        break;
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+        // TEMP--------------------
+        name = "";
+        // TEMP--------------------
+        layout = mRootPtr->StaticResources()->
+            GetStaticInputLayout(name);
+        break;
+    default:
+        break;
+    }
+
+    return layout;
 }
 
 ID3D11Buffer* RSMeshHelper::CreateIndexBuffer(

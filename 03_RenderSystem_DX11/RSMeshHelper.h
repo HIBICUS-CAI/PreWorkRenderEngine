@@ -26,6 +26,8 @@ public:
         SUBMESH_INFO* _info, LAYOUT_TYPE _layoutType);
 
 private:
+    ID3D11InputLayout* RefStaticInputLayout(
+        LAYOUT_TYPE _layoutType);
     ID3D11Buffer* CreateIndexBuffer(
         const std::vector<UINT>* const _indices);
     ID3D11Buffer* CreateVertexBuffer(

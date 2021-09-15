@@ -122,7 +122,11 @@ struct SUBMESH_INFO
 
 struct RS_SUBMESH_DATA
 {
-    int a = 0;
+    ID3D11InputLayout* mLayout = nullptr;
+    ID3D11Buffer* mIndexBuffer = nullptr;
+    ID3D11Buffer* mVertexBuffer = nullptr;
+    std::vector<std::string> mTextures = {};
+    RS_MATERIAL_INFO mMaterial = {};
 };
 
 constexpr UINT MESH_TEX_MAX = 10;
