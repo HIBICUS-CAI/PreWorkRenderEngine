@@ -58,6 +58,8 @@ int WINAPI WinMain(
         }
     }
 
+    ReleaseTempPipeline();
+
     mesh->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;

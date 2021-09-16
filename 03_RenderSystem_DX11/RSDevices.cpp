@@ -93,6 +93,11 @@ ID3D11DeviceContext* RSDevices::GetSTContext() const
     return mImmediateContext;
 }
 
+ID3D11RenderTargetView* RSDevices::GetSwapChainRtv() const
+{
+    return mSwapChainRtv;
+}
+
 void RSDevices::PresentSwapChain()
 {
     mDXGISwapChain->Present(0, 0);

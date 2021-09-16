@@ -4,6 +4,13 @@
 #include <vector>
 #include "RSPass_Base.h"
 
+struct TEMP_WVPBuffer
+{
+    DirectX::XMFLOAT4X4 mWorld = {};
+    DirectX::XMFLOAT4X4 mView = {};
+    DirectX::XMFLOAT4X4 mProjection = {};
+};
+
 void PassRootToTempPipeline(class RSRoot_DX11* _root);
 
 bool CreateTempPipeline();
@@ -44,4 +51,5 @@ private:
     DRAWCALL_TYPE mDrawCallType;
     RSDrawCallsPipe* mDrawCallPipe;
     ID3D11Buffer* mWVPBuffer;
+    TEMP_WVPBuffer mCPUBuffer;
 };
