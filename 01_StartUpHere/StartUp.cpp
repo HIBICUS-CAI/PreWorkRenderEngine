@@ -3,6 +3,7 @@
 #include "ID_Interface.h"
 #include "TempMesh.h"
 #include "RSRoot_DX11.h"
+#include "TempPipeline_Diffuse.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -31,6 +32,12 @@ int WINAPI WinMain(
     }
 
     mesh->Process(root->MeshHelper());
+
+    PassRootToTempPipeline(root);
+    if (!CreateTempPipeline())
+    {
+        return -3;
+    }
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
