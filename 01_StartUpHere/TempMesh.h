@@ -6,6 +6,7 @@
 #include <DirectXMath.h>
 #include "RSCommon.h"
 #include "RSMeshHelper.h"
+#include "RSDrawCallsPool.h"
 
 enum class MESH_FILE_TYPE
 {
@@ -59,6 +60,12 @@ public:
         //mData=_helper->ProcessSubMesh()
     }
 
+    void UploadDrawCall(RSDrawCallsPool* _pool)
+    {
+        RS_DRAWCALL_DATA data = {};
+        _pool->AddDrawCallToPipe(DRAWCALL_TYPE::OPACITY, data);
+    }
+
     void Release(RSMeshHelper* _helper)
     {
         _helper->ReleaseSubMesh(mData);
@@ -85,6 +92,14 @@ public:
         for (auto& sub : mSubMeshes)
         {
             sub.Process(_helper);
+        }
+    }
+
+    void UploadDrawCall(RSDrawCallsPool* _pool)
+    {
+        for (auto& sub : mSubMeshes)
+        {
+            sub.UploadDrawCall(_pool);
         }
     }
 

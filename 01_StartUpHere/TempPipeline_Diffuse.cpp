@@ -4,6 +4,8 @@
 #include "RSTopic.h"
 #include "RSShaderCompile.h"
 #include "RSDevices.h"
+#include "RSDrawCallsPool.h"
+#include <DirectXColors.h>
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
@@ -100,6 +102,10 @@ bool RSPass_Diffuse::InitPass()
     if (!CreateSamplers()) { return false; }
     if (!CreateBuffers()) { return false; }
 
+    mDrawCallType = DRAWCALL_TYPE::OPACITY;
+    mDrawCallPipe = g_Root->DrawCallsPool()->
+        GetDrawCallsPipe(mDrawCallType);
+
     return true;
 }
 
@@ -114,7 +120,16 @@ void RSPass_Diffuse::ReleasePass()
 
 void RSPass_Diffuse::ExecuatePass()
 {
+    g_Root->Devices()->GetSTContext()->OMSetRenderTargets(1,
+        &mRenderTargetView, mDepthStencilView);
+    g_Root->Devices()->GetSTContext()->ClearRenderTargetView(
+        mRenderTargetView, DirectX::Colors::DarkGreen);
+    g_Root->Devices()->GetSTContext()->ClearDepthStencilView(
+        mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
 
+    // TEMP-----------------------------
+    g_Root->Devices()->PresentSwapChain();
+    mDrawCallPipe->mDatas.clear();
 }
 
 bool RSPass_Diffuse::CreateShaders()

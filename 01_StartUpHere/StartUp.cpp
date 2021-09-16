@@ -55,6 +55,9 @@ int WINAPI WinMain(
             {
                 PostQuitMessage(0);
             }
+
+            mesh->UploadDrawCall(root->DrawCallsPool());
+            ExecuateTempPipeline();
         }
     }
 
