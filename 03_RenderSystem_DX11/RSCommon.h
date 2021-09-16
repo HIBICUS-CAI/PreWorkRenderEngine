@@ -125,7 +125,7 @@ struct SUBMESH_INFO
 {
     TOPOLOGY_TYPE mTopologyType = TOPOLOGY_TYPE::NONE;
     std::vector<UINT>* mIndeices = nullptr;
-    std::vector<void*>* mVerteices = nullptr;
+    void* mVerteices = nullptr;
     std::vector<std::string>* mTextures = nullptr;
     MATERIAL_INFO* mMaterial = nullptr;
     std::string mStaticMaterial = "";
@@ -147,7 +147,7 @@ constexpr UINT MESH_TEX_MAX = 10;
 struct RS_MESH_TEXTURE_INFO
 {
     bool mUse = false;
-    int a = 0;
+    ID3D11ShaderResourceView* mSrv;
 };
 
 struct RS_MISC_INFO

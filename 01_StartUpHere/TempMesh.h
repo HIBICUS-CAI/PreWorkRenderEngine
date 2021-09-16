@@ -41,12 +41,7 @@ public:
         SUBMESH_INFO si = {};
         si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
         si.mIndeices = &mIndeices;
-        std::vector<void*> p = {};
-        for (auto& vert : mVerteices)
-        {
-            p.push_back(&vert);
-        }
-        si.mVerteices = &p;
+        si.mVerteices = &mVerteices;
         std::vector<std::string> t = {};
         for (auto& tex : mTextures)
         {
@@ -59,9 +54,14 @@ public:
         mi.mFresnelR0 = {};
         mi.mShininess = 5.f;
         si.mMaterial = &mi;
-        mData = _helper->ProcessSubMesh(
+        _helper->ProcessSubMesh(&mData,
             &si, LAYOUT_TYPE::NORMAL_TANGENT_TEX);
         //mData=_helper->ProcessSubMesh()
+    }
+
+    void Release(RSMeshHelper* _helper)
+    {
+        _helper->ReleaseSubMesh(mData);
     }
 
 private:
@@ -85,6 +85,14 @@ public:
         for (auto& sub : mSubMeshes)
         {
             sub.Process(_helper);
+        }
+    }
+
+    void Release(RSMeshHelper* _helper)
+    {
+        for (auto& sub : mSubMeshes)
+        {
+            sub.Release(_helper);
         }
     }
 

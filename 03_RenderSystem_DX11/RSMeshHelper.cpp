@@ -44,51 +44,53 @@ void RSMeshHelper::CleanAndStop()
 
 }
 
-RS_SUBMESH_DATA RSMeshHelper::ProcessSubMesh(
+void RSMeshHelper::ProcessSubMesh(
+    RS_SUBMESH_DATA* _result,
     SUBMESH_INFO* _info, LAYOUT_TYPE _layoutType)
 {
     assert(_info);
-
-    RS_SUBMESH_DATA data = {};
 
     auto type = _info->mTopologyType;
     switch (type)
     {
     case TOPOLOGY_TYPE::POINTLIST:
-        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+        _result->mTopologyType =
+            D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
         break;
     case TOPOLOGY_TYPE::LINELIST:
-        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+        _result->mTopologyType =
+            D3D_PRIMITIVE_TOPOLOGY_LINELIST;
         break;
     case TOPOLOGY_TYPE::LINESTRIP:
-        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        _result->mTopologyType =
+            D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
         break;
     case TOPOLOGY_TYPE::TRIANGLELIST:
-        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        _result->mTopologyType =
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         break;
     case TOPOLOGY_TYPE::TRIANGLESTRIP:
-        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        _result->mTopologyType =
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
         break;
     default:
-        data.mTopologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        _result->mTopologyType =
+            D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
         break;
     }
-    data.mLayout = RefStaticInputLayout(_layoutType);
-    data.mIndexBuffer = CreateIndexBuffer(_info->mIndeices);
-    data.mVertexBuffer = CreateVertexBuffer(_info->mVerteices,
+    _result->mLayout = RefStaticInputLayout(_layoutType);
+    _result->mIndexBuffer = CreateIndexBuffer(_info->mIndeices);
+    _result->mVertexBuffer = CreateVertexBuffer(_info->mVerteices,
         _layoutType);
-    data.mTextures = CreateTexSrv(_info->mTextures);
-    data.mMaterial = RS_MATERIAL_INFO();
+    CreateTexSrv(_result, _info->mTextures);
     if (_info->mMaterial)
     {
-        data.mMaterial = CreateSubMeshMaterial(_info->mMaterial);
+        CreateSubMeshMaterial(_result, _info->mMaterial);
     }
     else
     {
-        data.mMaterial = RefStaticMaterial(_info->mStaticMaterial);
+        RefStaticMaterial(_result, _info->mStaticMaterial);
     }
-
-    return data;
 }
 
 ID3D11InputLayout* RSMeshHelper::RefStaticInputLayout(
@@ -157,32 +159,38 @@ ID3D11Buffer* RSMeshHelper::CreateIndexBuffer(
 }
 
 ID3D11Buffer* RSMeshHelper::CreateVertexBuffer(
-    const std::vector<void*>* const _vertices,
+    const void* const _vertices,
     LAYOUT_TYPE _layoutType)
 {
-    std::vector<VertexType::BasicVertex> basic = {};
-    std::vector<VertexType::ColorVertex> color = {};
-    std::vector<VertexType::TangentVertex> tangent = {};
+    std::vector<VertexType::BasicVertex>* basic = nullptr;
+    std::vector<VertexType::ColorVertex>* color = nullptr;
+    std::vector<VertexType::TangentVertex>* tangent = nullptr;
+    UINT size = 0;
+    UINT vertexSize = 0;
+    void* vertArray = nullptr;
 
     switch (_layoutType)
     {
     case LAYOUT_TYPE::NORMAL_COLOR:
-        for (auto& vert : *_vertices)
-        {
-            color.emplace_back(*(VertexType::ColorVertex*)vert);
-        }
+        color =
+            (std::vector<VertexType::ColorVertex>*)_vertices;
+        size = (UINT)color->size();
+        vertexSize = (UINT)sizeof(VertexType::ColorVertex);
+        vertArray = &((*color)[0]);
         break;
     case LAYOUT_TYPE::NORMAL_TEX:
-        for (auto& vert : *_vertices)
-        {
-            basic.emplace_back(*(VertexType::BasicVertex*)vert);
-        }
+        basic =
+            (std::vector<VertexType::BasicVertex>*)_vertices;
+        size = (UINT)basic->size();
+        vertexSize = (UINT)sizeof(VertexType::BasicVertex);
+        vertArray = &((*basic)[0]);
         break;
     case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
-        for (auto& vert : *_vertices)
-        {
-            tangent.emplace_back(*(VertexType::TangentVertex*)vert);
-        }
+        tangent =
+            (std::vector<VertexType::TangentVertex>*)_vertices;
+        size = (UINT)tangent->size();
+        vertexSize = (UINT)sizeof(VertexType::TangentVertex);
+        vertArray = &((*tangent)[0]);
         break;
     default:
         return nullptr;
@@ -194,41 +202,12 @@ ID3D11Buffer* RSMeshHelper::CreateVertexBuffer(
     ZeroMemory(&vbd, sizeof(vbd));
     ZeroMemory(&initData, sizeof(initData));
     vbd.Usage = D3D11_USAGE_IMMUTABLE;
-    switch (_layoutType)
-    {
-    case LAYOUT_TYPE::NORMAL_COLOR:
-        vbd.ByteWidth =
-            (UINT)(sizeof(VertexType::ColorVertex) * color.size());
-        break;
-    case LAYOUT_TYPE::NORMAL_TEX:
-        vbd.ByteWidth =
-            (UINT)(sizeof(VertexType::BasicVertex) * basic.size());
-        break;
-    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
-        vbd.ByteWidth =
-            (UINT)(sizeof(VertexType::TangentVertex) * tangent.size());
-        break;
-    default:
-        return nullptr;
-    }
+    vbd.ByteWidth = vertexSize * size;
     vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vbd.CPUAccessFlags = 0;
     vbd.MiscFlags = 0;
 
-    switch (_layoutType)
-    {
-    case LAYOUT_TYPE::NORMAL_COLOR:
-        initData.pSysMem = &color[0];
-        break;
-    case LAYOUT_TYPE::NORMAL_TEX:
-        initData.pSysMem = &basic[0];
-        break;
-    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
-        initData.pSysMem = &tangent[0];
-        break;
-    default:
-        return nullptr;
-    }
+    initData.pSysMem = vertArray;
 
     HRESULT hr = S_OK;
     hr = mDevicesPtr->GetDevice()->
@@ -243,13 +222,14 @@ ID3D11Buffer* RSMeshHelper::CreateVertexBuffer(
     }
 }
 
-std::vector<std::string> RSMeshHelper::CreateTexSrv(
+void RSMeshHelper::CreateTexSrv(
+    RS_SUBMESH_DATA* _result,
     const std::vector<std::string>* const _textures)
 {
-    std::vector<std::string> texVec = {};
-    std::wstring wstr = L"";
-    std::string name = "";
-    HRESULT hr = S_OK;
+    std::vector<std::string>* texVec = &(_result->mTextures);
+    static std::wstring wstr = L"";
+    static std::string name = "";
+    static HRESULT hr = S_OK;
     ID3D11ShaderResourceView* srv = nullptr;
 
     for (auto& tex : *_textures)
@@ -266,7 +246,7 @@ std::vector<std::string> RSMeshHelper::CreateTexSrv(
             {
                 name = tex;
                 mTexManagerPtr->AddMeshSrv(name, srv);
-                texVec.emplace_back(name);
+                texVec->emplace_back(name);
             }
             else
             {
@@ -283,7 +263,7 @@ std::vector<std::string> RSMeshHelper::CreateTexSrv(
             {
                 name = tex;
                 mTexManagerPtr->AddMeshSrv(name, srv);
-                texVec.emplace_back(name);
+                texVec->emplace_back(name);
             }
             else
             {
@@ -292,27 +272,35 @@ std::vector<std::string> RSMeshHelper::CreateTexSrv(
             }
         }
     }
-
-    return texVec;
 }
 
-RS_MATERIAL_INFO RSMeshHelper::CreateSubMeshMaterial(
+void RSMeshHelper::CreateSubMeshMaterial(
+    RS_SUBMESH_DATA* _result,
     const MATERIAL_INFO* const _info)
 {
-    RS_MATERIAL_INFO material = {};
-    material.mDiffuseAlbedo = _info->mDiffuseAlbedo;
-    material.mFresnelR0 = _info->mFresnelR0;
-    material.mShininess = _info->mShininess;
+    assert(_info);
 
-    return material;
+    RS_MATERIAL_INFO* material = &(_result->mMaterial);
+    material->mDiffuseAlbedo = _info->mDiffuseAlbedo;
+    material->mFresnelR0 = _info->mFresnelR0;
+    material->mShininess = _info->mShininess;
 }
 
-RS_MATERIAL_INFO RSMeshHelper::RefStaticMaterial(
+void RSMeshHelper::RefStaticMaterial(
+    RS_SUBMESH_DATA* _result,
     std::string& _materialName)
 {
     auto material = mRootPtr->StaticResources()->
         GetStaticMaterial(_materialName);
     assert(material);
 
-    return *material;
+    _result->mMaterial.mDiffuseAlbedo = material->mDiffuseAlbedo;
+    _result->mMaterial.mFresnelR0 = material->mFresnelR0;
+    _result->mMaterial.mShininess = material->mShininess;
+}
+
+void RSMeshHelper::ReleaseSubMesh(RS_SUBMESH_DATA& _result)
+{
+    SAFE_RELEASE(_result.mIndexBuffer);
+    SAFE_RELEASE(_result.mVertexBuffer);
 }

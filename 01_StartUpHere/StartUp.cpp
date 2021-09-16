@@ -51,6 +51,7 @@ int WINAPI WinMain(
         }
     }
 
+    mesh->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;

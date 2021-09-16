@@ -22,8 +22,9 @@ public:
         class RSTexturesManager* _texManager);
     void CleanAndStop();
 
-    RS_SUBMESH_DATA ProcessSubMesh(
+    void ProcessSubMesh(RS_SUBMESH_DATA* _result,
         SUBMESH_INFO* _info, LAYOUT_TYPE _layoutType);
+    void ReleaseSubMesh(RS_SUBMESH_DATA& _result);
 
 private:
     ID3D11InputLayout* RefStaticInputLayout(
@@ -31,13 +32,13 @@ private:
     ID3D11Buffer* CreateIndexBuffer(
         const std::vector<UINT>* const _indices);
     ID3D11Buffer* CreateVertexBuffer(
-        const std::vector<void*>* const _vertices,
+        const void* const _vertices,
         LAYOUT_TYPE _layoutType);
-    std::vector<std::string> CreateTexSrv(
+    void CreateTexSrv(RS_SUBMESH_DATA* _result,
         const std::vector<std::string>* const _textures);
-    RS_MATERIAL_INFO CreateSubMeshMaterial(
+    void CreateSubMeshMaterial(RS_SUBMESH_DATA* _result,
         const MATERIAL_INFO* const _info);
-    RS_MATERIAL_INFO RefStaticMaterial(
+    void RefStaticMaterial(RS_SUBMESH_DATA* _result,
         std::string& _materialName);
 
 private:
