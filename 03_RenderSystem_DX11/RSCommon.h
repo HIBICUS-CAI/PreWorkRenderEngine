@@ -142,6 +142,15 @@ struct RS_SUBMESH_DATA
     RS_MATERIAL_INFO mMaterial = {};
 };
 
+struct RS_SUBMESH_DRAWCALL_DATA
+{
+    D3D_PRIMITIVE_TOPOLOGY mTopologyType =
+        D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    ID3D11InputLayout* mLayout = nullptr;
+    ID3D11Buffer* mIndexBuffer = nullptr;
+    ID3D11Buffer* mVertexBuffer = nullptr;
+};
+
 constexpr UINT MESH_TEX_MAX = 10;
 
 struct RS_MESH_TEXTURE_INFO
@@ -160,7 +169,7 @@ struct RS_MISC_INFO
 // 不包含光照信息，之后从相关地方调取
 struct RS_DRAWCALL_DATA
 {
-    RS_SUBMESH_DATA mMeshData = {};
+    RS_SUBMESH_DRAWCALL_DATA mMeshData = {};
     RS_CAM_INFO mCameraData = {};
     RS_MATERIAL_INFO mMaterialData = {};
     RS_MESH_TEXTURE_INFO mTextureDatas[MESH_TEX_MAX] = { {} };
