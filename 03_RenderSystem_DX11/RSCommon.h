@@ -156,7 +156,7 @@ constexpr UINT MESH_TEX_MAX = 10;
 struct RS_MESH_TEXTURE_INFO
 {
     bool mUse = false;
-    ID3D11ShaderResourceView* mSrv;
+    ID3D11ShaderResourceView* mSrv = nullptr;
 };
 
 struct RS_MISC_INFO

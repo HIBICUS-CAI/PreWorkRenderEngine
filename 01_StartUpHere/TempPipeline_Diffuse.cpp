@@ -6,6 +6,7 @@
 #include "RSDevices.h"
 #include "RSDrawCallsPool.h"
 #include <DirectXColors.h>
+#include "TempMesh.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
@@ -126,6 +127,58 @@ void RSPass_Diffuse::ExecuatePass()
         mRenderTargetView, DirectX::Colors::DarkGreen);
     g_Root->Devices()->GetSTContext()->ClearDepthStencilView(
         mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
+    g_Root->Devices()->GetSTContext()->VSSetShader(
+        mVertexShader, nullptr, 0);
+    g_Root->Devices()->GetSTContext()->PSSetShader(
+        mPixelShader, nullptr, 0);
+    g_Root->Devices()->GetSTContext()->PSSetSamplers(
+        0, 1, &mSampler);
+
+    DirectX::XMMATRIX mat = {};
+    DirectX::XMFLOAT4X4 flt44 = {};
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+    static float time = 0.f;
+    time += 0.0001f;
+    for (auto& call : mDrawCallPipe->mDatas)
+    {
+        mat = DirectX::XMMatrixMultiply(
+            DirectX::XMMatrixScaling(0.04f, 0.04f, 0.04f),
+            DirectX::XMMatrixRotationY(time)
+        );
+        mat = DirectX::XMMatrixMultiply(
+            mat, DirectX::XMMatrixTranslation(0.f, 0.f, 10.f));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&flt44, mat);
+        mCPUBuffer.mWorld = flt44;
+        mat = DirectX::XMLoadFloat4x4(&call.mCameraData.mViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&flt44, mat);
+        mCPUBuffer.mView = flt44;
+        mat = DirectX::XMLoadFloat4x4(&call.mCameraData.mProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&flt44, mat);
+        mCPUBuffer.mProjection = flt44;
+
+        g_Root->Devices()->GetSTContext()->UpdateSubresource(
+            mWVPBuffer, 0, nullptr, &mCPUBuffer, 0, 0);
+        g_Root->Devices()->GetSTContext()->IASetInputLayout(
+            call.mMeshData.mLayout);
+        g_Root->Devices()->GetSTContext()->IASetPrimitiveTopology(
+            call.mMeshData.mTopologyType);
+        g_Root->Devices()->GetSTContext()->IASetVertexBuffers(
+            0, 1, &call.mMeshData.mVertexBuffer,
+            &stride, &offset);
+        g_Root->Devices()->GetSTContext()->IASetIndexBuffer(
+            call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        g_Root->Devices()->GetSTContext()->VSSetConstantBuffers(
+            0, 1, &mWVPBuffer);
+        g_Root->Devices()->GetSTContext()->PSSetShaderResources(
+            0, 1, &call.mTextureDatas[0].mSrv);
+
+        g_Root->Devices()->GetSTContext()->DrawIndexed(
+            (UINT)61164, 0, 0);
+    }
 
     // TEMP-----------------------------
     g_Root->Devices()->PresentSwapChain();

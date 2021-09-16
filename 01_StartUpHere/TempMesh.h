@@ -7,6 +7,9 @@
 #include "RSCommon.h"
 #include "RSMeshHelper.h"
 #include "RSDrawCallsPool.h"
+#include "RSRoot_DX11.h"
+#include "RSTexturesManager.h"
+#include "RSCamerasContainer.h"
 
 enum class MESH_FILE_TYPE
 {
@@ -60,9 +63,21 @@ public:
         //mData=_helper->ProcessSubMesh()
     }
 
-    void UploadDrawCall(RSDrawCallsPool* _pool)
+    void UploadDrawCall(RSDrawCallsPool* _pool,
+        RSRoot_DX11* _root)
     {
+        std::string name = "temp-cam";
         RS_DRAWCALL_DATA data = {};
+        data.mMeshData.mLayout = mData.mLayout;
+        data.mMeshData.mTopologyType = mData.mTopologyType;
+        data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
+        data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
+        data.mCameraData = *(_root->CamerasContainer()->
+            GetRSCameraInfo(name));
+        data.mTextureDatas[0].mUse = true;
+        data.mTextureDatas[0].mSrv = _root->TexturesManager()->
+            GetMeshSrv(mData.mTextures[0]);
+
         _pool->AddDrawCallToPipe(DRAWCALL_TYPE::OPACITY, data);
     }
 
@@ -95,11 +110,12 @@ public:
         }
     }
 
-    void UploadDrawCall(RSDrawCallsPool* _pool)
+    void UploadDrawCall(RSDrawCallsPool* _pool,
+        RSRoot_DX11* _root)
     {
         for (auto& sub : mSubMeshes)
         {
-            sub.UploadDrawCall(_pool);
+            sub.UploadDrawCall(_pool, _root);
         }
     }
 

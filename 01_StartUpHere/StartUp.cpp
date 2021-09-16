@@ -4,6 +4,8 @@
 #include "TempMesh.h"
 #include "RSRoot_DX11.h"
 #include "TempPipeline_Diffuse.h"
+#include "RSCamera.h"
+#include "RSCamerasContainer.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -18,8 +20,8 @@ int WINAPI WinMain(
     InputInterface::StartUp();
 
     TempMesh* mesh = new TempMesh();
-    if (!mesh->Load("phong_cube.fbx.meshdata",
-        MESH_FILE_TYPE::BIN))
+    if (!mesh->Load("Dragon.FBX.json",
+        MESH_FILE_TYPE::JSON))
     {
         return -1;
     }
@@ -39,6 +41,17 @@ int WINAPI WinMain(
         return -3;
     }
 
+    std::string name = "temp-cam";
+    CAM_INFO ci = {};
+    ci.mType = LENS_TYPE::PERSPECTIVE;
+    ci.mPosition = { 0.f,0.f,0.f };
+    ci.mLookAt = { 0.f,0.f,1.f };
+    ci.mUpVec = { 0.f,1.f,0.f };
+    ci.mNearFarZ = { 1.f,100.f };
+    ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
+    auto cam = root->CamerasContainer()->CreateRSCamera(
+        name, &ci);
+
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)
     {
@@ -56,7 +69,7 @@ int WINAPI WinMain(
                 PostQuitMessage(0);
             }
 
-            mesh->UploadDrawCall(root->DrawCallsPool());
+            mesh->UploadDrawCall(root->DrawCallsPool(), root);
             ExecuateTempPipeline();
         }
     }

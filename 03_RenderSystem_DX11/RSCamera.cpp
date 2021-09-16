@@ -38,6 +38,9 @@ RSCamera::RSCamera(CAM_INFO* _info) :
     default:
         break;
     }
+
+    CalcRSViewMat();
+    CalcRSProjMat();
 }
 
 RSCamera::~RSCamera()
@@ -72,6 +75,9 @@ void RSCamera::ResetRSCamera(CAM_INFO* _info)
     default:
         break;
     }
+
+    CalcRSViewMat();
+    CalcRSProjMat();
 }
 
 void RSCamera::TranslateRSCamera(XMFLOAT3 _delta)
