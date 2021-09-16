@@ -11,6 +11,8 @@
 #include "RSRoot_DX11.h"
 #include "RSPipeline.h"
 #include "RSTopic.h"
+#include "RSShaderCompile.h"
+#include "RSDevices.h"
 
 RSStaticResources::RSStaticResources() :
     mRootPtr(nullptr),
@@ -33,6 +35,13 @@ bool RSStaticResources::StartUp(RSRoot_DX11* _root)
     if (!_root) { return false; }
 
     mRootPtr = _root;
+
+    if (!CompileStaticShaders()) { return false; }
+    if (!BuildStaticStates()) { return false; }
+    if (!BuildStaticInputLayouts()) { return false; }
+    if (!BuildStaticTopics()) { return false; }
+    if (!BuildStaticPipelines()) { return false; }
+    if (!BuildStaticMaterials()) { return false; }
 
     return true;
 }
@@ -128,9 +137,136 @@ bool RSStaticResources::BuildStaticStates()
 
 bool RSStaticResources::BuildStaticInputLayouts()
 {
-    // TEMP----------------------
+    ID3DBlob* shaderBlob = nullptr;
+    ID3D11InputLayout* inputLayout = nullptr;
+    HRESULT hr = S_OK;
+
+    {
+        hr = Tool::CompileShaderFromFile(
+            L"..\\03_RenderSystem_DX11\\StaticResources\\InputLayoutForBasic.hlsl",
+            "main", "vs_5_0", &shaderBlob);
+        FAIL_HR_RETURN(hr);
+
+        D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            {
+                "POSITION",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,0,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "NORMAL",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,12,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "TEXCOORD",0,
+                DXGI_FORMAT_R32G32_FLOAT,0,24,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            }
+        };
+        UINT numInputLayouts = ARRAYSIZE(layout);
+
+        hr = mRootPtr->Devices()->GetDevice()->
+            CreateInputLayout(
+                layout, numInputLayouts,
+                shaderBlob->GetBufferPointer(),
+                shaderBlob->GetBufferSize(),
+                &inputLayout);
+        shaderBlob->Release();
+        FAIL_HR_RETURN(hr);
+        mInputLayoutMap.insert({ "BasicVertex",inputLayout });
+        shaderBlob = nullptr;
+        inputLayout = nullptr;
+        hr = S_OK;
+    }
+
+    {
+        hr = Tool::CompileShaderFromFile(
+            L"..\\03_RenderSystem_DX11\\StaticResources\\InputLayoutForColor.hlsl",
+            "main", "vs_5_0", &shaderBlob);
+        FAIL_HR_RETURN(hr);
+
+        D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            {
+                "POSITION",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,0,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "NORMAL",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,12,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "COLOR",0,
+                DXGI_FORMAT_R32G32B32A32_FLOAT,0,24,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            }
+        };
+        UINT numInputLayouts = ARRAYSIZE(layout);
+
+        hr = mRootPtr->Devices()->GetDevice()->
+            CreateInputLayout(
+                layout, numInputLayouts,
+                shaderBlob->GetBufferPointer(),
+                shaderBlob->GetBufferSize(),
+                &inputLayout);
+        shaderBlob->Release();
+        FAIL_HR_RETURN(hr);
+        mInputLayoutMap.insert({ "ColorVertex",inputLayout });
+        shaderBlob = nullptr;
+        inputLayout = nullptr;
+        hr = S_OK;
+    }
+
+    {
+        hr = Tool::CompileShaderFromFile(
+            L"..\\03_RenderSystem_DX11\\StaticResources\\InputLayoutForTangent.hlsl",
+            "main", "vs_5_0", &shaderBlob);
+        FAIL_HR_RETURN(hr);
+
+        D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            {
+                "POSITION",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,0,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "NORMAL",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,12,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "TANGENT",0,
+                DXGI_FORMAT_R32G32B32_FLOAT,0,24,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            },
+            {
+                "TEXCOORD",0,
+                DXGI_FORMAT_R32G32_FLOAT,0,36,
+                D3D11_INPUT_PER_VERTEX_DATA,0
+            }
+        };
+        UINT numInputLayouts = ARRAYSIZE(layout);
+
+        hr = mRootPtr->Devices()->GetDevice()->
+            CreateInputLayout(
+                layout, numInputLayouts,
+                shaderBlob->GetBufferPointer(),
+                shaderBlob->GetBufferSize(),
+                &inputLayout);
+        shaderBlob->Release();
+        FAIL_HR_RETURN(hr);
+        mInputLayoutMap.insert({ "TangentVertex",inputLayout });
+        shaderBlob = nullptr;
+        inputLayout = nullptr;
+        hr = S_OK;
+    }
+
     return true;
-    // TEMP----------------------
 }
 
 bool RSStaticResources::BuildStaticTopics()

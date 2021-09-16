@@ -17,6 +17,9 @@
     <Filter Include="Common">
       <UniqueIdentifier>{0bcc8651-2a40-4202-b33e-262dba9f0cc3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tool">
+      <UniqueIdentifier>{bb4c5505-e763-42bf-b757-205edeee903f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RSCamera.h">
@@ -70,6 +73,9 @@
     <ClInclude Include="RSVertexType.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="RSShaderCompile.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSCamera.cpp">
@@ -113,6 +119,9 @@
     </ClCompile>
     <ClCompile Include="RSTopic.cpp">
       <Filter>Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="RSShaderCompile.cpp">
+      <Filter>Tool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -101,29 +101,19 @@ ID3D11InputLayout* RSMeshHelper::RefStaticInputLayout(
     switch (_layoutType)
     {
     case LAYOUT_TYPE::NORMAL_COLOR:
-        // TEMP--------------------
-        name = "";
-        // TEMP--------------------
-        layout = mRootPtr->StaticResources()->
-            GetStaticInputLayout(name);
+        name = "ColorVertex";
         break;
     case LAYOUT_TYPE::NORMAL_TEX:
-        // TEMP--------------------
-        name = "";
-        // TEMP--------------------
-        layout = mRootPtr->StaticResources()->
-            GetStaticInputLayout(name);
+        name = "BasicVertex";
         break;
     case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
-        // TEMP--------------------
-        name = "";
-        // TEMP--------------------
-        layout = mRootPtr->StaticResources()->
-            GetStaticInputLayout(name);
+        name = "TangentVertex";
         break;
     default:
-        break;
+        return nullptr;
     }
+    layout = mRootPtr->StaticResources()->
+        GetStaticInputLayout(name);
 
     return layout;
 }
