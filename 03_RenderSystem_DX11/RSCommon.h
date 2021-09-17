@@ -1,10 +1,10 @@
-//---------------------------------------------------------------
+ï»¿//---------------------------------------------------------------
 // File: RSCommon.h
 // Proj: RenderSystem_DX11
-// Info: ÉùÃ÷RenderSystem_DX11Ïà¹ØµÄÈ«¾ÖÀàĞÍ
+// Info: å£°æ˜RenderSystem_DX11ç›¸å…³çš„å…¨å±€ç±»å‹
 // Date: 2021.9.14
 // Mail: cai_genkan@outlook.com
-// Comt: ÔÚ´ËlibÏîÄ¿ÄÚÖĞÌá¹©ExtraMacro
+// Comt: åœ¨æ­¤libé¡¹ç›®å†…ä¸­æä¾›ExtraMacro
 //---------------------------------------------------------------
 
 #pragma once
@@ -166,7 +166,7 @@ struct RS_MISC_INFO
     float mDeltaTime;
 };
 
-// ²»°üº¬¹âÕÕĞÅÏ¢£¬Ö®ºó´ÓÏà¹ØµØ·½µ÷È¡
+// ä¸åŒ…å«å…‰ç…§ä¿¡æ¯ï¼Œä¹‹åä»ç›¸å…³åœ°æ–¹è°ƒå–
 struct RS_DRAWCALL_DATA
 {
     RS_SUBMESH_DRAWCALL_DATA mMeshData = {};

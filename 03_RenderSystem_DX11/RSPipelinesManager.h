@@ -1,7 +1,7 @@
-//---------------------------------------------------------------
+ï»¿//---------------------------------------------------------------
 // File: RSPipelinesManager.h
 // Proj: RenderSystem_DX11
-// Info: ±£´æ²¢¹ÜÀíËùÓĞµÄpipeline
+// Info: ä¿å­˜å¹¶ç®¡ç†æ‰€æœ‰çš„pipeline
 // Date: 2021.9.13
 // Mail: cai_genkan@outlook.com
 // Comt: NULL

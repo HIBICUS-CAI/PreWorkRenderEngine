@@ -1,7 +1,7 @@
-//---------------------------------------------------------------
+ï»¿//---------------------------------------------------------------
 // File: RSExtraMacro.h
 // Proj: RenderSystem_DX11
-// Info: Ìá¹©RenderSystem_DX11ÄÚ¿ÉÓÃµÄ¶îÍâºê¶¨Òå
+// Info: æä¾›RenderSystem_DX11å†…å¯ç”¨çš„é¢å¤–å®å®šä¹‰
 // Date: 2021.9.14
 // Mail: cai_genkan@outlook.com
 // Comt: NULL
