@@ -12,7 +12,7 @@
 static RSRoot_DX11* g_Root = nullptr;
 static RSPipeline* g_TempPipeline = nullptr;
 
-void PassRootToTempPipeline(class RSRoot_DX11* _root)
+void PassRootToTempPipeline(RSRoot_DX11* _root)
 {
     g_Root = _root;
 }

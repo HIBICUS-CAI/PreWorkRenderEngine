@@ -49,6 +49,7 @@ int WINAPI WinMain(
     ci.mUpVec = { 0.f,1.f,0.f };
     ci.mNearFarZ = { 1.f,100.f };
     ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
+    ci.mOWidthAndheight = { 12.8f,7.2f };
     auto cam = root->CamerasContainer()->CreateRSCamera(
         name, &ci);
 
