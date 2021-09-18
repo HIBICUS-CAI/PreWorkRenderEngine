@@ -66,16 +66,12 @@ public:
     void UploadDrawCall(RSDrawCallsPool* _pool,
         RSRoot_DX11* _root)
     {
-        std::string name = "temp-cam";
-        RS_DRAWCALL_DATA data = {};
-        data.mMeshData.mLayout = mData.mLayout;
-        data.mMeshData.mTopologyType = mData.mTopologyType;
-        data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
-        data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
-        data.mMeshData.mIndexCount = (UINT)mIndeices.size();
+        static std::vector<RS_INSTANCE_DATA> instance = {};
+        static float time = 0.f;
+        time += 0.0001f;
+        instance.clear();
         {
-            static float time = 0.f;
-            time += 0.0001f;
+            RS_INSTANCE_DATA ins_data = {};
             DirectX::XMMATRIX mat = {};
             DirectX::XMFLOAT4X4 flt44 = {};
             mat = DirectX::XMMatrixMultiply(
@@ -86,8 +82,18 @@ public:
                 mat,
                 DirectX::XMMatrixTranslation(0.f, 0.f, 10.f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
-            data.mInstanceData.mWorldMatrix = flt44;
+            ins_data.mWorldMat = flt44;
+            instance.emplace_back(ins_data);
         }
+
+        std::string name = "temp-cam";
+        RS_DRAWCALL_DATA data = {};
+        data.mMeshData.mLayout = mData.mLayout;
+        data.mMeshData.mTopologyType = mData.mTopologyType;
+        data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
+        data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
+        data.mMeshData.mIndexCount = (UINT)mIndeices.size();
+        data.mInstanceData.mDataPtr = &instance;
         data.mCameraData = *(_root->CamerasContainer()->
             GetRSCameraInfo(name));
         data.mTextureDatas[0].mUse = true;

@@ -152,10 +152,17 @@ struct RS_SUBMESH_DRAWCALL_DATA
     UINT mIndexCount = 0;
 };
 
+struct RS_INSTANCE_DATA
+{
+    DirectX::XMFLOAT4X4 mWorldMat = {};
+    RS_MATERIAL_INFO mMaterialData = {};
+    DirectX::XMFLOAT4 mCustomizedData1 = {};
+    DirectX::XMFLOAT4 mCustomizedData2 = {};
+};
+
 struct RS_INSTANCE_DRAWCALL_DATA
 {
-    // TODO 之后想办法修改为容器或者指针，可能指针会好一些
-    DirectX::XMFLOAT4X4 mWorldMatrix = {};
+    std::vector<RS_INSTANCE_DATA>* mDataPtr = nullptr;
 };
 
 constexpr UINT MESH_TEX_MAX = 10;

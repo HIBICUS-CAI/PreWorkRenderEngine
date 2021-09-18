@@ -138,7 +138,8 @@ void RSPass_Diffuse::ExecuatePass()
     UINT offset = 0;
     for (auto& call : mDrawCallPipe->mDatas)
     {
-        mat = DirectX::XMLoadFloat4x4(&call.mInstanceData.mWorldMatrix);
+        mat = DirectX::XMLoadFloat4x4(
+            &(*(call.mInstanceData.mDataPtr))[0].mWorldMat);
         mat = DirectX::XMMatrixTranspose(mat);
         DirectX::XMStoreFloat4x4(&flt44, mat);
         mCPUBuffer.mWorld = flt44;
@@ -167,7 +168,8 @@ void RSPass_Diffuse::ExecuatePass()
             0, 1, &call.mTextureDatas[0].mSrv);
 
         STContext()->DrawIndexedInstanced(
-            call.mMeshData.mIndexCount, 1, 0, 0, 0);
+            call.mMeshData.mIndexCount,
+            (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
     }
 
     // TEMP-----------------------------
