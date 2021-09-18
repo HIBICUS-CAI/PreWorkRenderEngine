@@ -33,8 +33,8 @@ private:
     LENS_TYPE mLensType;
 
     DirectX::XMFLOAT3 mCamPosition;
-    DirectX::XMFLOAT3 mCamUpVec;
-    DirectX::XMFLOAT3 mCamLookAt;
+    DirectX::XMFLOAT3 mCamUpVec;    // 基于原点的向量
+    DirectX::XMFLOAT3 mCamLookAt;   // 基于原点的向量
 
     float mFovAngleYPersp;
     float mAspectRatio;

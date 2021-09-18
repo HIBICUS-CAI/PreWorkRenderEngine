@@ -82,9 +82,16 @@ void RSCamera::ResetRSCamera(CAM_INFO* _info)
 
 void RSCamera::TranslateRSCamera(XMFLOAT3 _delta)
 {
+    XMVECTOR lookat = XMLoadFloat3(&mCamLookAt);
+    XMVECTOR up = XMLoadFloat3(&mCamUpVec);
+    XMVECTOR right = XMVector3Cross(lookat, up);
+    XMVECTOR movelookat = XMVector3Normalize(lookat);
+    XMVECTOR moveright = XMVector3Normalize(right);
+    movelookat *= _delta.z;
+    moveright *= _delta.x;
     XMVECTOR pos = XMLoadFloat3(&mCamPosition);
-    XMVECTOR delta = XMLoadFloat3(&_delta);
-    pos += delta;
+    pos += movelookat;
+    pos += moveright;
     XMStoreFloat3(&mCamPosition, pos);
 
     CalcRSViewMat();
@@ -94,15 +101,13 @@ void RSCamera::RotateRSCamera(XMFLOAT3 _deltaAngle)
 {
     XMVECTOR lookat = XMLoadFloat3(&mCamLookAt);
     XMVECTOR up = XMLoadFloat3(&mCamUpVec);
-    XMVECTOR pos = XMLoadFloat3(&mCamPosition);
-    lookat -= pos;
-    lookat = XMVector3Rotate(lookat,
-        XMQuaternionRotationRollPitchYaw(
-            _deltaAngle.x, _deltaAngle.y, _deltaAngle.z));
-    lookat += pos;
-    up = XMVector3Rotate(up,
-        XMQuaternionRotationRollPitchYaw(
-            _deltaAngle.x, _deltaAngle.y, _deltaAngle.z));
+    XMVECTOR right = XMVector3Cross(lookat, up);
+    XMMATRIX pitch = XMMatrixRotationAxis(right, _deltaAngle.x);
+    up = XMVector3TransformNormal(up, pitch);
+    lookat = XMVector3TransformNormal(lookat, pitch);
+    XMMATRIX y = XMMatrixRotationY(_deltaAngle.y);
+    up = XMVector3TransformNormal(up, y);
+    lookat = XMVector3TransformNormal(lookat, y);
     XMStoreFloat3(&mCamLookAt, lookat);
     XMStoreFloat3(&mCamUpVec, up);
 
@@ -139,7 +144,7 @@ void RSCamera::CalcRSViewMat()
 {
     XMMATRIX view = XMMatrixLookAtLH(
         XMLoadFloat3(&mCamPosition),
-        XMLoadFloat3(&mCamLookAt),
+        XMLoadFloat3(&mCamLookAt) + XMLoadFloat3(&mCamPosition),
         XMLoadFloat3(&mCamUpVec));
     XMVECTOR det = XMMatrixDeterminant(view);
     XMMATRIX invview = XMMatrixInverse(&det, view);

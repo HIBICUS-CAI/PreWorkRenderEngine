@@ -70,6 +70,15 @@ int WINAPI WinMain(
                 PostQuitMessage(0);
             }
 
+            auto sticksL = InputInterface::LeftStickOffset();
+            auto sticksR = InputInterface::RightStickOffset();
+            float vertL = (float)-sticksL.x / 1000000.f;
+            float horiL = (float)-sticksL.y / 1000000.f;
+            float vertR = (float)sticksR.x / 5000000.f;
+            float horiR = (float)-sticksR.y / 5000000.f;
+            cam->TranslateRSCamera({ vertL,0.f,horiL });
+            cam->RotateRSCamera({ horiR,vertR,0.f });
+
             mesh->UploadDrawCall(root->DrawCallsPool(), root);
             ExecuateTempPipeline();
         }
