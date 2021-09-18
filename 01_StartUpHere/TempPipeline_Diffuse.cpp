@@ -21,7 +21,7 @@ bool CreateTempPipeline()
 {
     std::string name = "test-diffuse";
     RSPass_Diffuse* pass = new RSPass_Diffuse(
-        name, PASS_TYPE::RENDER);
+        name, PASS_TYPE::RENDER, g_Root);
 
     pass->SetExecuateOrder(1);
 
@@ -54,8 +54,9 @@ void ReleaseTempPipeline()
 }
 
 RSPass_Diffuse::RSPass_Diffuse(
-    std::string& _name, PASS_TYPE _type) :
-    RSPass_Base(_name, _type),
+    std::string& _name, PASS_TYPE _type,
+    class RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
     mVertexShader(nullptr), mPixelShader(nullptr),
     //mRasterizerState(nullptr), mDepthStencilState(nullptr),
     mRenderTargetView(nullptr), mDepthStencilView(nullptr),
@@ -121,33 +122,23 @@ void RSPass_Diffuse::ReleasePass()
 
 void RSPass_Diffuse::ExecuatePass()
 {
-    g_Root->Devices()->GetSTContext()->OMSetRenderTargets(1,
+    STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, mDepthStencilView);
-    g_Root->Devices()->GetSTContext()->ClearRenderTargetView(
+    STContext()->ClearRenderTargetView(
         mRenderTargetView, DirectX::Colors::DarkGreen);
-    g_Root->Devices()->GetSTContext()->ClearDepthStencilView(
+    STContext()->ClearDepthStencilView(
         mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
-    g_Root->Devices()->GetSTContext()->VSSetShader(
-        mVertexShader, nullptr, 0);
-    g_Root->Devices()->GetSTContext()->PSSetShader(
-        mPixelShader, nullptr, 0);
-    g_Root->Devices()->GetSTContext()->PSSetSamplers(
-        0, 1, &mSampler);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    STContext()->PSSetSamplers(0, 1, &mSampler);
 
     DirectX::XMMATRIX mat = {};
     DirectX::XMFLOAT4X4 flt44 = {};
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
-    static float time = 0.f;
-    time += 0.0001f;
     for (auto& call : mDrawCallPipe->mDatas)
     {
-        mat = DirectX::XMMatrixMultiply(
-            DirectX::XMMatrixScaling(0.04f, 0.04f, 0.04f),
-            DirectX::XMMatrixRotationY(time)
-        );
-        mat = DirectX::XMMatrixMultiply(
-            mat, DirectX::XMMatrixTranslation(0.f, 0.f, 10.f));
+        mat = DirectX::XMLoadFloat4x4(&call.mInstanceData.mWorldMatrix);
         mat = DirectX::XMMatrixTranspose(mat);
         DirectX::XMStoreFloat4x4(&flt44, mat);
         mCPUBuffer.mWorld = flt44;
@@ -160,24 +151,23 @@ void RSPass_Diffuse::ExecuatePass()
         DirectX::XMStoreFloat4x4(&flt44, mat);
         mCPUBuffer.mProjection = flt44;
 
-        g_Root->Devices()->GetSTContext()->UpdateSubresource(
+        STContext()->UpdateSubresource(
             mWVPBuffer, 0, nullptr, &mCPUBuffer, 0, 0);
-        g_Root->Devices()->GetSTContext()->IASetInputLayout(
+        STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
-        g_Root->Devices()->GetSTContext()->IASetPrimitiveTopology(
+        STContext()->IASetPrimitiveTopology(
             call.mMeshData.mTopologyType);
-        g_Root->Devices()->GetSTContext()->IASetVertexBuffers(
+        STContext()->IASetVertexBuffers(
             0, 1, &call.mMeshData.mVertexBuffer,
             &stride, &offset);
-        g_Root->Devices()->GetSTContext()->IASetIndexBuffer(
+        STContext()->IASetIndexBuffer(
             call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        g_Root->Devices()->GetSTContext()->VSSetConstantBuffers(
-            0, 1, &mWVPBuffer);
-        g_Root->Devices()->GetSTContext()->PSSetShaderResources(
+        STContext()->VSSetConstantBuffers(0, 1, &mWVPBuffer);
+        STContext()->PSSetShaderResources(
             0, 1, &call.mTextureDatas[0].mSrv);
 
-        g_Root->Devices()->GetSTContext()->DrawIndexed(
-            (UINT)61164, 0, 0);
+        STContext()->DrawIndexedInstanced(
+            call.mMeshData.mIndexCount, 1, 0, 0, 0);
     }
 
     // TEMP-----------------------------
@@ -195,7 +185,7 @@ bool RSPass_Diffuse::CreateShaders()
         "main", "vs_5_0", &shaderBlob);
     if (FAILED(hr)) { return false; }
 
-    hr = g_Root->Devices()->GetDevice()->CreateVertexShader(
+    hr = Device()->CreateVertexShader(
         shaderBlob->GetBufferPointer(),
         shaderBlob->GetBufferSize(),
         nullptr, &mVertexShader);
@@ -208,7 +198,7 @@ bool RSPass_Diffuse::CreateShaders()
         "main", "ps_5_0", &shaderBlob);
     if (FAILED(hr)) { return false; }
 
-    hr = g_Root->Devices()->GetDevice()->CreatePixelShader(
+    hr = Device()->CreatePixelShader(
         shaderBlob->GetBufferPointer(),
         shaderBlob->GetBufferSize(),
         nullptr, &mPixelShader);
@@ -242,7 +232,7 @@ bool RSPass_Diffuse::CreateViews()
     texDepSte.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     texDepSte.CPUAccessFlags = 0;
     texDepSte.MiscFlags = 0;
-    hr = g_Root->Devices()->GetDevice()->CreateTexture2D(
+    hr = Device()->CreateTexture2D(
         &texDepSte, nullptr, &depthTex);
     if (FAILED(hr)) { return false; }
 
@@ -250,7 +240,7 @@ bool RSPass_Diffuse::CreateViews()
     desDSV.Format = texDepSte.Format;
     desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     desDSV.Texture2D.MipSlice = 0;
-    hr = g_Root->Devices()->GetDevice()->CreateDepthStencilView(
+    hr = Device()->CreateDepthStencilView(
         depthTex, &desDSV, &mDepthStencilView);
     depthTex->Release();
     if (FAILED(hr)) { return false; }
@@ -271,7 +261,7 @@ bool RSPass_Diffuse::CreateSamplers()
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-    hr = g_Root->Devices()->GetDevice()->CreateSamplerState(
+    hr = Device()->CreateSamplerState(
         &sampDesc, &mSampler);
     if (FAILED(hr)) { return false; }
 
@@ -286,7 +276,7 @@ bool RSPass_Diffuse::CreateBuffers()
     bdc.ByteWidth = sizeof(TEMP_WVPBuffer);
     bdc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bdc.CPUAccessFlags = 0;
-    hr = g_Root->Devices()->GetDevice()->CreateBuffer(
+    hr = Device()->CreateBuffer(
         &bdc, nullptr, &mWVPBuffer);
     if (FAILED(hr)) { return false; }
 

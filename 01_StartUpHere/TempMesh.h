@@ -72,6 +72,22 @@ public:
         data.mMeshData.mTopologyType = mData.mTopologyType;
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
+        data.mMeshData.mIndexCount = (UINT)mIndeices.size();
+        {
+            static float time = 0.f;
+            time += 0.0001f;
+            DirectX::XMMATRIX mat = {};
+            DirectX::XMFLOAT4X4 flt44 = {};
+            mat = DirectX::XMMatrixMultiply(
+                DirectX::XMMatrixScaling(0.04f, 0.04f, 0.04f),
+                DirectX::XMMatrixRotationY(time)
+            );
+            mat = DirectX::XMMatrixMultiply(
+                mat,
+                DirectX::XMMatrixTranslation(0.f, 0.f, 10.f));
+            DirectX::XMStoreFloat4x4(&flt44, mat);
+            data.mInstanceData.mWorldMatrix = flt44;
+        }
         data.mCameraData = *(_root->CamerasContainer()->
             GetRSCameraInfo(name));
         data.mTextureDatas[0].mUse = true;

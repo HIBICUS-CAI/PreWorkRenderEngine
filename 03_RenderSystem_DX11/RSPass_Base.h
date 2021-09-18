@@ -14,7 +14,8 @@
 class RSPass_Base
 {
 public:
-    RSPass_Base(std::string& _name, PASS_TYPE _type);
+    RSPass_Base(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
     RSPass_Base(const RSPass_Base& _source);
     virtual ~RSPass_Base();
 
@@ -22,6 +23,9 @@ public:
     PASS_TYPE GetPassType() const;
     void SetExecuateOrder(UINT _order);
     UINT GetExecuateOrder() const;
+
+    ID3D11Device* Device() const;
+    ID3D11DeviceContext* STContext() const;
 
 public:
     virtual RSPass_Base* ClonePass() = 0;
@@ -36,4 +40,7 @@ private:
     const std::string mName;
     const PASS_TYPE mPassType;
     UINT mExecuateOrderInTopic;
+
+    ID3D11Device* mDevice;
+    ID3D11DeviceContext* mSTContext;
 };

@@ -149,6 +149,13 @@ struct RS_SUBMESH_DRAWCALL_DATA
     ID3D11InputLayout* mLayout = nullptr;
     ID3D11Buffer* mIndexBuffer = nullptr;
     ID3D11Buffer* mVertexBuffer = nullptr;
+    UINT mIndexCount = 0;
+};
+
+struct RS_INSTANCE_DRAWCALL_DATA
+{
+    // TODO 之后想办法修改为容器或者指针，可能指针会好一些
+    DirectX::XMFLOAT4X4 mWorldMatrix = {};
 };
 
 constexpr UINT MESH_TEX_MAX = 10;
@@ -170,6 +177,7 @@ struct RS_MISC_INFO
 struct RS_DRAWCALL_DATA
 {
     RS_SUBMESH_DRAWCALL_DATA mMeshData = {};
+    RS_INSTANCE_DRAWCALL_DATA mInstanceData = {};
     RS_CAM_INFO mCameraData = {};
     RS_MATERIAL_INFO mMaterialData = {};
     RS_MESH_TEXTURE_INFO mTextureDatas[MESH_TEX_MAX] = { {} };

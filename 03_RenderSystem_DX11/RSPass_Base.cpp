@@ -8,17 +8,23 @@
 //---------------------------------------------------------------
 
 #include "RSPass_Base.h"
+#include "RSRoot_DX11.h"
+#include "RSDevices.h"
 
-RSPass_Base::RSPass_Base(std::string& _name, PASS_TYPE _type) :
+RSPass_Base::RSPass_Base(std::string& _name, PASS_TYPE _type,
+    class RSRoot_DX11* _root) :
     mName(_name), mPassType(_type),
-    mExecuateOrderInTopic(RS_INVALID_ORDER)
+    mExecuateOrderInTopic(RS_INVALID_ORDER),
+    mDevice(_root->Devices()->GetDevice()),
+    mSTContext(_root->Devices()->GetSTContext())
 {
 
 }
 
 RSPass_Base::RSPass_Base(const RSPass_Base& _source) :
     mName(_source.mName), mPassType(_source.mPassType),
-    mExecuateOrderInTopic(_source.mExecuateOrderInTopic)
+    mExecuateOrderInTopic(_source.mExecuateOrderInTopic),
+    mDevice(_source.mDevice), mSTContext(_source.mSTContext)
 {
 
 }
@@ -46,4 +52,14 @@ void RSPass_Base::SetExecuateOrder(UINT _order)
 UINT RSPass_Base::GetExecuateOrder() const
 {
     return mExecuateOrderInTopic;
+}
+
+ID3D11Device* RSPass_Base::Device() const
+{
+    return mDevice;
+}
+
+ID3D11DeviceContext* RSPass_Base::STContext() const
+{
+    return mSTContext;
 }

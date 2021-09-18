@@ -20,7 +20,8 @@ void ReleaseTempPipeline();
 class RSPass_Diffuse :public RSPass_Base
 {
 public:
-    RSPass_Diffuse(std::string& _name, PASS_TYPE _type);
+    RSPass_Diffuse(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
     RSPass_Diffuse(const RSPass_Diffuse& _source);
     virtual ~RSPass_Diffuse();
 
