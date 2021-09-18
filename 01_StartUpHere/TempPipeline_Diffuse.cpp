@@ -62,7 +62,8 @@ RSPass_Diffuse::RSPass_Diffuse(
     mRenderTargetView(nullptr), mDepthStencilView(nullptr),
     mSampler(nullptr), mDrawCallType(DRAWCALL_TYPE::OPACITY),
     mDrawCallPipe(nullptr), mWVPBuffer(nullptr),
-    mCPUBuffer({})
+    mCPUBuffer({}), mStructedBuffer(nullptr),
+    mStructedBufferSrv(nullptr)
 {
 
 }
@@ -81,7 +82,9 @@ RSPass_Diffuse::RSPass_Diffuse(
     mDrawCallType(_source.mDrawCallType),
     mDrawCallPipe(_source.mDrawCallPipe),
     mWVPBuffer(_source.mWVPBuffer),
-    mCPUBuffer(_source.mCPUBuffer)
+    mCPUBuffer(_source.mCPUBuffer),
+    mStructedBuffer(_source.mStructedBuffer),
+    mStructedBufferSrv(_source.mStructedBufferSrv)
 {
 
 }
@@ -100,9 +103,9 @@ bool RSPass_Diffuse::InitPass()
 {
     if (!CreateShaders()) { return false; }
     if (!CreateStates()) { return false; }
+    if (!CreateBuffers()) { return false; }
     if (!CreateViews()) { return false; }
     if (!CreateSamplers()) { return false; }
-    if (!CreateBuffers()) { return false; }
 
     mDrawCallType = DRAWCALL_TYPE::OPACITY;
     mDrawCallPipe = g_Root->DrawCallsPool()->
@@ -118,6 +121,7 @@ void RSPass_Diffuse::ReleasePass()
     RS_RELEASE(mSampler);
     RS_RELEASE(mDepthStencilView);
     RS_RELEASE(mWVPBuffer);
+    RS_RELEASE(mStructedBuffer);
 }
 
 void RSPass_Diffuse::ExecuatePass()
@@ -138,11 +142,27 @@ void RSPass_Diffuse::ExecuatePass()
     UINT offset = 0;
     for (auto& call : mDrawCallPipe->mDatas)
     {
-        mat = DirectX::XMLoadFloat4x4(
-            &(*(call.mInstanceData.mDataPtr))[0].mWorldMat);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&flt44, mat);
-        mCPUBuffer.mWorld = flt44;
+        auto vecPtr = call.mInstanceData.mDataPtr;
+        auto size = vecPtr->size();
+        D3D11_MAPPED_SUBRESOURCE msr = {};
+        STContext()->Map(mStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
+        for (size_t i = 0; i < size; i++)
+        {
+            mat = DirectX::XMLoadFloat4x4(
+                &(*vecPtr)[i].mWorldMat);
+            mat = DirectX::XMMatrixTranspose(mat);
+            DirectX::XMStoreFloat4x4(&ins_data[i].mWorldMat, mat);
+            ins_data[i].mMaterialData =
+                (*vecPtr)[i].mMaterialData;
+            ins_data[i].mCustomizedData1 =
+                (*vecPtr)[i].mCustomizedData1;
+            ins_data[i].mCustomizedData2 =
+                (*vecPtr)[i].mCustomizedData2;
+        }
+        STContext()->Unmap(mStructedBuffer, 0);
+
         mat = DirectX::XMLoadFloat4x4(&call.mCameraData.mViewMat);
         mat = DirectX::XMMatrixTranspose(mat);
         DirectX::XMStoreFloat4x4(&flt44, mat);
@@ -164,6 +184,8 @@ void RSPass_Diffuse::ExecuatePass()
         STContext()->IASetIndexBuffer(
             call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         STContext()->VSSetConstantBuffers(0, 1, &mWVPBuffer);
+        STContext()->VSSetShaderResources(
+            0, 1, &mStructedBufferSrv);
         STContext()->PSSetShaderResources(
             0, 1, &call.mTextureDatas[0].mSrv);
 
@@ -247,6 +269,15 @@ bool RSPass_Diffuse::CreateViews()
     depthTex->Release();
     if (FAILED(hr)) { return false; }
 
+    D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
+    ZeroMemory(&desSRV, sizeof(desSRV));
+    desSRV.Format = DXGI_FORMAT_UNKNOWN;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    desSRV.Buffer.ElementWidth = 2;
+    hr = Device()->CreateShaderResourceView(mStructedBuffer,
+        &desSRV, &mStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -280,6 +311,17 @@ bool RSPass_Diffuse::CreateBuffers()
     bdc.CPUAccessFlags = 0;
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mWVPBuffer);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = 2 * sizeof(RS_INSTANCE_DATA);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mStructedBuffer);
     if (FAILED(hr)) { return false; }
 
     return true;

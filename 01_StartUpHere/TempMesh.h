@@ -80,7 +80,19 @@ public:
             );
             mat = DirectX::XMMatrixMultiply(
                 mat,
-                DirectX::XMMatrixTranslation(0.f, 0.f, 10.f));
+                DirectX::XMMatrixTranslation(2.f, 0.f, 10.f));
+            DirectX::XMStoreFloat4x4(&flt44, mat);
+            ins_data.mWorldMat = flt44;
+            instance.emplace_back(ins_data);
+
+            ins_data = {};
+            mat = DirectX::XMMatrixMultiply(
+                DirectX::XMMatrixScaling(0.02f, 0.02f, 0.02f),
+                DirectX::XMMatrixRotationY(-time)
+            );
+            mat = DirectX::XMMatrixMultiply(
+                mat,
+                DirectX::XMMatrixTranslation(-2.f, 0.f, 10.f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
             instance.emplace_back(ins_data);

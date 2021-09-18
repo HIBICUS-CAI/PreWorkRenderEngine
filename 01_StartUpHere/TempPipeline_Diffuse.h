@@ -6,7 +6,6 @@
 
 struct TEMP_WVPBuffer
 {
-    DirectX::XMFLOAT4X4 mWorld = {};
     DirectX::XMFLOAT4X4 mView = {};
     DirectX::XMFLOAT4X4 mProjection = {};
 };
@@ -53,4 +52,6 @@ private:
     RSDrawCallsPipe* mDrawCallPipe;
     ID3D11Buffer* mWVPBuffer;
     TEMP_WVPBuffer mCPUBuffer;
+    ID3D11Buffer* mStructedBuffer;
+    ID3D11ShaderResourceView* mStructedBufferSrv;
 };

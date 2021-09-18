@@ -15,21 +15,37 @@ struct VS_OUTPUT
     float2 TexCoordL : TEXCOORD;
 };
 
-cbuffer WVP : register(b0)
+struct MATERIAL
+{
+    float4 gDiffuseAlbedo;
+    float3 gFresnelR0;
+    float gShininess;
+};
+
+struct INSTANCE_DATA
 {
     matrix gWorld;
+    MATERIAL gMaterial;
+    float4 gCustomizedData1;
+    float4 gCustomizedData2;
+};
+
+StructuredBuffer<INSTANCE_DATA> gInstances : register(t0);
+
+cbuffer WVP : register(b0)
+{
     matrix gView;
     matrix gProjection;
 };
 
-VS_OUTPUT main(VS_INPUT _in)
+VS_OUTPUT main(VS_INPUT _in, uint _instanceID : SV_InstanceID)
 {
     VS_OUTPUT _out = (VS_OUTPUT)0;
 
-    _out.PosH = mul(float4(_in.PosL, 1.0f), gWorld);
+    _out.PosH = mul(float4(_in.PosL, 1.0f), gInstances[_instanceID].gWorld);
     _out.PosW = _out.PosH.xyz;
-    _out.NormalW = mul(_in.NormalL, (float3x3)gWorld);
-    _out.TangentW = mul(_in.TangentL, (float3x3)gWorld);
+    _out.NormalW = mul(_in.NormalL, (float3x3)gInstances[_instanceID].gWorld);
+    _out.TangentW = mul(_in.TangentL, (float3x3)gInstances[_instanceID].gWorld);
     _out.PosH = mul(_out.PosH, gView);
     _out.PosH = mul(_out.PosH, gProjection);
     _out.TexCoordL = _in.TexCoordL;
