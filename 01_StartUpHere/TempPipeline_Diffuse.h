@@ -55,3 +55,39 @@ private:
     ID3D11Buffer* mStructedBuffer;
     ID3D11ShaderResourceView* mStructedBufferSrv;
 };
+
+class RSPass_FromTex :public RSPass_Base
+{
+public:
+    RSPass_FromTex(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_FromTex(const RSPass_FromTex& _source);
+    virtual ~RSPass_FromTex();
+
+public:
+    virtual RSPass_FromTex* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateBuffer();
+    bool CreateShaders();
+    bool CreateViews();
+    bool CreateSamplers();
+
+private:
+    ID3D11Buffer* mIndexBuffer;
+    D3D_PRIMITIVE_TOPOLOGY mTopology;
+    ID3D11InputLayout* mLayout;
+    ID3D11VertexShader* mVertexShader;
+    ID3D11PixelShader* mPixelShader;
+    //ID3D11RasterizerState* mRasterizerState;
+    //ID3D11DepthStencilState* mDepthStencilState;
+    ID3D11RenderTargetView* mSwapChainRtv;
+    ID3D11ShaderResourceView* mInputSrv;
+    ID3D11SamplerState* mSampler;
+};

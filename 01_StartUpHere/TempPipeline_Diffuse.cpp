@@ -5,8 +5,11 @@
 #include "RSShaderCompile.h"
 #include "RSDevices.h"
 #include "RSDrawCallsPool.h"
+#include "RSStaticResources.h"
 #include <DirectXColors.h>
 #include "TempMesh.h"
+
+#define IN_ONE_TOPIC
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
@@ -25,9 +28,16 @@ bool CreateTempPipeline()
 
     pass->SetExecuateOrder(1);
 
+    std::string name1 = "test-fromtex";
+    RSPass_FromTex* pass1 = new RSPass_FromTex(
+        name1, PASS_TYPE::RENDER, g_Root);
+    pass1->SetExecuateOrder(2);
+
+#ifdef IN_ONE_TOPIC
     name = "test-topic";
     RSTopic* topic = new RSTopic(name);
     topic->StartTopicAssembly();
+    topic->InsertPass(pass1);
     topic->InsertPass(pass);
     topic->SetExecuateOrder(1);
     topic->FinishTopicAssembly();
@@ -37,6 +47,28 @@ bool CreateTempPipeline()
     g_TempPipeline->StartPipelineAssembly();
     g_TempPipeline->InsertTopic(topic);
     g_TempPipeline->FinishPipelineAssembly();
+#else
+    name = "test-topic1";
+    RSTopic* topic1 = new RSTopic(name);
+    topic1->StartTopicAssembly();
+    topic1->InsertPass(pass);
+    topic1->SetExecuateOrder(1);
+    topic1->FinishTopicAssembly();
+
+    name = "test-topic2";
+    RSTopic* topic2 = new RSTopic(name);
+    topic2->StartTopicAssembly();
+    topic2->InsertPass(pass1);
+    topic2->SetExecuateOrder(2);
+    topic2->FinishTopicAssembly();
+
+    name = "test-pipeline";
+    g_TempPipeline = new RSPipeline(name);
+    g_TempPipeline->StartPipelineAssembly();
+    g_TempPipeline->InsertTopic(topic2);
+    g_TempPipeline->InsertTopic(topic1);
+    g_TempPipeline->FinishPipelineAssembly();
+#endif // IN_ONE_TOPIC
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
 
@@ -54,8 +86,7 @@ void ReleaseTempPipeline()
 }
 
 RSPass_Diffuse::RSPass_Diffuse(
-    std::string& _name, PASS_TYPE _type,
-    class RSRoot_DX11* _root) :
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
     RSPass_Base(_name, _type, _root),
     mVertexShader(nullptr), mPixelShader(nullptr),
     //mRasterizerState(nullptr), mDepthStencilState(nullptr),
@@ -119,9 +150,13 @@ void RSPass_Diffuse::ReleasePass()
     RS_RELEASE(mVertexShader);
     RS_RELEASE(mPixelShader);
     RS_RELEASE(mSampler);
-    RS_RELEASE(mDepthStencilView);
     RS_RELEASE(mWVPBuffer);
     RS_RELEASE(mStructedBuffer);
+
+    std::string name = "temp-tex-depth";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "temp-tex";
+    g_Root->TexturesManager()->DeleteDataTex(name);
 }
 
 void RSPass_Diffuse::ExecuatePass()
@@ -195,8 +230,10 @@ void RSPass_Diffuse::ExecuatePass()
     }
 
     // TEMP-----------------------------
-    g_Root->Devices()->PresentSwapChain();
     mDrawCallPipe->mDatas.clear();
+
+    ID3D11RenderTargetView* null = nullptr;
+    STContext()->OMSetRenderTargets(1, &null, nullptr);
 }
 
 bool RSPass_Diffuse::CreateShaders()
@@ -240,8 +277,6 @@ bool RSPass_Diffuse::CreateStates()
 
 bool RSPass_Diffuse::CreateViews()
 {
-    mRenderTargetView = g_Root->Devices()->GetSwapChainRtv();
-
     HRESULT hr = S_OK;
     ID3D11Texture2D* depthTex = nullptr;
     D3D11_TEXTURE2D_DESC texDepSte = {};
@@ -266,8 +301,56 @@ bool RSPass_Diffuse::CreateViews()
     desDSV.Texture2D.MipSlice = 0;
     hr = Device()->CreateDepthStencilView(
         depthTex, &desDSV, &mDepthStencilView);
-    depthTex->Release();
     if (FAILED(hr)) { return false; }
+
+    DATA_TEXTURE_INFO dti = {};
+    std::string name = "temp-tex-depth";
+    dti.mTexture = depthTex;
+    dti.mDsv = mDepthStencilView;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    name = "temp-tex";
+    ID3D11Texture2D* tempTex = nullptr;
+    D3D11_TEXTURE2D_DESC tempDesc = {};
+    tempDesc.Width = 1280;
+    tempDesc.Height = 720;
+    tempDesc.MipLevels = 1;
+    tempDesc.ArraySize = 1;
+    tempDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    tempDesc.SampleDesc.Count = 1;
+    tempDesc.SampleDesc.Quality = 0;
+    tempDesc.Usage = D3D11_USAGE_DEFAULT;
+    tempDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    tempDesc.CPUAccessFlags = 0;
+    tempDesc.MiscFlags = 0;
+    hr = Device()->CreateTexture2D(
+        &tempDesc, nullptr, &tempTex);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(tempTex, &rtvDesc,
+        &mRenderTargetView);
+    if (FAILED(hr)) { return false; }
+
+    ID3D11ShaderResourceView* srv = nullptr;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    hr = Device()->CreateShaderResourceView(tempTex, &srvDesc,
+        &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    dti.mTexture = tempTex;
+    dti.mRtv = mRenderTargetView;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     ZeroMemory(&desSRV, sizeof(desSRV));
@@ -322,6 +405,180 @@ bool RSPass_Diffuse::CreateBuffers()
     bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+RSPass_FromTex::RSPass_FromTex(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    //mRasterizerState(nullptr), mDepthStencilState(nullptr),
+    mSwapChainRtv(nullptr), mInputSrv(nullptr),
+    mSampler(nullptr),
+    mIndexBuffer(nullptr), mLayout(nullptr),
+    mTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP)
+{
+
+}
+
+RSPass_FromTex::RSPass_FromTex(
+    const RSPass_FromTex& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    //mRasterizerState(_source.mRasterizerState),
+    //mDepthStencilState(_source.mDepthStencilState),
+    mSwapChainRtv(_source.mSwapChainRtv),
+    mInputSrv(_source.mInputSrv),
+    mSampler(_source.mSampler),
+    mIndexBuffer(_source.mIndexBuffer),
+    mLayout(_source.mLayout), mTopology(_source.mTopology)
+{
+
+}
+
+RSPass_FromTex::~RSPass_FromTex()
+{
+
+}
+
+RSPass_FromTex* RSPass_FromTex::ClonePass()
+{
+    return new RSPass_FromTex(*this);
+}
+
+bool RSPass_FromTex::InitPass()
+{
+    if (!CreateBuffer()) { return false; }
+    if (!CreateShaders()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    return true;
+}
+
+void RSPass_FromTex::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mSampler);
+    //RS_RELEASE(mSwapChainRtv);
+    //RS_RELEASE(mInputSrv);
+    std::string name = "temp-tex-depth";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+}
+
+void RSPass_FromTex::ExecuatePass()
+{
+    STContext()->OMSetRenderTargets(1, &mSwapChainRtv, nullptr);
+    STContext()->ClearRenderTargetView(
+        mSwapChainRtv, DirectX::Colors::DarkGreen);
+    STContext()->IASetIndexBuffer(mIndexBuffer,
+        DXGI_FORMAT_R32_UINT, 0);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    STContext()->PSSetSamplers(0, 1, &mSampler);
+    STContext()->PSSetShaderResources(0, 1, &mInputSrv);
+
+    STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    g_Root->Devices()->PresentSwapChain();
+
+    ID3D11ShaderResourceView* null = nullptr;
+    STContext()->PSSetShaderResources(0, 1, &null);
+}
+
+bool RSPass_FromTex::CreateBuffer()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bufDesc = {};
+    std::string name = "";
+
+    UINT indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufDesc.ByteWidth = sizeof(UINT) * 6;
+    bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bufDesc.CPUAccessFlags = 0;
+    bufDesc.StructureByteStride = 0;
+    bufDesc.MiscFlags = 0;
+    D3D11_SUBRESOURCE_DATA iinitData = {};
+    ZeroMemory(&iinitData, sizeof(iinitData));
+    iinitData.pSysMem = indices;
+    hr = Device()->CreateBuffer(
+        &bufDesc, &iinitData, &mIndexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    mTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+    return true;
+}
+
+bool RSPass_FromTex::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\fromtex_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\fromtex_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_FromTex::CreateViews()
+{
+    std::string name = "temp-tex";
+    mSwapChainRtv = g_Root->Devices()->GetSwapChainRtv();
+    auto info = g_Root->TexturesManager()->GetDataTexInfo(name);
+    if (!info) { return false; }
+    mInputSrv = info->mSrv;
+    if (!mInputSrv) { return false; }
+
+    return true;
+}
+
+bool RSPass_FromTex::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mSampler);
     if (FAILED(hr)) { return false; }
 
     return true;
