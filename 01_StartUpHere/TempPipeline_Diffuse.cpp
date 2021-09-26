@@ -6,6 +6,7 @@
 #include "RSDevices.h"
 #include "RSDrawCallsPool.h"
 #include "RSStaticResources.h"
+#include "RSPipelinesManager.h"
 #include <DirectXColors.h>
 #include "TempMesh.h"
 
@@ -72,17 +73,13 @@ bool CreateTempPipeline()
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
 
+    name = g_TempPipeline->GetPipelineName();
+    g_Root->PipelinesManager()->AddPipeline(
+        name, g_TempPipeline);
+    g_Root->PipelinesManager()->SetPipeline(name);
+    g_Root->PipelinesManager()->ProcessNextPipeline();
+
     return true;
-}
-
-void ExecuateTempPipeline()
-{
-    g_TempPipeline->ExecuatePipeline();
-}
-
-void ReleaseTempPipeline()
-{
-    g_TempPipeline->ReleasePipeline();
 }
 
 RSPass_Diffuse::RSPass_Diffuse(

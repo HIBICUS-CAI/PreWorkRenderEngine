@@ -13,8 +13,6 @@ struct TEMP_WVPBuffer
 void PassRootToTempPipeline(class RSRoot_DX11* _root);
 
 bool CreateTempPipeline();
-void ExecuateTempPipeline();
-void ReleaseTempPipeline();
 
 class RSPass_Diffuse :public RSPass_Base
 {

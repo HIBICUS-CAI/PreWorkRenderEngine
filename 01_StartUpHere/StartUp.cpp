@@ -6,6 +6,7 @@
 #include "TempPipeline_Diffuse.h"
 #include "RSCamera.h"
 #include "RSCamerasContainer.h"
+#include "RSPipelinesManager.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -80,11 +81,9 @@ int WINAPI WinMain(
             cam->RotateRSCamera({ horiR,vertR,0.f });
 
             mesh->UploadDrawCall(root->DrawCallsPool(), root);
-            ExecuateTempPipeline();
+            root->PipelinesManager()->ExecuateCurrentPipeline();
         }
     }
-
-    ReleaseTempPipeline();
 
     mesh->Release(root->MeshHelper());
     root->CleanAndStop();

@@ -90,6 +90,13 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
 
 void RSRoot_DX11::CleanAndStop()
 {
+    if (mPipelinesManagerPtr)
+    {
+        mPipelinesManagerPtr->CleanAndStop();
+        delete mPipelinesManagerPtr;
+        mPipelinesManagerPtr = nullptr;
+    }
+
     if (mMeshHelperPtr)
     {
         mMeshHelperPtr->CleanAndStop();
@@ -130,13 +137,6 @@ void RSRoot_DX11::CleanAndStop()
         mDrawCallsPoolPtr->CleanAndStop();
         delete mDrawCallsPoolPtr;
         mDrawCallsPoolPtr = nullptr;
-    }
-
-    if (mPipelinesManagerPtr)
-    {
-        mPipelinesManagerPtr->CleanAndStop();
-        delete mPipelinesManagerPtr;
-        mPipelinesManagerPtr = nullptr;
     }
 
     if (mDevicesPtr)
