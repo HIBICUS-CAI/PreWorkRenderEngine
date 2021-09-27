@@ -103,6 +103,20 @@ private:
         const VertexType::ColorVertex& _v0,
         const VertexType::ColorVertex& _v1);
 
+    void BuildCylinderTopCap(
+        float _bottomRadius, float _topRadius, float _height,
+        UINT _sliceCount, UINT _stackCount,
+        LAYOUT_TYPE _layout, void* _vertexVec,
+        std::vector<UINT>* _indexVec,
+        DirectX::XMFLOAT4& _vertColor);
+
+    void BuildCylinderBottomCap(
+        float _bottomRadius, float _topRadius, float _height,
+        UINT _sliceCount, UINT _stackCount,
+        LAYOUT_TYPE _layout, void* _vertexVec,
+        std::vector<UINT>* _indexVec,
+        DirectX::XMFLOAT4& _vertColor);
+
 private:
     RSMeshHelper* mMeshHelperPtr;
 };

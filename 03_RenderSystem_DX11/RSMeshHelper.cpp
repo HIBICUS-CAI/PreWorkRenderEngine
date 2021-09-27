@@ -1153,7 +1153,239 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateCylinder(
     LAYOUT_TYPE _layout, bool _useVertexColor,
     DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
 {
-    return {};
+    RS_SUBMESH_DATA rsd = {};
+    SUBMESH_INFO si = {};
+    MATERIAL_INFO mi = {};
+    std::vector<UINT> indeices = {};
+    std::vector<VertexType::BasicVertex> basic = {};
+    std::vector<VertexType::TangentVertex> tangent = {};
+    std::vector<VertexType::ColorVertex> color = {};
+    std::vector<std::string> textures = {};
+
+    switch (_layout)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        float stackHeight = _height / _stackCount;
+        float radiusStep = (_topRadius - _bottomRadius) / _stackCount;
+        UINT ringCount = _stackCount + 1;
+
+        for (UINT i = 0; i < ringCount; i++)
+        {
+            float y = -0.5f * _height + i * stackHeight;
+            float r = _bottomRadius + i * radiusStep;
+            float dTheta = 2.0f * DirectX::XM_PI / _sliceCount;
+
+            for (UINT j = 0; j <= _sliceCount; j++)
+            {
+                VertexType::ColorVertex vertex = {};
+
+                float c = cosf(j * dTheta);
+                float s = sinf(j * dTheta);
+
+                vertex.Color = _vertColor;
+                vertex.Position =
+                    DirectX::XMFLOAT3(r * c, y, r * s);
+                DirectX::XMFLOAT3 tangentV =
+                    DirectX::XMFLOAT3(-s, 0.f, c);
+
+                float dr = _bottomRadius - _topRadius;
+                XMFLOAT3 bitangent(dr * c, -_height, dr * s);
+                XMVECTOR T = DirectX::XMLoadFloat3(&tangentV);
+                XMVECTOR B = DirectX::XMLoadFloat3(&bitangent);
+                XMVECTOR N = DirectX::XMVector3Normalize(
+                    DirectX::XMVector3Cross(T, B));
+                DirectX::XMStoreFloat3(&vertex.Normal, N);
+
+                color.emplace_back(vertex);
+            }
+        }
+
+        UINT ringVertexCount = _sliceCount + 1;
+
+        for (UINT i = 0; i < _stackCount; ++i)
+        {
+            for (UINT j = 0; j < _sliceCount; ++j)
+            {
+                indeices.emplace_back(i * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j + 1);
+
+                indeices.emplace_back(i * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j + 1);
+                indeices.emplace_back(i * ringVertexCount + j + 1);
+            }
+        }
+
+        BuildCylinderTopCap(_bottomRadius, _topRadius, _height,
+            _sliceCount, _stackCount, _layout,
+            &color, &indeices, _vertColor);
+        BuildCylinderBottomCap(_bottomRadius, _topRadius, _height,
+            _sliceCount, _stackCount, _layout,
+            &color, &indeices, _vertColor);
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &color;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TEX:
+    {
+        float stackHeight = _height / _stackCount;
+        float radiusStep = (_topRadius - _bottomRadius) / _stackCount;
+        UINT ringCount = _stackCount + 1;
+
+        for (UINT i = 0; i < ringCount; i++)
+        {
+            float y = -0.5f * _height + i * stackHeight;
+            float r = _bottomRadius + i * radiusStep;
+            float dTheta = 2.0f * DirectX::XM_PI / _sliceCount;
+
+            for (UINT j = 0; j <= _sliceCount; j++)
+            {
+                VertexType::BasicVertex vertex = {};
+
+                float c = cosf(j * dTheta);
+                float s = sinf(j * dTheta);
+
+                vertex.Position =
+                    DirectX::XMFLOAT3(r * c, y, r * s);
+                vertex.TexCoord.x = (float)j / _sliceCount;
+                vertex.TexCoord.y = 1.0f - (float)i / _stackCount;
+                DirectX::XMFLOAT3 tangentV =
+                    DirectX::XMFLOAT3(-s, 0.f, c);
+
+                float dr = _bottomRadius - _topRadius;
+                XMFLOAT3 bitangent(dr * c, -_height, dr * s);
+                XMVECTOR T = DirectX::XMLoadFloat3(&tangentV);
+                XMVECTOR B = DirectX::XMLoadFloat3(&bitangent);
+                XMVECTOR N = DirectX::XMVector3Normalize(
+                    DirectX::XMVector3Cross(T, B));
+                DirectX::XMStoreFloat3(&vertex.Normal, N);
+
+                basic.emplace_back(vertex);
+            }
+        }
+
+        UINT ringVertexCount = _sliceCount + 1;
+
+        for (UINT i = 0; i < _stackCount; ++i)
+        {
+            for (UINT j = 0; j < _sliceCount; ++j)
+            {
+                indeices.emplace_back(i * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j + 1);
+
+                indeices.emplace_back(i * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j + 1);
+                indeices.emplace_back(i * ringVertexCount + j + 1);
+            }
+        }
+
+        BuildCylinderTopCap(_bottomRadius, _topRadius, _height,
+            _sliceCount, _stackCount, _layout,
+            &basic, &indeices, _vertColor);
+        BuildCylinderBottomCap(_bottomRadius, _topRadius, _height,
+            _sliceCount, _stackCount, _layout,
+            &basic, &indeices, _vertColor);
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &basic;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+    {
+        float stackHeight = _height / _stackCount;
+        float radiusStep = (_topRadius - _bottomRadius) / _stackCount;
+        UINT ringCount = _stackCount + 1;
+
+        for (UINT i = 0; i < ringCount; i++)
+        {
+            float y = -0.5f * _height + i * stackHeight;
+            float r = _bottomRadius + i * radiusStep;
+            float dTheta = 2.0f * DirectX::XM_PI / _sliceCount;
+
+            for (UINT j = 0; j <= _sliceCount; j++)
+            {
+                VertexType::TangentVertex vertex = {};
+
+                float c = cosf(j * dTheta);
+                float s = sinf(j * dTheta);
+
+                vertex.Position = DirectX::XMFLOAT3(r * c, y, r * s);
+                vertex.TexCoord.x = (float)j / _sliceCount;
+                vertex.TexCoord.y = 1.0f - (float)i / _stackCount;
+                vertex.Tangent = DirectX::XMFLOAT3(-s, 0.f, c);
+
+                float dr = _bottomRadius - _topRadius;
+                XMFLOAT3 bitangent(dr * c, -_height, dr * s);
+                XMVECTOR T = DirectX::XMLoadFloat3(&vertex.Tangent);
+                XMVECTOR B = DirectX::XMLoadFloat3(&bitangent);
+                XMVECTOR N = DirectX::XMVector3Normalize(
+                    DirectX::XMVector3Cross(T, B));
+                DirectX::XMStoreFloat3(&vertex.Normal, N);
+
+                tangent.emplace_back(vertex);
+            }
+        }
+
+        UINT ringVertexCount = _sliceCount + 1;
+
+        for (UINT i = 0; i < _stackCount; ++i)
+        {
+            for (UINT j = 0; j < _sliceCount; ++j)
+            {
+                indeices.emplace_back(i * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j + 1);
+
+                indeices.emplace_back(i * ringVertexCount + j);
+                indeices.emplace_back((i + 1) * ringVertexCount + j + 1);
+                indeices.emplace_back(i * ringVertexCount + j + 1);
+            }
+        }
+
+        BuildCylinderTopCap(_bottomRadius, _topRadius, _height,
+            _sliceCount, _stackCount, _layout,
+            &tangent, &indeices, _vertColor);
+        BuildCylinderBottomCap(_bottomRadius, _topRadius, _height,
+            _sliceCount, _stackCount, _layout,
+            &tangent, &indeices, _vertColor);
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &tangent;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    default:
+        bool nullLayout = false;
+        assert(nullLayout);
+    }
+
+    return rsd;
 }
 
 RS_SUBMESH_DATA RSGeometryGenerator::CreateGrid(
@@ -1388,4 +1620,284 @@ VertexType::ColorVertex RSGeometryGenerator::ColorMidPoint(
     DirectX::XMStoreFloat4(&v.Color, color);
 
     return v;
+}
+
+void RSGeometryGenerator::BuildCylinderTopCap(
+    float _bottomRadius, float _topRadius, float _height,
+    UINT _sliceCount, UINT _stackCount,
+    LAYOUT_TYPE _layout, void* _vertexVec,
+    std::vector<UINT>* _indexVec,
+    DirectX::XMFLOAT4& _vertColor)
+{
+    switch (_layout)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        std::vector<VertexType::ColorVertex>* _colorVec =
+            (std::vector<VertexType::ColorVertex>*)_vertexVec;
+
+        UINT baseIndex = (UINT)_colorVec->size();
+        float y = 0.5f * _height;
+        float dTheta = 2.f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 0; i <= _sliceCount; i++)
+        {
+            float x = _topRadius * cosf(i * dTheta);
+            float z = _topRadius * sinf(i * dTheta);
+            float u = x / _height + 0.5f;
+            float v = z / _height + 0.5f;
+
+            VertexType::ColorVertex vert =
+            {
+                { x, y, z }, { 0.0f, 1.0f, 0.0f }, _vertColor
+            };
+            _colorVec->emplace_back(vert);
+        }
+
+        VertexType::ColorVertex vert =
+        {
+            { 0.0f, y, 0.0f }, { 0.0f, 1.0f, 0.0f }, _vertColor
+        };
+        _colorVec->emplace_back(vert);
+
+        UINT centerIndex = (UINT)_colorVec->size() - 1;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            _indexVec->emplace_back(centerIndex);
+            _indexVec->emplace_back(baseIndex + i + 1);
+            _indexVec->emplace_back(baseIndex + i);
+        }
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TEX:
+    {
+        std::vector<VertexType::BasicVertex>* _basicVec =
+            (std::vector<VertexType::BasicVertex>*)_vertexVec;
+
+        UINT baseIndex = (UINT)_basicVec->size();
+        float y = 0.5f * _height;
+        float dTheta = 2.f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 0; i <= _sliceCount; i++)
+        {
+            float x = _topRadius * cosf(i * dTheta);
+            float z = _topRadius * sinf(i * dTheta);
+            float u = x / _height + 0.5f;
+            float v = z / _height + 0.5f;
+
+            VertexType::BasicVertex vert =
+            {
+                { x, y, z }, { 0.0f, 1.0f, 0.0f }, { u, v }
+            };
+            _basicVec->emplace_back(vert);
+        }
+
+        VertexType::BasicVertex vert =
+        {
+            { 0.0f, y, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.5f, 0.5f }
+        };
+        _basicVec->emplace_back(vert);
+
+        UINT centerIndex = (UINT)_basicVec->size() - 1;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            _indexVec->emplace_back(centerIndex);
+            _indexVec->emplace_back(baseIndex + i + 1);
+            _indexVec->emplace_back(baseIndex + i);
+        }
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+    {
+        std::vector<VertexType::TangentVertex>* _tangeVec =
+            (std::vector<VertexType::TangentVertex>*)_vertexVec;
+
+        UINT baseIndex = (UINT)_tangeVec->size();
+        float y = 0.5f * _height;
+        float dTheta = 2.f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 0; i <= _sliceCount; i++)
+        {
+            float x = _topRadius * cosf(i * dTheta);
+            float z = _topRadius * sinf(i * dTheta);
+            float u = x / _height + 0.5f;
+            float v = z / _height + 0.5f;
+
+            VertexType::TangentVertex vert =
+            {
+                { x, y, z }, { 0.0f, 1.0f, 0.0f },
+                { 1.0f, 0.0f, 0.0f }, { u, v }
+            };
+            _tangeVec->emplace_back(vert);
+        }
+
+        VertexType::TangentVertex vert =
+        {
+            { 0.0f, y, 0.0f }, { 0.0f, 1.0f, 0.0f },
+            { 1.0f, 0.0f, 0.0f }, { 0.5f, 0.5f }
+        };
+        _tangeVec->emplace_back(vert);
+
+        UINT centerIndex = (UINT)_tangeVec->size() - 1;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            _indexVec->emplace_back(centerIndex);
+            _indexVec->emplace_back(baseIndex + i + 1);
+            _indexVec->emplace_back(baseIndex + i);
+        }
+
+        break;
+    }
+
+    default:
+        bool nullLayout = false;
+        assert(nullLayout);
+    }
+}
+
+void RSGeometryGenerator::BuildCylinderBottomCap(
+    float _bottomRadius, float _topRadius, float _height,
+    UINT _sliceCount, UINT _stackCount,
+    LAYOUT_TYPE _layout, void* _vertexVec,
+    std::vector<UINT>* _indexVec,
+    DirectX::XMFLOAT4& _vertColor)
+{
+    switch (_layout)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        std::vector<VertexType::ColorVertex>* _colorVec =
+            (std::vector<VertexType::ColorVertex>*)_vertexVec;
+
+        UINT baseIndex = (UINT)_colorVec->size();
+        float y = -0.5f * _height;
+        float dTheta = 2.f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 0; i <= _sliceCount; i++)
+        {
+            float x = _bottomRadius * cosf(i * dTheta);
+            float z = _bottomRadius * sinf(i * dTheta);
+            float u = x / _height + 0.5f;
+            float v = z / _height + 0.5f;
+
+            VertexType::ColorVertex vert =
+            {
+                { x, y, z }, { 0.0f, -1.0f, 0.0f }, _vertColor
+            };
+            _colorVec->emplace_back(vert);
+        }
+
+        VertexType::ColorVertex vert =
+        {
+            { 0.0f, y, 0.0f }, { 0.0f, -1.0f, 0.0f }, _vertColor
+        };
+        _colorVec->emplace_back(vert);
+
+        UINT centerIndex = (UINT)_colorVec->size() - 1;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            _indexVec->emplace_back(centerIndex);
+            _indexVec->emplace_back(baseIndex + i);
+            _indexVec->emplace_back(baseIndex + i + 1);
+        }
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TEX:
+    {
+        std::vector<VertexType::BasicVertex>* _basicVec =
+            (std::vector<VertexType::BasicVertex>*)_vertexVec;
+
+        UINT baseIndex = (UINT)_basicVec->size();
+        float y = -0.5f * _height;
+        float dTheta = 2.f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 0; i <= _sliceCount; i++)
+        {
+            float x = _bottomRadius * cosf(i * dTheta);
+            float z = _bottomRadius * sinf(i * dTheta);
+            float u = x / _height + 0.5f;
+            float v = z / _height + 0.5f;
+
+            VertexType::BasicVertex vert =
+            {
+                { x, y, z }, { 0.0f, -1.0f, 0.0f }, { u, v }
+            };
+            _basicVec->emplace_back(vert);
+        }
+
+        VertexType::BasicVertex vert =
+        {
+            { 0.0f, y, 0.0f }, { 0.0f, -1.0f, 0.0f }, { 0.5f, 0.5f }
+        };
+        _basicVec->emplace_back(vert);
+
+        UINT centerIndex = (UINT)_basicVec->size() - 1;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            _indexVec->emplace_back(centerIndex);
+            _indexVec->emplace_back(baseIndex + i);
+            _indexVec->emplace_back(baseIndex + i + 1);
+        }
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+    {
+        std::vector<VertexType::TangentVertex>* _tangeVec =
+            (std::vector<VertexType::TangentVertex>*)_vertexVec;
+
+        UINT baseIndex = (UINT)_tangeVec->size();
+        float y = -0.5f * _height;
+        float dTheta = 2.f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 0; i <= _sliceCount; i++)
+        {
+            float x = _bottomRadius * cosf(i * dTheta);
+            float z = _bottomRadius * sinf(i * dTheta);
+            float u = x / _height + 0.5f;
+            float v = z / _height + 0.5f;
+
+            VertexType::TangentVertex vert =
+            {
+                { x, y, z }, { 0.0f, -1.0f, 0.0f },
+                { 1.0f, 0.0f, 0.0f }, { u, v }
+            };
+            _tangeVec->emplace_back(vert);
+        }
+
+        VertexType::TangentVertex vert =
+        {
+            { 0.0f, y, 0.0f }, { 0.0f, -1.0f, 0.0f },
+            { 1.0f, 0.0f, 0.0f }, { 0.5f, 0.5f }
+        };
+        _tangeVec->emplace_back(vert);
+
+        UINT centerIndex = (UINT)_tangeVec->size() - 1;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            _indexVec->emplace_back(centerIndex);
+            _indexVec->emplace_back(baseIndex + i);
+            _indexVec->emplace_back(baseIndex + i + 1);
+        }
+
+        break;
+    }
+
+    default:
+        bool nullLayout = false;
+        assert(nullLayout);
+    }
 }
