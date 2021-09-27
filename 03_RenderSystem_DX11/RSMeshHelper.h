@@ -58,34 +58,46 @@ public:
 
     RS_SUBMESH_DATA CreateBox(
         float _width, float _height, float _depth, UINT _diviNum,
-        std::string&& _layoutName, bool _useVertexColor = true,
+        LAYOUT_TYPE _layout, bool _useVertexColor = true,
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
 
     RS_SUBMESH_DATA CreateSphere(
         float _radius, UINT _sliceCount, UINT _stackCount,
-        std::string&& _layoutName, bool _useVertexColor = true,
+        LAYOUT_TYPE _layout, bool _useVertexColor = true,
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
 
     RS_SUBMESH_DATA CreateGeometrySphere(
         float _radius, UINT _diviNum,
-        std::string&& _layoutName, bool _useVertexColor = true,
+        LAYOUT_TYPE _layout, bool _useVertexColor = true,
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
 
     RS_SUBMESH_DATA CreateCylinder(
         float _bottomRadius, float _topRadius, float _height,
         UINT _sliceCount, UINT _stackCount,
-        std::string&& _layoutName, bool _useVertexColor = true,
+        LAYOUT_TYPE _layout, bool _useVertexColor = true,
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
 
     RS_SUBMESH_DATA CreateGrid(
         float _width, float _depth, UINT _rowCount, UINT _colCount,
-        std::string&& _layoutName, bool _useVertexColor = true,
+        LAYOUT_TYPE _layout, bool _useVertexColor = true,
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
+
+private:
+    void SubDivide(LAYOUT_TYPE _layout, void* _vertexVec,
+        std::vector<UINT>* _indexVec);
+
+    VertexType::BasicVertex BasicMidPoint(
+        const VertexType::BasicVertex& _v0,
+        const VertexType::BasicVertex& _v1);
+
+    VertexType::TangentVertex TangentMidPoint(
+        const VertexType::TangentVertex& _v0,
+        const VertexType::TangentVertex& _v1);
 
 private:
     RSMeshHelper* mMeshHelperPtr;

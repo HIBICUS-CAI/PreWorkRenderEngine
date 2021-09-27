@@ -86,7 +86,7 @@ RSPass_Diffuse::RSPass_Diffuse(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
     RSPass_Base(_name, _type, _root),
     mVertexShader(nullptr), mPixelShader(nullptr),
-    //mRasterizerState(nullptr), mDepthStencilState(nullptr),
+    mRasterizerState(nullptr), /*mDepthStencilState(nullptr),*/
     mRenderTargetView(nullptr), mDepthStencilView(nullptr),
     mSampler(nullptr), mDrawCallType(DRAWCALL_TYPE::OPACITY),
     mDrawCallPipe(nullptr), mWVPBuffer(nullptr),
@@ -101,7 +101,7 @@ RSPass_Diffuse::RSPass_Diffuse(
     RSPass_Base(_source),
     mVertexShader(_source.mVertexShader),
     mPixelShader(_source.mPixelShader),
-    //mRasterizerState(_source.mRasterizerState),
+    mRasterizerState(_source.mRasterizerState),
     //mDepthStencilState(_source.mDepthStencilState),
     mRenderTargetView(_source.mRenderTargetView),
     mDepthStencilView(_source.mDepthStencilView),
@@ -149,6 +149,7 @@ void RSPass_Diffuse::ReleasePass()
     RS_RELEASE(mSampler);
     RS_RELEASE(mWVPBuffer);
     RS_RELEASE(mStructedBuffer);
+    RS_RELEASE(mRasterizerState);
 
     std::string name = "temp-tex-depth";
     g_Root->TexturesManager()->DeleteDataTex(name);
@@ -167,6 +168,7 @@ void RSPass_Diffuse::ExecuatePass()
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->PSSetSamplers(0, 1, &mSampler);
+    STContext()->RSSetState(mRasterizerState);
 
     DirectX::XMMATRIX mat = {};
     DirectX::XMFLOAT4X4 flt44 = {};
@@ -269,6 +271,24 @@ bool RSPass_Diffuse::CreateShaders()
 
 bool RSPass_Diffuse::CreateStates()
 {
+    HRESULT hr = S_OK;
+    D3D11_RASTERIZER_DESC rasDesc = {};
+
+    rasDesc.FillMode = D3D11_FILL_WIREFRAME;
+    rasDesc.CullMode = D3D11_CULL_NONE;
+    rasDesc.FrontCounterClockwise = FALSE;
+    rasDesc.DepthBias = 0;
+    rasDesc.SlopeScaledDepthBias = 0.f;
+    rasDesc.DepthBiasClamp = 0.f;
+    rasDesc.DepthClipEnable = TRUE;
+    rasDesc.ScissorEnable = FALSE;
+    rasDesc.MultisampleEnable = FALSE;
+    rasDesc.AntialiasedLineEnable = FALSE;
+
+    hr = Device()->CreateRasterizerState(
+        &rasDesc, &mRasterizerState);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -478,6 +498,7 @@ void RSPass_FromTex::ExecuatePass()
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->PSSetSamplers(0, 1, &mSampler);
     STContext()->PSSetShaderResources(0, 1, &mInputSrv);
+    STContext()->RSSetState(nullptr);
 
     STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
     g_Root->Devices()->PresentSwapChain();

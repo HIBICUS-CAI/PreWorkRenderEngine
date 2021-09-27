@@ -41,7 +41,7 @@ private:
 private:
     ID3D11VertexShader* mVertexShader;
     ID3D11PixelShader* mPixelShader;
-    //ID3D11RasterizerState* mRasterizerState;
+    ID3D11RasterizerState* mRasterizerState;
     //ID3D11DepthStencilState* mDepthStencilState;
     ID3D11RenderTargetView* mRenderTargetView;
     ID3D11DepthStencilView* mDepthStencilView;

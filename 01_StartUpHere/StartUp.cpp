@@ -34,6 +34,12 @@ int WINAPI WinMain(
         return -2;
     }
 
+    TempGeoMesh* box = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateBox(
+            1.5f, 1.5f, 1.5f, 3, 
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false, 
+            {}, "white.jpg"));
+
     mesh->Process(root->MeshHelper());
 
     PassRootToTempPipeline(root);
@@ -81,14 +87,17 @@ int WINAPI WinMain(
             cam->RotateRSCamera({ horiR,vertR,0.f });
 
             mesh->UploadDrawCall(root->DrawCallsPool(), root);
+            box->UploadDrawCall(root->DrawCallsPool(), root);
             root->PipelinesManager()->ExecuateCurrentPipeline();
         }
     }
 
     mesh->Release(root->MeshHelper());
+    box->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;
+    delete box;
 
     return (int)msg.wParam;
 }

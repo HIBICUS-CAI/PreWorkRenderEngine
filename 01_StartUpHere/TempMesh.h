@@ -176,9 +176,41 @@ public:
     TempGeoMesh(RS_SUBMESH_DATA&& _data) :mData(_data) {}
     ~TempGeoMesh() {}
 
-    void UploadDrawCall()
+    void UploadDrawCall(RSDrawCallsPool* _pool,
+        RSRoot_DX11* _root)
     {
-        return;
+        static std::vector<RS_INSTANCE_DATA> instance = {};
+        instance.clear();
+
+        RS_INSTANCE_DATA ins_data = {};
+        DirectX::XMMATRIX mat = {};
+        DirectX::XMFLOAT4X4 flt44 = {};
+        mat = DirectX::XMMatrixMultiply(
+            DirectX::XMMatrixScaling(1.f, 1.f, 1.f),
+            DirectX::XMMatrixRotationY(0.f)
+        );
+        mat = DirectX::XMMatrixMultiply(
+            mat,
+            DirectX::XMMatrixTranslation(0.f, 0.f, 15.f));
+        DirectX::XMStoreFloat4x4(&flt44, mat);
+        ins_data.mWorldMat = flt44;
+        instance.emplace_back(ins_data);
+
+        std::string name = "temp-cam";
+        RS_DRAWCALL_DATA data = {};
+        data.mMeshData.mLayout = mData.mLayout;
+        data.mMeshData.mTopologyType = mData.mTopologyType;
+        data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
+        data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
+        data.mMeshData.mIndexCount = 2304;
+        data.mInstanceData.mDataPtr = &instance;
+        data.mCameraData = *(_root->CamerasContainer()->
+            GetRSCameraInfo(name));
+        data.mTextureDatas[0].mUse = true;
+        data.mTextureDatas[0].mSrv = _root->TexturesManager()->
+            GetMeshSrv(mData.mTextures[0]);
+
+        _pool->AddDrawCallToPipe(DRAWCALL_TYPE::OPACITY, data);
     }
 
     void Release(RSMeshHelper* _helper)

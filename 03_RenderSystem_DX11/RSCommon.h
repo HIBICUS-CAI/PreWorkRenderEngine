@@ -16,6 +16,7 @@
 #include <d3d11_1.h>
 #include <DirectXMath.h>
 #include <Windows.h>
+#include "RSVertexType.h"
 
 enum class PASS_TYPE
 {
@@ -208,5 +209,4 @@ struct DATA_TEXTURE_INFO
 
 #ifdef _RS_DX11
 #include "RSExtraMacro.h"
-#include "RSVertexType.h"
 #endif // _RS_DX11
