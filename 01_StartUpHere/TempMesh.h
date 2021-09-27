@@ -169,3 +169,26 @@ private:
     std::string mDirectory;
     std::string mTextureType;
 };
+
+class TempGeoMesh
+{
+public:
+    TempGeoMesh(RS_SUBMESH_DATA&& _data) :mData(_data) {}
+    ~TempGeoMesh() {}
+
+    void UploadDrawCall()
+    {
+        return;
+    }
+
+    void Release(RSMeshHelper* _helper)
+    {
+        if (_helper)
+        {
+            _helper->ReleaseSubMesh(mData);
+        }
+    }
+
+private:
+    RS_SUBMESH_DATA mData;
+};

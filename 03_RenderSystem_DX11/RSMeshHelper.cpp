@@ -17,7 +17,8 @@
 #include <DirectXTK\DDSTextureLoader.h>
 
 RSMeshHelper::RSMeshHelper() :
-    mRootPtr(nullptr), mTexManagerPtr(nullptr), mDevicesPtr(nullptr)
+    mRootPtr(nullptr), mTexManagerPtr(nullptr),
+    mDevicesPtr(nullptr), mGeoGeneratorPtr(nullptr)
 {
 
 }
@@ -35,13 +36,23 @@ bool RSMeshHelper::StartUp(
     mRootPtr = _root;
     mTexManagerPtr = _texManager;
     mDevicesPtr = _root->Devices();
+    mGeoGeneratorPtr = new RSGeometryGenerator();
 
     return true;
 }
 
 void RSMeshHelper::CleanAndStop()
 {
+    if (mGeoGeneratorPtr)
+    {
+        delete mGeoGeneratorPtr;
+        mGeoGeneratorPtr = nullptr;
+    }
+}
 
+RSGeometryGenerator* RSMeshHelper::GeoGenerate()
+{
+    return mGeoGeneratorPtr;
 }
 
 void RSMeshHelper::ProcessSubMesh(
@@ -293,4 +304,49 @@ void RSMeshHelper::ReleaseSubMesh(RS_SUBMESH_DATA& _result)
 {
     SAFE_RELEASE(_result.mIndexBuffer);
     SAFE_RELEASE(_result.mVertexBuffer);
+}
+
+RSGeometryGenerator::RSGeometryGenerator() {}
+
+RSGeometryGenerator::~RSGeometryGenerator() {}
+
+RS_SUBMESH_DATA RSGeometryGenerator::CreateBox(
+    float _width, float _height, float _depth, UINT _diviNum,
+    std::string&& _layoutName, bool _useVertexColor,
+    DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
+{
+    return {};
+}
+
+RS_SUBMESH_DATA RSGeometryGenerator::CreateSphere(
+    float _radius, UINT _sliceCount, UINT _stackCount,
+    std::string&& _layoutName, bool _useVertexColor,
+    DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
+{
+    return {};
+}
+
+RS_SUBMESH_DATA RSGeometryGenerator::CreateGeometrySphere(
+    float _radius, UINT _diviNum,
+    std::string&& _layoutName, bool _useVertexColor,
+    DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
+{
+    return {};
+}
+
+RS_SUBMESH_DATA RSGeometryGenerator::CreateCylinder(
+    float _bottomRadius, float _topRadius, float _height,
+    UINT _sliceCount, UINT _stackCount,
+    std::string&& _layoutName, bool _useVertexColor,
+    DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
+{
+    return {};
+}
+
+RS_SUBMESH_DATA RSGeometryGenerator::CreateGrid(
+    float _width, float _depth, UINT _rowCount, UINT _colCount,
+    std::string&& _layoutName, bool _useVertexColor,
+    DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
+{
+    return {};
 }

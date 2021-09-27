@@ -26,6 +26,8 @@ public:
         SUBMESH_INFO* _info, LAYOUT_TYPE _layoutType);
     void ReleaseSubMesh(RS_SUBMESH_DATA& _result);
 
+    class RSGeometryGenerator* GeoGenerate();
+
 private:
     ID3D11InputLayout* RefStaticInputLayout(
         LAYOUT_TYPE _layoutType);
@@ -45,5 +47,43 @@ private:
     class RSRoot_DX11* mRootPtr;
     class RSTexturesManager* mTexManagerPtr;
     class RSDevices* mDevicesPtr;
+    class RSGeometryGenerator* mGeoGeneratorPtr;
 };
 
+class RSGeometryGenerator
+{
+public:
+    RSGeometryGenerator();
+    ~RSGeometryGenerator();
+
+    RS_SUBMESH_DATA CreateBox(
+        float _width, float _height, float _depth, UINT _diviNum,
+        std::string&& _layoutName, bool _useVertexColor = true,
+        DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
+        std::string&& _texColorName = "");
+
+    RS_SUBMESH_DATA CreateSphere(
+        float _radius, UINT _sliceCount, UINT _stackCount,
+        std::string&& _layoutName, bool _useVertexColor = true,
+        DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
+        std::string&& _texColorName = "");
+
+    RS_SUBMESH_DATA CreateGeometrySphere(
+        float _radius, UINT _diviNum,
+        std::string&& _layoutName, bool _useVertexColor = true,
+        DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
+        std::string&& _texColorName = "");
+
+    RS_SUBMESH_DATA CreateCylinder(
+        float _bottomRadius, float _topRadius, float _height,
+        UINT _sliceCount, UINT _stackCount,
+        std::string&& _layoutName, bool _useVertexColor = true,
+        DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
+        std::string&& _texColorName = "");
+
+    RS_SUBMESH_DATA CreateGrid(
+        float _width, float _depth, UINT _rowCount, UINT _colCount,
+        std::string&& _layoutName, bool _useVertexColor = true,
+        DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
+        std::string&& _texColorName = "");
+};
