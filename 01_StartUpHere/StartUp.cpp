@@ -36,8 +36,8 @@ int WINAPI WinMain(
 
     TempGeoMesh* box = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateBox(
-            1.5f, 1.5f, 1.5f, 3, 
-            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false, 
+            1.5f, 1.5f, 1.5f, 3,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
 
     mesh->Process(root->MeshHelper());

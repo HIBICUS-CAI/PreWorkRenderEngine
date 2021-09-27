@@ -104,7 +104,7 @@ public:
         data.mMeshData.mTopologyType = mData.mTopologyType;
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
-        data.mMeshData.mIndexCount = (UINT)mIndeices.size();
+        data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &instance;
         data.mCameraData = *(_root->CamerasContainer()->
             GetRSCameraInfo(name));
@@ -202,7 +202,7 @@ public:
         data.mMeshData.mTopologyType = mData.mTopologyType;
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
-        data.mMeshData.mIndexCount = 2304;
+        data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &instance;
         data.mCameraData = *(_root->CamerasContainer()->
             GetRSCameraInfo(name));

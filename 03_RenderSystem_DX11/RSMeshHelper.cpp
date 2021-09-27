@@ -95,6 +95,7 @@ void RSMeshHelper::ProcessSubMesh(
     _result->mIndexBuffer = CreateIndexBuffer(_info->mIndeices);
     _result->mVertexBuffer = CreateVertexBuffer(_info->mVerteices,
         _layoutType);
+    _result->mIndexCount = (UINT)_info->mIndeices->size();
     CreateTexSrv(_result, _info->mTextures);
     if (_info->mMaterial)
     {

@@ -140,6 +140,7 @@ struct RS_SUBMESH_DATA
     ID3D11InputLayout* mLayout = nullptr;
     ID3D11Buffer* mIndexBuffer = nullptr;
     ID3D11Buffer* mVertexBuffer = nullptr;
+    UINT mIndexCount = 0;
     std::vector<std::string> mTextures = {};
     RS_MATERIAL_INFO mMaterial = {};
 };
