@@ -570,7 +570,324 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateSphere(
     LAYOUT_TYPE _layout, bool _useVertexColor,
     DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
 {
-    return {};
+    RS_SUBMESH_DATA rsd = {};
+    SUBMESH_INFO si = {};
+    MATERIAL_INFO mi = {};
+    std::vector<UINT> indeices = {};
+    std::vector<VertexType::BasicVertex> basic = {};
+    std::vector<VertexType::TangentVertex> tangent = {};
+    std::vector<VertexType::ColorVertex> color = {};
+    std::vector<std::string> textures = {};
+
+    switch (_layout)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        if (!_useVertexColor)
+        {
+            bool notUsingVertColor = false;
+            assert(notUsingVertColor);
+        }
+        VertexType::ColorVertex topVertex =
+        {
+            { 0.0f, +_radius, 0.0f }, { 0.0f, +1.0f, 0.0f },
+            _vertColor
+        };
+        VertexType::ColorVertex bottomVertex =
+        {
+            { 0.0f, -_radius, 0.0f }, { 0.0f, -1.0f, 0.0f },
+            _vertColor
+        };
+
+        color.emplace_back(topVertex);
+
+        float phiStep = DirectX::XM_PI / _stackCount;
+        float thetaStep = 2.0f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 1; i <= _stackCount - 1; i++)
+        {
+            float phi = i * phiStep;
+
+            for (UINT j = 0; j <= _sliceCount; j++)
+            {
+                float theta = j * thetaStep;
+                VertexType::ColorVertex v = {};
+
+                v.Position.x = _radius * sinf(phi) * cosf(theta);
+                v.Position.y = _radius * cosf(phi);
+                v.Position.z = _radius * sinf(phi) * sinf(theta);
+
+                XMVECTOR P = XMLoadFloat3(&v.Position);
+                XMStoreFloat3(&v.Normal, XMVector3Normalize(P));
+
+                v.Color = _vertColor;
+
+                color.emplace_back(v);
+            }
+        }
+
+        color.emplace_back(bottomVertex);
+
+        for (UINT i = 1; i <= _sliceCount; i++)
+        {
+            indeices.emplace_back(0);
+            indeices.emplace_back(i + 1);
+            indeices.emplace_back(i);
+        }
+
+        UINT baseIndex = 1;
+        UINT ringVertexCount = _sliceCount + 1;
+        for (UINT i = 0; i < _stackCount - 2; i++)
+        {
+            for (UINT j = 0; j < _sliceCount; j++)
+            {
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j);
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j + 1);
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j);
+
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j);
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j + 1);
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j + 1);
+            }
+        }
+
+        UINT southPoleIndex = (UINT)color.size() - 1;
+        baseIndex = southPoleIndex - ringVertexCount;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            indeices.emplace_back(southPoleIndex);
+            indeices.emplace_back(baseIndex + i);
+            indeices.emplace_back(baseIndex + i + 1);
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &color;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TEX:
+    {
+        if (_useVertexColor)
+        {
+            bool usingVertColor = false;
+            assert(usingVertColor);
+        }
+        VertexType::BasicVertex topVertex =
+        {
+            { 0.0f, +_radius, 0.0f }, { 0.0f, +1.0f, 0.0f },
+            { 0.0f, 0.0f }
+        };
+        VertexType::BasicVertex bottomVertex =
+        {
+            { 0.0f, -_radius, 0.0f }, { 0.0f, -1.0f, 0.0f },
+            { 0.0f, 1.0f }
+        };
+
+        basic.emplace_back(topVertex);
+
+        float phiStep = DirectX::XM_PI / _stackCount;
+        float thetaStep = 2.0f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 1; i <= _stackCount - 1; i++)
+        {
+            float phi = i * phiStep;
+
+            for (UINT j = 0; j <= _sliceCount; j++)
+            {
+                float theta = j * thetaStep;
+                VertexType::BasicVertex v = {};
+
+                v.Position.x = _radius * sinf(phi) * cosf(theta);
+                v.Position.y = _radius * cosf(phi);
+                v.Position.z = _radius * sinf(phi) * sinf(theta);
+
+                XMVECTOR P = XMLoadFloat3(&v.Position);
+                XMStoreFloat3(&v.Normal, XMVector3Normalize(P));
+
+                v.TexCoord.x = theta / DirectX::XM_2PI;
+                v.TexCoord.y = phi / DirectX::XM_PI;
+
+                basic.emplace_back(v);
+            }
+        }
+
+        basic.emplace_back(bottomVertex);
+
+        for (UINT i = 1; i <= _sliceCount; i++)
+        {
+            indeices.emplace_back(0);
+            indeices.emplace_back(i + 1);
+            indeices.emplace_back(i);
+        }
+
+        UINT baseIndex = 1;
+        UINT ringVertexCount = _sliceCount + 1;
+        for (UINT i = 0; i < _stackCount - 2; i++)
+        {
+            for (UINT j = 0; j < _sliceCount; j++)
+            {
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j);
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j + 1);
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j);
+
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j);
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j + 1);
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j + 1);
+            }
+        }
+
+        UINT southPoleIndex = (UINT)basic.size() - 1;
+        baseIndex = southPoleIndex - ringVertexCount;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            indeices.emplace_back(southPoleIndex);
+            indeices.emplace_back(baseIndex + i);
+            indeices.emplace_back(baseIndex + i + 1);
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &basic;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+    {
+        if (_useVertexColor)
+        {
+            bool usingVertColor = false;
+            assert(usingVertColor);
+        }
+        VertexType::TangentVertex topVertex =
+        {
+            { 0.0f, +_radius, 0.0f }, { 0.0f, +1.0f, 0.0f },
+            { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }
+        };
+        VertexType::TangentVertex bottomVertex =
+        {
+            { 0.0f, -_radius, 0.0f }, { 0.0f, -1.0f, 0.0f },
+            { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }
+        };
+
+        tangent.emplace_back(topVertex);
+
+        float phiStep = DirectX::XM_PI / _stackCount;
+        float thetaStep = 2.0f * DirectX::XM_PI / _sliceCount;
+
+        for (UINT i = 1; i <= _stackCount - 1; i++)
+        {
+            float phi = i * phiStep;
+
+            for (UINT j = 0; j <= _sliceCount; j++)
+            {
+                float theta = j * thetaStep;
+                VertexType::TangentVertex v = {};
+
+                v.Position.x = _radius * sinf(phi) * cosf(theta);
+                v.Position.y = _radius * cosf(phi);
+                v.Position.z = _radius * sinf(phi) * sinf(theta);
+                v.Tangent.x = -_radius * sinf(phi) * sinf(theta);
+                v.Tangent.y = 0.0f;
+                v.Tangent.z = +_radius * sinf(phi) * cosf(theta);
+
+                XMVECTOR T = XMLoadFloat3(&v.Tangent);
+                XMStoreFloat3(&v.Tangent, XMVector3Normalize(T));
+                XMVECTOR P = XMLoadFloat3(&v.Position);
+                XMStoreFloat3(&v.Normal, XMVector3Normalize(P));
+
+                v.TexCoord.x = theta / DirectX::XM_2PI;
+                v.TexCoord.y = phi / DirectX::XM_PI;
+
+                tangent.emplace_back(v);
+            }
+        }
+
+        tangent.emplace_back(bottomVertex);
+
+        for (UINT i = 1; i <= _sliceCount; i++)
+        {
+            indeices.emplace_back(0);
+            indeices.emplace_back(i + 1);
+            indeices.emplace_back(i);
+        }
+
+        UINT baseIndex = 1;
+        UINT ringVertexCount = _sliceCount + 1;
+        for (UINT i = 0; i < _stackCount - 2; i++)
+        {
+            for (UINT j = 0; j < _sliceCount; j++)
+            {
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j);
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j + 1);
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j);
+
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j);
+                indeices.emplace_back(
+                    baseIndex + i * ringVertexCount + j + 1);
+                indeices.emplace_back(
+                    baseIndex + (i + 1) * ringVertexCount + j + 1);
+            }
+        }
+
+        UINT southPoleIndex = (UINT)tangent.size() - 1;
+        baseIndex = southPoleIndex - ringVertexCount;
+
+        for (UINT i = 0; i < _sliceCount; i++)
+        {
+            indeices.emplace_back(southPoleIndex);
+            indeices.emplace_back(baseIndex + i);
+            indeices.emplace_back(baseIndex + i + 1);
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &tangent;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    default:
+        bool nullLayout = false;
+        assert(nullLayout);
+    }
+
+    return rsd;
 }
 
 RS_SUBMESH_DATA RSGeometryGenerator::CreateGeometrySphere(
@@ -614,7 +931,7 @@ void RSGeometryGenerator::SubDivide(LAYOUT_TYPE _layout,
         _indexVec->resize(0);
 
         UINT numTris = (UINT)indexCopy.size() / 3;
-        for (UINT i = 0; i < numTris; ++i)
+        for (UINT i = 0; i < numTris; i++)
         {
             VertexType::ColorVertex v0 =
                 colorCopy[indexCopy[i * 3 + 0]];
@@ -661,7 +978,7 @@ void RSGeometryGenerator::SubDivide(LAYOUT_TYPE _layout,
         _indexVec->resize(0);
 
         UINT numTris = (UINT)indexCopy.size() / 3;
-        for (UINT i = 0; i < numTris; ++i)
+        for (UINT i = 0; i < numTris; i++)
         {
             VertexType::BasicVertex v0 =
                 basicCopy[indexCopy[i * 3 + 0]];
@@ -708,7 +1025,7 @@ void RSGeometryGenerator::SubDivide(LAYOUT_TYPE _layout,
         _indexVec->resize(0);
 
         UINT numTris = (UINT)indexCopy.size() / 3;
-        for (UINT i = 0; i < numTris; ++i)
+        for (UINT i = 0; i < numTris; i++)
         {
             VertexType::TangentVertex v0 =
                 tangeCopy[indexCopy[i * 3 + 0]];
