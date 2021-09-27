@@ -373,7 +373,7 @@ bool RSPass_Diffuse::CreateViews()
     ZeroMemory(&desSRV, sizeof(desSRV));
     desSRV.Format = DXGI_FORMAT_UNKNOWN;
     desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    desSRV.Buffer.ElementWidth = 2;
+    desSRV.Buffer.ElementWidth = 256;
     hr = Device()->CreateShaderResourceView(mStructedBuffer,
         &desSRV, &mStructedBufferSrv);
     if (FAILED(hr)) { return false; }
@@ -417,7 +417,7 @@ bool RSPass_Diffuse::CreateBuffers()
     bdc.Usage = D3D11_USAGE_DYNAMIC;
     bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    bdc.ByteWidth = 2 * sizeof(RS_INSTANCE_DATA);
+    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
     bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
     hr = Device()->CreateBuffer(
