@@ -36,7 +36,7 @@ bool RSMeshHelper::StartUp(
     mRootPtr = _root;
     mTexManagerPtr = _texManager;
     mDevicesPtr = _root->Devices();
-    mGeoGeneratorPtr = new RSGeometryGenerator();
+    mGeoGeneratorPtr = new RSGeometryGenerator(this);
 
     return true;
 }
@@ -306,7 +306,8 @@ void RSMeshHelper::ReleaseSubMesh(RS_SUBMESH_DATA& _result)
     SAFE_RELEASE(_result.mVertexBuffer);
 }
 
-RSGeometryGenerator::RSGeometryGenerator() {}
+RSGeometryGenerator::RSGeometryGenerator(RSMeshHelper* _helper) :
+    mMeshHelperPtr(_helper) {}
 
 RSGeometryGenerator::~RSGeometryGenerator() {}
 

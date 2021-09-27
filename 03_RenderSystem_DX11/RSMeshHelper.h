@@ -53,7 +53,7 @@ private:
 class RSGeometryGenerator
 {
 public:
-    RSGeometryGenerator();
+    RSGeometryGenerator(RSMeshHelper* _helper);
     ~RSGeometryGenerator();
 
     RS_SUBMESH_DATA CreateBox(
@@ -86,4 +86,7 @@ public:
         std::string&& _layoutName, bool _useVertexColor = true,
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
+
+private:
+    RSMeshHelper* mMeshHelperPtr;
 };
