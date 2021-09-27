@@ -99,6 +99,10 @@ private:
         const VertexType::TangentVertex& _v0,
         const VertexType::TangentVertex& _v1);
 
+    VertexType::ColorVertex ColorMidPoint(
+        const VertexType::ColorVertex& _v0,
+        const VertexType::ColorVertex& _v1);
+
 private:
     RSMeshHelper* mMeshHelperPtr;
 };

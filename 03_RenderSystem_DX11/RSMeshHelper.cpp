@@ -336,6 +336,77 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateBox(
     switch (_layout)
     {
     case LAYOUT_TYPE::NORMAL_COLOR:
+        if (!_useVertexColor)
+        {
+            bool notUsingVertColor = false;
+            assert(notUsingVertColor);
+        }
+        color.resize(24);
+        // front face
+        color[0] = { { -hw, -hh, -hd }, { 0.0f, 0.0f, -1.0f }, _vertColor };
+        color[1] = { { -hw, +hh, -hd }, { 0.0f, 0.0f, -1.0f }, _vertColor };
+        color[2] = { { +hw, +hh, -hd }, { 0.0f, 0.0f, -1.0f }, _vertColor };
+        color[3] = { { +hw, -hh, -hd }, { 0.0f, 0.0f, -1.0f }, _vertColor };
+        // back face
+        color[4] = { { -hw, -hh, +hd }, { 0.0f, 0.0f, 1.0f }, _vertColor };
+        color[5] = { { +hw, -hh, +hd }, { 0.0f, 0.0f, 1.0f }, _vertColor };
+        color[6] = { { +hw, +hh, +hd }, { 0.0f, 0.0f, 1.0f }, _vertColor };
+        color[7] = { { -hw, +hh, +hd }, { 0.0f, 0.0f, 1.0f }, _vertColor };
+        // top face
+        color[8] = { { -hw, +hh, -hd }, { 0.0f, 1.0f, 0.0f }, _vertColor };
+        color[9] = { { -hw, +hh, +hd }, { 0.0f, 1.0f, 0.0f }, _vertColor };
+        color[10] = { { +hw, +hh, +hd }, { 0.0f, 1.0f, 0.0f }, _vertColor };
+        color[11] = { { +hw, +hh, -hd }, { 0.0f, 1.0f, 0.0f }, _vertColor };
+        // bottom face
+        color[12] = { { -hw, -hh, -hd }, { 0.0f, -1.0f, 0.0f }, _vertColor };
+        color[13] = { { +hw, -hh, -hd }, { 0.0f, -1.0f, 0.0f }, _vertColor };
+        color[14] = { { +hw, -hh, +hd }, { 0.0f, -1.0f, 0.0f }, _vertColor };
+        color[15] = { { -hw, -hh, +hd }, { 0.0f, -1.0f, 0.0f }, _vertColor };
+        // left face
+        color[16] = { { -hw, -hh, +hd }, { -1.0f, 0.0f, 0.0f }, _vertColor };
+        color[17] = { { -hw, +hh, +hd }, { -1.0f, 0.0f, 0.0f }, _vertColor };
+        color[18] = { { -hw, +hh, -hd }, { -1.0f, 0.0f, 0.0f }, _vertColor };
+        color[19] = { { -hw, -hh, -hd }, { -1.0f, 0.0f, 0.0f }, _vertColor };
+        // right face
+        color[20] = { { +hw, -hh, -hd }, { 1.0f, 0.0f, 0.0f }, _vertColor };
+        color[21] = { { +hw, +hh, -hd }, { 1.0f, 0.0f, 0.0f }, _vertColor };
+        color[22] = { { +hw, +hh, +hd }, { 1.0f, 0.0f, 0.0f }, _vertColor };
+        color[23] = { { +hw, -hh, +hd }, { 1.0f, 0.0f, 0.0f }, _vertColor };
+
+        // front face index
+        indeices[0] = 0; indeices[1] = 1; indeices[2] = 2;
+        indeices[3] = 0; indeices[4] = 2; indeices[5] = 3;
+        // back face index
+        indeices[6] = 4; indeices[7] = 5; indeices[8] = 6;
+        indeices[9] = 4; indeices[10] = 6; indeices[11] = 7;
+        // top face index
+        indeices[12] = 8; indeices[13] = 9; indeices[14] = 10;
+        indeices[15] = 8; indeices[16] = 10; indeices[17] = 11;
+        // bottom face index
+        indeices[18] = 12; indeices[19] = 13; indeices[20] = 14;
+        indeices[21] = 12; indeices[22] = 14; indeices[23] = 15;
+        // left face index
+        indeices[24] = 16; indeices[25] = 17; indeices[26] = 18;
+        indeices[27] = 16; indeices[28] = 18; indeices[29] = 19;
+        // right face index
+        indeices[30] = 20; indeices[31] = 21; indeices[32] = 22;
+        indeices[33] = 20; indeices[34] = 22; indeices[35] = 23;
+
+        if (_diviNum > 6) { _diviNum = 6; }
+        for (UINT i = 0; i < _diviNum; i++)
+        {
+            SubDivide(_layout, &color, &indeices);
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &color;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
         break;
 
     case LAYOUT_TYPE::NORMAL_TEX:
@@ -533,7 +604,51 @@ void RSGeometryGenerator::SubDivide(LAYOUT_TYPE _layout,
     switch (_layout)
     {
     case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        std::vector<VertexType::ColorVertex>* _colorVec =
+            (std::vector<VertexType::ColorVertex>*)_vertexVec;
+        std::vector<VertexType::ColorVertex> colorCopy = *_colorVec;
+        std::vector<UINT> indexCopy = *_indexVec;
+
+        _colorVec->resize(0);
+        _indexVec->resize(0);
+
+        UINT numTris = (UINT)indexCopy.size() / 3;
+        for (UINT i = 0; i < numTris; ++i)
+        {
+            VertexType::ColorVertex v0 =
+                colorCopy[indexCopy[i * 3 + 0]];
+            VertexType::ColorVertex v1 =
+                colorCopy[indexCopy[i * 3 + 1]];
+            VertexType::ColorVertex v2 =
+                colorCopy[indexCopy[i * 3 + 2]];
+
+            VertexType::ColorVertex m0 = ColorMidPoint(v0, v1);
+            VertexType::ColorVertex m1 = ColorMidPoint(v1, v2);
+            VertexType::ColorVertex m2 = ColorMidPoint(v0, v2);
+
+            _colorVec->emplace_back(v0);
+            _colorVec->emplace_back(v1);
+            _colorVec->emplace_back(v2);
+            _colorVec->emplace_back(m0);
+            _colorVec->emplace_back(m1);
+            _colorVec->emplace_back(m2);
+            _indexVec->emplace_back(i * 6 + 0);
+            _indexVec->emplace_back(i * 6 + 3);
+            _indexVec->emplace_back(i * 6 + 5);
+            _indexVec->emplace_back(i * 6 + 3);
+            _indexVec->emplace_back(i * 6 + 4);
+            _indexVec->emplace_back(i * 6 + 5);
+            _indexVec->emplace_back(i * 6 + 5);
+            _indexVec->emplace_back(i * 6 + 4);
+            _indexVec->emplace_back(i * 6 + 2);
+            _indexVec->emplace_back(i * 6 + 3);
+            _indexVec->emplace_back(i * 6 + 1);
+            _indexVec->emplace_back(i * 6 + 4);
+        }
+
         break;
+    }
 
     case LAYOUT_TYPE::NORMAL_TEX:
     {
@@ -682,6 +797,29 @@ VertexType::TangentVertex RSGeometryGenerator::TangentMidPoint(
     DirectX::XMStoreFloat3(&v.Normal, normal);
     DirectX::XMStoreFloat3(&v.Tangent, tangent);
     DirectX::XMStoreFloat2(&v.TexCoord, tex);
+
+    return v;
+}
+
+VertexType::ColorVertex RSGeometryGenerator::ColorMidPoint(
+    const VertexType::ColorVertex& _v0,
+    const VertexType::ColorVertex& _v1)
+{
+    DirectX::XMVECTOR p0 = DirectX::XMLoadFloat3(&_v0.Position);
+    DirectX::XMVECTOR p1 = DirectX::XMLoadFloat3(&_v1.Position);
+    DirectX::XMVECTOR n0 = DirectX::XMLoadFloat3(&_v0.Normal);
+    DirectX::XMVECTOR n1 = DirectX::XMLoadFloat3(&_v1.Normal);
+    DirectX::XMVECTOR col0 = DirectX::XMLoadFloat4(&_v0.Color);
+    DirectX::XMVECTOR col1 = DirectX::XMLoadFloat4(&_v1.Color);
+    DirectX::XMVECTOR pos = 0.5f * (p0 + p1);
+    DirectX::XMVECTOR color = 0.5f * (col0 + col1);
+    DirectX::XMVECTOR normal =
+        DirectX::XMVector3Normalize(0.5f * (n0 + n1));
+
+    VertexType::ColorVertex v = {};
+    DirectX::XMStoreFloat3(&v.Position, pos);
+    DirectX::XMStoreFloat3(&v.Normal, normal);
+    DirectX::XMStoreFloat4(&v.Color, color);
 
     return v;
 }
