@@ -35,8 +35,8 @@ int WINAPI WinMain(
     }
 
     TempGeoMesh* geo = new TempGeoMesh(root->MeshHelper()->
-        GeoGenerate()->CreateSphere(
-            2.5f, 25, 25,
+        GeoGenerate()->CreateGeometrySphere(
+            2.5f, 3,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
 

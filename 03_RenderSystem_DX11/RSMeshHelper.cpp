@@ -895,7 +895,256 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateGeometrySphere(
     LAYOUT_TYPE _layout, bool _useVertexColor,
     DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
 {
-    return {};
+    RS_SUBMESH_DATA rsd = {};
+    SUBMESH_INFO si = {};
+    MATERIAL_INFO mi = {};
+    std::vector<UINT> indeices = {};
+    std::vector<VertexType::BasicVertex> basic = {};
+    std::vector<VertexType::TangentVertex> tangent = {};
+    std::vector<VertexType::ColorVertex> color = {};
+    std::vector<std::string> textures = {};
+
+    switch (_layout)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        if (!_useVertexColor)
+        {
+            bool notUsingVertColor = false;
+            assert(notUsingVertColor);
+        }
+
+        if (_diviNum > 6) { _diviNum = 6; }
+
+        const float X = 0.525731f;
+        const float Z = 0.850651f;
+        XMFLOAT3 pos[12] =
+        {
+            XMFLOAT3(-X, 0.0f, Z),  XMFLOAT3(X, 0.0f, Z),
+            XMFLOAT3(-X, 0.0f, -Z), XMFLOAT3(X, 0.0f, -Z),
+            XMFLOAT3(0.0f, Z, X),   XMFLOAT3(0.0f, Z, -X),
+            XMFLOAT3(0.0f, -Z, X),  XMFLOAT3(0.0f, -Z, -X),
+            XMFLOAT3(Z, X, 0.0f),   XMFLOAT3(-Z, X, 0.0f),
+            XMFLOAT3(Z, -X, 0.0f),  XMFLOAT3(-Z, -X, 0.0f)
+        };
+        UINT k[60] =
+        {
+            1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,
+            1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,
+            3,10,7, 10,6,7, 6,11,7, 6,0,11, 6,1,0,
+            10,1,6, 11,0,9, 2,11,9, 5,2,9,  11,2,7
+        };
+
+        color.resize(ARRAYSIZE(pos));
+        indeices.assign(&k[0], &k[60]);
+
+        for (UINT i = 0; i < ARRAYSIZE(pos); i++)
+        {
+            color[i].Position = pos[i];
+        }
+        for (UINT i = 0; i < _diviNum; i++)
+        {
+            SubDivide(_layout, &color, &indeices);
+        }
+
+        for (UINT i = 0; i < (UINT)color.size(); ++i)
+        {
+            XMVECTOR n = XMVector3Normalize(
+                XMLoadFloat3(&color[i].Position));
+            XMVECTOR p = _radius * n;
+
+            XMStoreFloat3(&color[i].Position, p);
+            XMStoreFloat3(&color[i].Normal, n);
+
+            float theta = atan2f(
+                color[i].Position.z, color[i].Position.x);
+
+            if (theta < 0.0f)
+            {
+                theta += DirectX::XM_2PI;
+            }
+
+            float phi = acosf(color[i].Position.y / _radius);
+            color[i].Color = _vertColor;
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &color;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TEX:
+    {
+        if (_useVertexColor)
+        {
+            bool usingVertColor = false;
+            assert(usingVertColor);
+        }
+
+        if (_diviNum > 6) { _diviNum = 6; }
+
+        const float X = 0.525731f;
+        const float Z = 0.850651f;
+        XMFLOAT3 pos[12] =
+        {
+            XMFLOAT3(-X, 0.0f, Z),  XMFLOAT3(X, 0.0f, Z),
+            XMFLOAT3(-X, 0.0f, -Z), XMFLOAT3(X, 0.0f, -Z),
+            XMFLOAT3(0.0f, Z, X),   XMFLOAT3(0.0f, Z, -X),
+            XMFLOAT3(0.0f, -Z, X),  XMFLOAT3(0.0f, -Z, -X),
+            XMFLOAT3(Z, X, 0.0f),   XMFLOAT3(-Z, X, 0.0f),
+            XMFLOAT3(Z, -X, 0.0f),  XMFLOAT3(-Z, -X, 0.0f)
+        };
+        UINT k[60] =
+        {
+            1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,
+            1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,
+            3,10,7, 10,6,7, 6,11,7, 6,0,11, 6,1,0,
+            10,1,6, 11,0,9, 2,11,9, 5,2,9,  11,2,7
+        };
+
+        basic.resize(ARRAYSIZE(pos));
+        indeices.assign(&k[0], &k[60]);
+
+        for (UINT i = 0; i < ARRAYSIZE(pos); i++)
+        {
+            basic[i].Position = pos[i];
+        }
+        for (UINT i = 0; i < _diviNum; i++)
+        {
+            SubDivide(_layout, &basic, &indeices);
+        }
+
+        for (UINT i = 0; i < (UINT)basic.size(); ++i)
+        {
+            XMVECTOR n = XMVector3Normalize(
+                XMLoadFloat3(&basic[i].Position));
+            XMVECTOR p = _radius * n;
+
+            XMStoreFloat3(&basic[i].Position, p);
+            XMStoreFloat3(&basic[i].Normal, n);
+
+            float theta = atan2f(
+                basic[i].Position.z, basic[i].Position.x);
+
+            if (theta < 0.0f)
+            {
+                theta += DirectX::XM_2PI;
+            }
+
+            float phi = acosf(basic[i].Position.y / _radius);
+
+            basic[i].TexCoord.x = theta / DirectX::XM_2PI;
+            basic[i].TexCoord.y = phi / DirectX::XM_PI;
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &basic;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+    {
+        if (_useVertexColor)
+        {
+            bool usingVertColor = false;
+            assert(usingVertColor);
+        }
+
+        if (_diviNum > 6) { _diviNum = 6; }
+
+        const float X = 0.525731f;
+        const float Z = 0.850651f;
+        XMFLOAT3 pos[12] =
+        {
+            XMFLOAT3(-X, 0.0f, Z),  XMFLOAT3(X, 0.0f, Z),
+            XMFLOAT3(-X, 0.0f, -Z), XMFLOAT3(X, 0.0f, -Z),
+            XMFLOAT3(0.0f, Z, X),   XMFLOAT3(0.0f, Z, -X),
+            XMFLOAT3(0.0f, -Z, X),  XMFLOAT3(0.0f, -Z, -X),
+            XMFLOAT3(Z, X, 0.0f),   XMFLOAT3(-Z, X, 0.0f),
+            XMFLOAT3(Z, -X, 0.0f),  XMFLOAT3(-Z, -X, 0.0f)
+        };
+        UINT k[60] =
+        {
+            1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,
+            1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,
+            3,10,7, 10,6,7, 6,11,7, 6,0,11, 6,1,0,
+            10,1,6, 11,0,9, 2,11,9, 5,2,9,  11,2,7
+        };
+
+        tangent.resize(ARRAYSIZE(pos));
+        indeices.assign(&k[0], &k[60]);
+
+        for (UINT i = 0; i < ARRAYSIZE(pos); i++)
+        {
+            tangent[i].Position = pos[i];
+        }
+        for (UINT i = 0; i < _diviNum; i++)
+        {
+            SubDivide(_layout, &tangent, &indeices);
+        }
+
+        for (UINT i = 0; i < (UINT)tangent.size(); ++i)
+        {
+            XMVECTOR n = XMVector3Normalize(
+                XMLoadFloat3(&tangent[i].Position));
+            XMVECTOR p = _radius * n;
+
+            XMStoreFloat3(&tangent[i].Position, p);
+            XMStoreFloat3(&tangent[i].Normal, n);
+
+            float theta = atan2f(
+                tangent[i].Position.z, tangent[i].Position.x);
+
+            if (theta < 0.0f)
+            {
+                theta += DirectX::XM_2PI;
+            }
+
+            float phi = acosf(tangent[i].Position.y / _radius);
+
+            tangent[i].TexCoord.x = theta / DirectX::XM_2PI;
+            tangent[i].TexCoord.y = phi / DirectX::XM_PI;
+
+            tangent[i].Tangent.x = -_radius * sinf(phi) * sinf(theta);
+            tangent[i].Tangent.y = 0.0f;
+            tangent[i].Tangent.z = +_radius * sinf(phi) * cosf(theta);
+
+            XMVECTOR T = XMLoadFloat3(&tangent[i].Tangent);
+            XMStoreFloat3(&tangent[i].Tangent, XMVector3Normalize(T));
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &tangent;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    default:
+        bool nullLayout = false;
+        assert(nullLayout);
+    }
+
+    return rsd;
 }
 
 RS_SUBMESH_DATA RSGeometryGenerator::CreateCylinder(
