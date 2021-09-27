@@ -1393,7 +1393,202 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateGrid(
     LAYOUT_TYPE _layout, bool _useVertexColor,
     DirectX::XMFLOAT4&& _vertColor, std::string&& _texColorName)
 {
-    return {};
+    RS_SUBMESH_DATA rsd = {};
+    SUBMESH_INFO si = {};
+    MATERIAL_INFO mi = {};
+    std::vector<UINT> indeices = {};
+    std::vector<VertexType::BasicVertex> basic = {};
+    std::vector<VertexType::TangentVertex> tangent = {};
+    std::vector<VertexType::ColorVertex> color = {};
+    std::vector<std::string> textures = {};
+
+    switch (_layout)
+    {
+    case LAYOUT_TYPE::NORMAL_COLOR:
+    {
+        UINT vertexCount = _rowCount * _colCount;
+        UINT faceCount = (_rowCount - 1) * (_colCount - 1) * 2;
+        float halfWidth = 0.5f * _width;
+        float halfDepth = 0.5f * _depth;
+        float dx = _width / (_colCount - 1);
+        float dz = _depth / (_rowCount - 1);
+        float du = 1.f / (_colCount - 1);
+        float dv = 1.f / (_rowCount - 1);
+
+        color.resize(vertexCount);
+        for (UINT i = 0; i < _rowCount; i++)
+        {
+            float z = halfDepth - i * dz;
+            for (UINT j = 0; j < _colCount; j++)
+            {
+                float x = -halfWidth + j * dx;
+
+                color[static_cast<std::vector<VertexType::ColorVertex, std::allocator<VertexType::ColorVertex>>::size_type>(i) * _colCount + j].Position =
+                    DirectX::XMFLOAT3(x, 0.f, z);
+                color[static_cast<std::vector<VertexType::ColorVertex, std::allocator<VertexType::ColorVertex>>::size_type>(i) * _colCount + j].Normal =
+                    DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
+                color[static_cast<std::vector<VertexType::ColorVertex, std::allocator<VertexType::ColorVertex>>::size_type>(i) * _colCount + j].Color = _vertColor;
+            }
+        }
+
+        indeices.resize(static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(faceCount) * 3);
+
+        UINT k = 0;
+        for (UINT i = 0; i < _rowCount - 1; i++)
+        {
+            for (UINT j = 0; j < _colCount - 1; j++)
+            {
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k)] = i * _colCount + j;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 1] = i * _colCount + j + 1;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 2] = (i + 1) * _colCount + j;
+
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 3] = (i + 1) * _colCount + j;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 4] = i * _colCount + j + 1;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 5] = (i + 1) * _colCount + j + 1;
+
+                k += 6;
+            }
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &color;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TEX:
+    {
+        UINT vertexCount = _rowCount * _colCount;
+        UINT faceCount = (_rowCount - 1) * (_colCount - 1) * 2;
+        float halfWidth = 0.5f * _width;
+        float halfDepth = 0.5f * _depth;
+        float dx = _width / (_colCount - 1);
+        float dz = _depth / (_rowCount - 1);
+        float du = 1.f / (_colCount - 1);
+        float dv = 1.f / (_rowCount - 1);
+
+        basic.resize(vertexCount);
+        for (UINT i = 0; i < _rowCount; i++)
+        {
+            float z = halfDepth - i * dz;
+            for (UINT j = 0; j < _colCount; j++)
+            {
+                float x = -halfWidth + j * dx;
+
+                basic[static_cast<std::vector<VertexType::BasicVertex, std::allocator<VertexType::BasicVertex>>::size_type>(i) * _colCount + j].Position =
+                    DirectX::XMFLOAT3(x, 0.f, z);
+                basic[static_cast<std::vector<VertexType::BasicVertex, std::allocator<VertexType::BasicVertex>>::size_type>(i) * _colCount + j].Normal =
+                    DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
+                basic[static_cast<std::vector<VertexType::BasicVertex, std::allocator<VertexType::BasicVertex>>::size_type>(i) * _colCount + j].TexCoord.x = j * du;
+                basic[static_cast<std::vector<VertexType::BasicVertex, std::allocator<VertexType::BasicVertex>>::size_type>(i) * _colCount + j].TexCoord.y = i * dv;
+            }
+        }
+
+        indeices.resize(static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(faceCount) * 3);
+
+        UINT k = 0;
+        for (UINT i = 0; i < _rowCount - 1; i++)
+        {
+            for (UINT j = 0; j < _colCount - 1; j++)
+            {
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k)] = i * _colCount + j;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 1] = i * _colCount + j + 1;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 2] = (i + 1) * _colCount + j;
+
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 3] = (i + 1) * _colCount + j;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 4] = i * _colCount + j + 1;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 5] = (i + 1) * _colCount + j + 1;
+
+                k += 6;
+            }
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &basic;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+    {
+        UINT vertexCount = _rowCount * _colCount;
+        UINT faceCount = (_rowCount - 1) * (_colCount - 1) * 2;
+        float halfWidth = 0.5f * _width;
+        float halfDepth = 0.5f * _depth;
+        float dx = _width / (_colCount - 1);
+        float dz = _depth / (_rowCount - 1);
+        float du = 1.f / (_colCount - 1);
+        float dv = 1.f / (_rowCount - 1);
+
+        tangent.resize(vertexCount);
+        for (UINT i = 0; i < _rowCount; i++)
+        {
+            float z = halfDepth - i * dz;
+            for (UINT j = 0; j < _colCount; j++)
+            {
+                float x = -halfWidth + j * dx;
+
+                tangent[static_cast<std::vector<VertexType::TangentVertex, std::allocator<VertexType::TangentVertex>>::size_type>(i) * _colCount + j].Position =
+                    DirectX::XMFLOAT3(x, 0.f, z);
+                tangent[static_cast<std::vector<VertexType::TangentVertex, std::allocator<VertexType::TangentVertex>>::size_type>(i) * _colCount + j].Normal =
+                    DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
+                tangent[static_cast<std::vector<VertexType::TangentVertex, std::allocator<VertexType::TangentVertex>>::size_type>(i) * _colCount + j].Tangent =
+                    DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+
+                tangent[static_cast<std::vector<VertexType::TangentVertex, std::allocator<VertexType::TangentVertex>>::size_type>(i) * _colCount + j].TexCoord.x = j * du;
+                tangent[static_cast<std::vector<VertexType::TangentVertex, std::allocator<VertexType::TangentVertex>>::size_type>(i) * _colCount + j].TexCoord.y = i * dv;
+            }
+        }
+
+        indeices.resize(static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(faceCount) * 3);
+
+        UINT k = 0;
+        for (UINT i = 0; i < _rowCount - 1; i++)
+        {
+            for (UINT j = 0; j < _colCount - 1; j++)
+            {
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k)] = i * _colCount + j;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 1] = i * _colCount + j + 1;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 2] = (i + 1) * _colCount + j;
+
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 3] = (i + 1) * _colCount + j;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 4] = i * _colCount + j + 1;
+                indeices[static_cast<std::vector<UINT, std::allocator<UINT>>::size_type>(k) + 5] = (i + 1) * _colCount + j + 1;
+
+                k += 6;
+            }
+        }
+
+        textures.emplace_back(_texColorName);
+
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mVerteices = &tangent;
+        si.mIndeices = &indeices;
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+
+        break;
+    }
+
+    default:
+        bool nullLayout = false;
+        assert(nullLayout);
+    }
+
+    return rsd;
 }
 
 void RSGeometryGenerator::SubDivide(LAYOUT_TYPE _layout,

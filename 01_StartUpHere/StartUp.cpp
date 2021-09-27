@@ -35,8 +35,8 @@ int WINAPI WinMain(
     }
 
     TempGeoMesh* geo = new TempGeoMesh(root->MeshHelper()->
-        GeoGenerate()->CreateCylinder(
-            2.5f, 1.f, 3.f, 20, 20,
+        GeoGenerate()->CreateGrid(
+            10.f, 10.f, 10, 10,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
 
