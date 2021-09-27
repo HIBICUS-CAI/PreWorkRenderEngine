@@ -398,8 +398,6 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateBox(
             SubDivide(_layout, &color, &indeices);
         }
 
-        textures.emplace_back(_texColorName);
-
         si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
         si.mVerteices = &color;
         si.mIndeices = &indeices;
@@ -666,8 +664,6 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateSphere(
             indeices.emplace_back(baseIndex + i);
             indeices.emplace_back(baseIndex + i + 1);
         }
-
-        textures.emplace_back(_texColorName);
 
         si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
         si.mVerteices = &color;
@@ -968,8 +964,6 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateGeometrySphere(
             color[i].Color = _vertColor;
         }
 
-        textures.emplace_back(_texColorName);
-
         si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
         si.mVerteices = &color;
         si.mIndeices = &indeices;
@@ -1224,8 +1218,6 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateCylinder(
             _sliceCount, _stackCount, _layout,
             &color, &indeices, _vertColor);
 
-        textures.emplace_back(_texColorName);
-
         si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
         si.mVerteices = &color;
         si.mIndeices = &indeices;
@@ -1449,8 +1441,6 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateGrid(
                 k += 6;
             }
         }
-
-        textures.emplace_back(_texColorName);
 
         si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
         si.mVerteices = &color;
