@@ -88,11 +88,11 @@ public:
             ins_data = {};
             mat = DirectX::XMMatrixMultiply(
                 DirectX::XMMatrixScaling(0.02f, 0.02f, 0.02f),
-                DirectX::XMMatrixRotationY(-time)
+                DirectX::XMMatrixRotationY(0.f)
             );
             mat = DirectX::XMMatrixMultiply(
                 mat,
-                DirectX::XMMatrixTranslation(0.f, -4.f, 0.f));
+                DirectX::XMMatrixTranslation(0.f, -4.f, -8.5f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
             instance.emplace_back(ins_data);

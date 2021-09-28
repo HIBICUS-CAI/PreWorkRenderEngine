@@ -64,6 +64,28 @@ int WINAPI WinMain(
         { 0.f,DirectX::XM_PIDIV2,0.f },
         { 10.f,2.5f,0.125f });
 
+    TempGeoMesh* pillars = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateCylinder(
+            2.5f, 1.5f, 30.f, 15, 5,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    pillars->AddInstanceData(
+        { 20.f,10.f,20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { -20.f,10.f,20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { -20.f,10.f,-20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { 20.f,10.f,-20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { 0.f,10.f,20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { 0.f,10.f,-20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { 20.f,10.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    pillars->AddInstanceData(
+        { -20.f,10.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+
     mesh->Process(root->MeshHelper());
 
     PassRootToTempPipeline(root);
@@ -113,6 +135,7 @@ int WINAPI WinMain(
             mesh->UploadDrawCall(root->DrawCallsPool(), root);
             floor->UploadDrawCall(root->DrawCallsPool(), root);
             walls->UploadDrawCall(root->DrawCallsPool(), root);
+            pillars->UploadDrawCall(root->DrawCallsPool(), root);
             root->PipelinesManager()->ExecuateCurrentPipeline();
         }
     }
@@ -120,11 +143,13 @@ int WINAPI WinMain(
     mesh->Release(root->MeshHelper());
     floor->Release(root->MeshHelper());
     walls->Release(root->MeshHelper());
+    pillars->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;
     delete floor;
     delete walls;
+    delete pillars;
 
     return (int)msg.wParam;
 }
