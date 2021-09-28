@@ -64,6 +64,28 @@ int WINAPI WinMain(
         { 0.f,DirectX::XM_PIDIV2,0.f },
         { 10.f,2.5f,0.125f });
 
+    TempGeoMesh* box = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateBox(
+            4.f, 4.f, 4.f, 1,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    box->AddInstanceData(
+        { 15.f,-3.f,15.f },
+        { 0.f,0.f,0.f },
+        { 1.f,1.f,1.f });
+    box->AddInstanceData(
+        { -15.f,-3.f,15.f },
+        { 0.f,0.f,0.f },
+        { 1.f,1.f,1.f });
+    box->AddInstanceData(
+        { 15.f,-3.f,-15.f },
+        { 0.f,0.f,0.f },
+        { 1.f,1.f,1.f });
+    box->AddInstanceData(
+        { -15.f,-3.f,-15.f },
+        { 0.f,0.f,0.f },
+        { 1.f,1.f,1.f });
+
     TempGeoMesh* pillars = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateCylinder(
             2.5f, 1.5f, 30.f, 15, 5,
@@ -85,6 +107,38 @@ int WINAPI WinMain(
         { 20.f,10.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
     pillars->AddInstanceData(
         { -20.f,10.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+
+    TempGeoMesh* sphere1 = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateSphere(
+            2.f, 15, 15,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    sphere1->AddInstanceData(
+        { 15.f,1.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+
+    TempGeoMesh* sphere2 = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateSphere(
+            2.f, 5, 5,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    sphere2->AddInstanceData(
+        { 15.f,1.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+
+    TempGeoMesh* geosph1 = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateGeometrySphere(
+            2.f, 2,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    geosph1->AddInstanceData(
+        { -15.f,1.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+
+    TempGeoMesh* geosph2 = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateGeometrySphere(
+            2.f, 1,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    geosph2->AddInstanceData(
+        { -15.f,1.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     mesh->Process(root->MeshHelper());
 
@@ -136,6 +190,11 @@ int WINAPI WinMain(
             floor->UploadDrawCall(root->DrawCallsPool(), root);
             walls->UploadDrawCall(root->DrawCallsPool(), root);
             pillars->UploadDrawCall(root->DrawCallsPool(), root);
+            box->UploadDrawCall(root->DrawCallsPool(), root);
+            sphere1->UploadDrawCall(root->DrawCallsPool(), root);
+            sphere2->UploadDrawCall(root->DrawCallsPool(), root);
+            geosph1->UploadDrawCall(root->DrawCallsPool(), root);
+            geosph2->UploadDrawCall(root->DrawCallsPool(), root);
             root->PipelinesManager()->ExecuateCurrentPipeline();
         }
     }
@@ -144,12 +203,22 @@ int WINAPI WinMain(
     floor->Release(root->MeshHelper());
     walls->Release(root->MeshHelper());
     pillars->Release(root->MeshHelper());
+    box->Release(root->MeshHelper());
+    sphere1->Release(root->MeshHelper());
+    sphere2->Release(root->MeshHelper());
+    geosph1->Release(root->MeshHelper());
+    geosph2->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;
     delete floor;
     delete walls;
     delete pillars;
+    delete box;
+    delete sphere1;
+    delete sphere2;
+    delete geosph1;
+    delete geosph2;
 
     return (int)msg.wParam;
 }
