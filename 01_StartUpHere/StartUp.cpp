@@ -40,7 +40,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
     floor->AddInstanceData(
-        { 0.f,-5.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+        { 0.f,-5.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     TempGeoMesh* walls = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateBox(
@@ -48,7 +48,21 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
     walls->AddInstanceData(
-        { 0.f,0.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+        { 0.f,1.25f,25.f },
+        { 0.f,0.f,0.f },
+        { 10.f,2.5f,0.125f });
+    walls->AddInstanceData(
+        { 0.f,1.25f,-25.f },
+        { 0.f,0.f,0.f },
+        { 10.f,2.5f,0.125f });
+    walls->AddInstanceData(
+        { 25.f,1.25f,0.f },
+        { 0.f,DirectX::XM_PIDIV2,0.f },
+        { 10.f,2.5f,0.125f });
+    walls->AddInstanceData(
+        { -25.f,1.25f,0.f },
+        { 0.f,DirectX::XM_PIDIV2,0.f },
+        { 10.f,2.5f,0.125f });
 
     mesh->Process(root->MeshHelper());
 
