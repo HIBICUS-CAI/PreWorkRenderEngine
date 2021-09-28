@@ -27,12 +27,18 @@
     <ClCompile Include="TempPipeline_Diffuse.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
+    <ClCompile Include="TempPipeline_Light.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TempMesh.h">
       <Filter>Temp</Filter>
     </ClInclude>
     <ClInclude Include="TempPipeline_Diffuse.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="TempPipeline_Light.h">
       <Filter>Temp</Filter>
     </ClInclude>
   </ItemGroup>

@@ -154,6 +154,7 @@
     <ClCompile Include="StartUp.cpp" />
     <ClCompile Include="TempMesh.cpp" />
     <ClCompile Include="TempPipeline_Diffuse.cpp" />
+    <ClCompile Include="TempPipeline_Light.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\03_InputDevice\03_InputDevice.vcxproj">
@@ -169,6 +170,7 @@
   <ItemGroup>
     <ClInclude Include="TempMesh.h" />
     <ClInclude Include="TempPipeline_Diffuse.h" />
+    <ClInclude Include="TempPipeline_Light.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

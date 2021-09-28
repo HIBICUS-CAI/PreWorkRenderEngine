@@ -4,6 +4,7 @@
 #include "TempMesh.h"
 #include "RSRoot_DX11.h"
 #include "TempPipeline_Diffuse.h"
+#include "TempPipeline_Light.h"
 #include "RSCamera.h"
 #include "RSCamerasContainer.h"
 #include "RSPipelinesManager.h"
@@ -143,9 +144,14 @@ int WINAPI WinMain(
     mesh->Process(root->MeshHelper());
 
     PassRootToTempWireFramePipeline(root);
+    PassRootToTempLightPipeline(root);
     if (!CreateTempWireFramePipeline())
     {
         return -3;
+    }
+    if (!CreateTempLightPipeline())
+    {
+        return -4;
     }
 
     std::string name = "temp-cam";
