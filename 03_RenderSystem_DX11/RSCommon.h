@@ -56,7 +56,7 @@ struct CAM_INFO
     DirectX::XMFLOAT3 mLookAt = {};
     DirectX::XMFLOAT3 mUpVec = {};
     DirectX::XMFLOAT2 mPFovyAndRatio = {};
-    DirectX::XMFLOAT2 mOWidthAndheight = {};
+    DirectX::XMFLOAT2 mOWidthAndHeight = {};
     DirectX::XMFLOAT2 mNearFarZ = {};
 };
 

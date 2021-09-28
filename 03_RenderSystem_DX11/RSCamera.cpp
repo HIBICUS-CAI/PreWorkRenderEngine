@@ -23,8 +23,8 @@ RSCamera::RSCamera(CAM_INFO* _info) :
     mCamUpVec = _info->mUpVec;
     mCamLookAt = _info->mLookAt;
     mFovAngleYPersp = _info->mPFovyAndRatio.x;
-    mWidthOrtho = _info->mOWidthAndheight.x;
-    mHeightOrtho = _info->mOWidthAndheight.y;
+    mWidthOrtho = _info->mOWidthAndHeight.x;
+    mHeightOrtho = _info->mOWidthAndHeight.y;
     mNearZ = _info->mNearFarZ.x;
     mFarZ = _info->mNearFarZ.y;
     switch (mLensType)
@@ -60,8 +60,8 @@ void RSCamera::ResetRSCamera(CAM_INFO* _info)
     mCamUpVec = _info->mUpVec;
     mCamLookAt = _info->mLookAt;
     mFovAngleYPersp = _info->mPFovyAndRatio.x;
-    mWidthOrtho = _info->mOWidthAndheight.x;
-    mHeightOrtho = _info->mOWidthAndheight.y;
+    mWidthOrtho = _info->mOWidthAndHeight.x;
+    mHeightOrtho = _info->mOWidthAndHeight.y;
     mNearZ = _info->mNearFarZ.x;
     mFarZ = _info->mNearFarZ.y;
     switch (mLensType)
