@@ -25,6 +25,13 @@ struct LightInfo
     UINT mPad1 = 0;
 };
 
+struct ShadowInfo
+{
+    DirectX::XMFLOAT4X4 mShadowViewMat = {};
+    DirectX::XMFLOAT4X4 mShadowProjMat = {};
+    DirectX::XMFLOAT4X4 mSSAOMat = {};
+};
+
 void PassRootToTempLightPipeline(class RSRoot_DX11* _root);
 
 bool CreateTempLightPipeline();
@@ -60,6 +67,7 @@ private:
     ID3D11RenderTargetView* mRenderTargetView;
     ID3D11DepthStencilView* mDepthStencilView;
     ID3D11SamplerState* mMeshTexSampler;
+    ID3D11SamplerState* mShadowTexSampler;
     DRAWCALL_TYPE mDrawCallType;
     RSDrawCallsPipe* mDrawCallPipe;
     ID3D11Buffer* mViewProjStructedBuffer;
@@ -74,6 +82,8 @@ private:
     ID3D11ShaderResourceView* mAmbientStructedBufferSrv;
     ID3D11Buffer* mMaterialStructedBuffer;
     ID3D11ShaderResourceView* mMaterialStructedBufferSrv;
+    ID3D11Buffer* mShadowStructedBuffer;
+    ID3D11ShaderResourceView* mShadowStructedBufferSrv;
 };
 
 class RSPass_Shadow :public RSPass_Base

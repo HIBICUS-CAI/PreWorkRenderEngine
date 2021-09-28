@@ -71,6 +71,7 @@ RSPass_Light::RSPass_Light(
     mVertexShader(nullptr), mPixelShader(nullptr),
     mRasterizerState(nullptr), mDepthStencilView(nullptr),
     mMeshTexSampler(nullptr), mRenderTargetView(nullptr),
+    mShadowTexSampler(nullptr),
     mDrawCallType(DRAWCALL_TYPE::OPACITY),
     mDrawCallPipe(nullptr),
     mViewProjStructedBuffer(nullptr),
@@ -84,7 +85,9 @@ RSPass_Light::RSPass_Light(
     mAmbientStructedBuffer(nullptr),
     mAmbientStructedBufferSrv(nullptr),
     mMaterialStructedBuffer(nullptr),
-    mMaterialStructedBufferSrv(nullptr)
+    mMaterialStructedBufferSrv(nullptr),
+    mShadowStructedBuffer(nullptr),
+    mShadowStructedBufferSrv(nullptr)
 {
 
 }
@@ -97,6 +100,7 @@ RSPass_Light::RSPass_Light(const RSPass_Light& _source) :
     mDepthStencilView(_source.mDepthStencilView),
     mRenderTargetView(_source.mRenderTargetView),
     mMeshTexSampler(_source.mMeshTexSampler),
+    mShadowTexSampler(_source.mShadowTexSampler),
     mDrawCallType(_source.mDrawCallType),
     mDrawCallPipe(_source.mDrawCallPipe),
     mViewProjStructedBuffer(_source.mViewProjStructedBuffer),
@@ -110,7 +114,9 @@ RSPass_Light::RSPass_Light(const RSPass_Light& _source) :
     mAmbientStructedBuffer(_source.mAmbientStructedBuffer),
     mAmbientStructedBufferSrv(_source.mAmbientStructedBufferSrv),
     mMaterialStructedBuffer(_source.mMaterialStructedBuffer),
-    mMaterialStructedBufferSrv(_source.mMaterialStructedBufferSrv)
+    mMaterialStructedBufferSrv(_source.mMaterialStructedBufferSrv),
+    mShadowStructedBuffer(_source.mShadowStructedBuffer),
+    mShadowStructedBufferSrv(_source.mShadowStructedBufferSrv)
 {
 
 }
@@ -146,6 +152,7 @@ void RSPass_Light::ReleasePass()
     RS_RELEASE(mPixelShader);
     RS_RELEASE(mRasterizerState);
     RS_RELEASE(mMeshTexSampler);
+    RS_RELEASE(mShadowTexSampler);
     RS_RELEASE(mViewProjStructedBufferSrv);
     RS_RELEASE(mViewProjStructedBuffer);
     RS_RELEASE(mInstanceStructedBufferSrv);
@@ -170,6 +177,7 @@ void RSPass_Light::ExecuatePass()
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->PSSetSamplers(0, 1, &mMeshTexSampler);
+    STContext()->PSSetSamplers(1, 1, &mShadowTexSampler);
     STContext()->RSSetState(mRasterizerState);
 
     DirectX::XMMATRIX mat = {};
@@ -247,6 +255,36 @@ void RSPass_Light::ExecuatePass()
         m_data[0] = call.mMaterialData;
         STContext()->Unmap(mMaterialStructedBuffer, 0);
 
+        STContext()->Map(mShadowStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        ShadowInfo* s_data = (ShadowInfo*)msr.pData;
+        // TEMP---------------------
+        DirectX::XMFLOAT3 pos = { 0.f,30.f,30.f };
+        DirectX::XMFLOAT3 look = { 0.f,-1.f,-1.f };
+        DirectX::XMFLOAT3 up = { 0.f,1.f,-1.f };
+        mat = DirectX::XMMatrixLookAtLH(
+            DirectX::XMLoadFloat3(&pos),
+            DirectX::XMLoadFloat3(&look),
+            DirectX::XMLoadFloat3(&up));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&s_data[0].mShadowViewMat, mat);
+        mat = DirectX::XMMatrixOrthographicLH(
+            12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&s_data[0].mShadowProjMat, mat);
+        static DirectX::XMMATRIX T(
+            0.5f, 0.0f, 0.0f, 0.0f,
+            0.0f, -0.5f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.5f, 0.5f, 0.0f, 1.0f);
+        mat = DirectX::XMMatrixTranspose(
+            DirectX::XMLoadFloat4x4(&call.mCameraData.mViewMat) *
+            DirectX::XMLoadFloat4x4(&call.mCameraData.mProjMat) *
+            T);
+        DirectX::XMStoreFloat4x4(&s_data[0].mSSAOMat, mat);
+        // TEMP---------------------
+        STContext()->Unmap(mShadowStructedBuffer, 0);
+
         STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
         STContext()->IASetPrimitiveTopology(
@@ -260,6 +298,8 @@ void RSPass_Light::ExecuatePass()
             0, 1, &mViewProjStructedBufferSrv);
         STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
+        STContext()->VSSetShaderResources(
+            2, 1, &mShadowStructedBufferSrv);
         STContext()->PSSetShaderResources(
             0, 1, &mAmbientStructedBufferSrv);
         STContext()->PSSetShaderResources(
@@ -270,6 +310,10 @@ void RSPass_Light::ExecuatePass()
             3, 1, &mLightStructedBufferSrv);
         STContext()->PSSetShaderResources(
             4, 1, &call.mTextureDatas[0].mSrv);
+        static std::string depthtex = "light-depth-light";
+        STContext()->PSSetShaderResources(
+            5, 1, &g_Root->TexturesManager()->
+            GetDataTexInfo(depthtex)->mSrv);
 
         STContext()->DrawIndexedInstanced(
             call.mMeshData.mIndexCount,
@@ -288,6 +332,7 @@ void RSPass_Light::ExecuatePass()
     STContext()->PSSetShaderResources(2, 1, &nullsrv);
     STContext()->PSSetShaderResources(3, 1, &nullsrv);
     STContext()->PSSetShaderResources(4, 1, &nullsrv);
+    STContext()->PSSetShaderResources(5, 1, &nullsrv);
 }
 
 bool RSPass_Light::CreateShaders()
@@ -375,6 +420,12 @@ bool RSPass_Light::CreateBuffers()
         &bdc, nullptr, &mMaterialStructedBuffer);
     if (FAILED(hr)) { return false; }
 
+    bdc.ByteWidth = sizeof(ShadowInfo);
+    bdc.StructureByteStride = sizeof(ShadowInfo);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mShadowStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -450,6 +501,11 @@ bool RSPass_Light::CreateViews()
         &desSRV, &mMaterialStructedBufferSrv);
     if (FAILED(hr)) { return false; }
 
+    hr = Device()->CreateShaderResourceView(
+        mShadowStructedBuffer,
+        &desSRV, &mShadowStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -468,6 +524,19 @@ bool RSPass_Light::CreateSamplers()
 
     hr = Device()->CreateSamplerState(
         &sampDesc, &mMeshTexSampler);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mShadowTexSampler);
     if (FAILED(hr)) { return false; }
 
     return true;
