@@ -75,3 +75,39 @@ private:
     ID3D11Buffer* mMaterialStructedBuffer;
     ID3D11ShaderResourceView* mMaterialStructedBufferSrv;
 };
+
+class RSPass_Shadow :public RSPass_Base
+{
+public:
+    RSPass_Shadow(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_Shadow(const RSPass_Shadow& _source);
+    virtual ~RSPass_Shadow();
+
+public:
+    virtual RSPass_Shadow* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateStates();
+    bool CreateBuffers();
+    bool CreateViews();
+    bool CreateSamplers();
+
+private:
+    ID3D11VertexShader* mVertexShader;
+    ID3D11RasterizerState* mRasterizerState;
+    ID3D11DepthStencilView* mDepthStencilView;
+    DRAWCALL_TYPE mDrawCallType;
+    RSDrawCallsPipe* mDrawCallPipe;
+    ID3D11Buffer* mViewProjStructedBuffer;
+    ID3D11ShaderResourceView* mViewProjStructedBufferSrv;
+    ID3D11Buffer* mInstanceStructedBuffer;
+    ID3D11ShaderResourceView* mInstanceStructedBufferSrv;
+};

@@ -26,20 +26,32 @@ bool CreateTempLightPipeline()
     std::string name = "basic-light";
     RSPass_Light* light = new RSPass_Light(
         name, PASS_TYPE::RENDER, g_Root);
-
     light->SetExecuateOrder(1);
 
+    name = "basic-shadowmap";
+    RSPass_Shadow* shadow = new RSPass_Shadow(
+        name, PASS_TYPE::RENDER, g_Root);
+    shadow->SetExecuateOrder(1);
+
+    name = "shadowmap-topic";
+    RSTopic* shadow_topic = new RSTopic(name);
+    shadow_topic->StartTopicAssembly();
+    shadow_topic->InsertPass(shadow);
+    shadow_topic->SetExecuateOrder(1);
+    shadow_topic->FinishTopicAssembly();
+
     name = "light-topic";
-    RSTopic* topic = new RSTopic(name);
-    topic->StartTopicAssembly();
-    topic->InsertPass(light);
-    topic->SetExecuateOrder(1);
-    topic->FinishTopicAssembly();
+    RSTopic* light_topic = new RSTopic(name);
+    light_topic->StartTopicAssembly();
+    light_topic->InsertPass(light);
+    light_topic->SetExecuateOrder(2);
+    light_topic->FinishTopicAssembly();
 
     name = "light-pipeline";
     g_TempPipeline = new RSPipeline(name);
     g_TempPipeline->StartPipelineAssembly();
-    g_TempPipeline->InsertTopic(topic);
+    g_TempPipeline->InsertTopic(shadow_topic);
+    g_TempPipeline->InsertTopic(light_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
@@ -452,5 +464,220 @@ bool RSPass_Light::CreateSamplers()
         &sampDesc, &mMeshTexSampler);
     if (FAILED(hr)) { return false; }
 
+    return true;
+}
+
+RSPass_Shadow::RSPass_Shadow(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr),
+    mRasterizerState(nullptr), mDepthStencilView(nullptr),
+    mDrawCallType(DRAWCALL_TYPE::OPACITY),
+    mDrawCallPipe(nullptr),
+    mViewProjStructedBuffer(nullptr),
+    mViewProjStructedBufferSrv(nullptr),
+    mInstanceStructedBuffer(nullptr),
+    mInstanceStructedBufferSrv(nullptr)
+{
+
+}
+
+RSPass_Shadow::RSPass_Shadow(const RSPass_Shadow& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mRasterizerState(_source.mRasterizerState),
+    mDepthStencilView(_source.mDepthStencilView),
+    mDrawCallType(_source.mDrawCallType),
+    mDrawCallPipe(_source.mDrawCallPipe),
+    mViewProjStructedBuffer(_source.mViewProjStructedBuffer),
+    mViewProjStructedBufferSrv(_source.mViewProjStructedBufferSrv),
+    mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
+    mInstanceStructedBufferSrv(_source.mInstanceStructedBufferSrv)
+{
+
+}
+
+RSPass_Shadow::~RSPass_Shadow()
+{
+
+}
+
+RSPass_Shadow* RSPass_Shadow::ClonePass()
+{
+    return new RSPass_Shadow(*this);
+}
+
+bool RSPass_Shadow::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateStates()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    mDrawCallType = DRAWCALL_TYPE::OPACITY;
+    mDrawCallPipe = g_Root->DrawCallsPool()->
+        GetDrawCallsPipe(mDrawCallType);
+
+    return true;
+}
+
+void RSPass_Shadow::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mRasterizerState);
+    RS_RELEASE(mViewProjStructedBufferSrv);
+    RS_RELEASE(mViewProjStructedBuffer);
+    RS_RELEASE(mInstanceStructedBufferSrv);
+    RS_RELEASE(mInstanceStructedBuffer);
+
+    std::string name = "light-depth-light";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+}
+
+void RSPass_Shadow::ExecuatePass()
+{
+
+}
+
+bool RSPass_Shadow::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\light_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Shadow::CreateStates()
+{
+    HRESULT hr = S_OK;
+    D3D11_RASTERIZER_DESC shadowRasterDesc = {};
+    ZeroMemory(&shadowRasterDesc, sizeof(shadowRasterDesc));
+
+    shadowRasterDesc.FillMode = D3D11_FILL_SOLID;
+    shadowRasterDesc.CullMode = D3D11_CULL_BACK;
+    shadowRasterDesc.FrontCounterClockwise = FALSE;
+    shadowRasterDesc.DepthBias = 100000;
+    shadowRasterDesc.SlopeScaledDepthBias = 1.f;
+    shadowRasterDesc.DepthBiasClamp = 0.f;
+    shadowRasterDesc.DepthClipEnable = TRUE;
+    shadowRasterDesc.ScissorEnable = FALSE;
+    shadowRasterDesc.MultisampleEnable = FALSE;
+    shadowRasterDesc.AntialiasedLineEnable = FALSE;
+
+    hr = Device()->CreateRasterizerState(&shadowRasterDesc,
+        &mRasterizerState);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool RSPass_Shadow::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bdc = {};
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mInstanceStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bdc.ByteWidth = sizeof(ViewProj);
+    bdc.StructureByteStride = sizeof(ViewProj);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mViewProjStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Shadow::CreateViews()
+{
+    HRESULT hr = S_OK;
+    ID3D11Texture2D* depthTex = nullptr;
+    D3D11_TEXTURE2D_DESC texDepSte = {};
+    texDepSte.Width = 1280;
+    texDepSte.Height = 720;
+    texDepSte.MipLevels = 1;
+    texDepSte.ArraySize = 1;
+    texDepSte.Format = DXGI_FORMAT_R24G8_TYPELESS;
+    texDepSte.SampleDesc.Count = 1;
+    texDepSte.SampleDesc.Quality = 0;
+    texDepSte.Usage = D3D11_USAGE_DEFAULT;
+    texDepSte.BindFlags = D3D11_BIND_DEPTH_STENCIL |
+        D3D11_BIND_SHADER_RESOURCE;
+    texDepSte.CPUAccessFlags = 0;
+    texDepSte.MiscFlags = 0;
+    hr = Device()->CreateTexture2D(
+        &texDepSte, nullptr, &depthTex);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC desDSV = {};
+    desDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    desDSV.Texture2D.MipSlice = 0;
+    hr = Device()->CreateDepthStencilView(
+        depthTex, &desDSV, &mDepthStencilView);
+    if (FAILED(hr)) { return false; }
+
+    ID3D11ShaderResourceView* srv = nullptr;
+    D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
+    desSRV.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    desSRV.Texture2D.MostDetailedMip = 0;
+    desSRV.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(
+        depthTex, &desSRV, &srv);
+    if (FAILED(hr)) { return false; }
+
+    DATA_TEXTURE_INFO dti = {};
+    std::string name = "light-depth-light";
+    dti.mTexture = depthTex;
+    dti.mDsv = mDepthStencilView;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    ZeroMemory(&desSRV, sizeof(desSRV));
+    desSRV.Format = DXGI_FORMAT_UNKNOWN;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    desSRV.Buffer.ElementWidth = 256;
+    hr = Device()->CreateShaderResourceView(
+        mInstanceStructedBuffer,
+        &desSRV, &mInstanceStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    desSRV.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mViewProjStructedBuffer,
+        &desSRV, &mViewProjStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Shadow::CreateSamplers()
+{
     return true;
 }
