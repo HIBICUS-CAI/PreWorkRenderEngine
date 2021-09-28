@@ -33,18 +33,30 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     shadow->SetExecuateOrder(1);
 
+    name = "basic-normal";
+    RSPass_Normal* normal = new RSPass_Normal(
+        name, PASS_TYPE::RENDER, g_Root);
+    normal->SetExecuateOrder(1);
+
+    name = "ssao-topic";
+    RSTopic* ssao_topic = new RSTopic(name);
+    ssao_topic->StartTopicAssembly();
+    ssao_topic->InsertPass(normal);
+    ssao_topic->SetExecuateOrder(1);
+    ssao_topic->FinishTopicAssembly();
+
     name = "shadowmap-topic";
     RSTopic* shadow_topic = new RSTopic(name);
     shadow_topic->StartTopicAssembly();
     shadow_topic->InsertPass(shadow);
-    shadow_topic->SetExecuateOrder(1);
+    shadow_topic->SetExecuateOrder(2);
     shadow_topic->FinishTopicAssembly();
 
     name = "light-topic";
     RSTopic* light_topic = new RSTopic(name);
     light_topic->StartTopicAssembly();
     light_topic->InsertPass(light);
-    light_topic->SetExecuateOrder(2);
+    light_topic->SetExecuateOrder(3);
     light_topic->FinishTopicAssembly();
 
     name = "light-pipeline";
@@ -52,6 +64,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->StartPipelineAssembly();
     g_TempPipeline->InsertTopic(shadow_topic);
     g_TempPipeline->InsertTopic(light_topic);
+    g_TempPipeline->InsertTopic(ssao_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
@@ -830,6 +843,258 @@ bool RSPass_Shadow::CreateViews()
 }
 
 bool RSPass_Shadow::CreateSamplers()
+{
+    return true;
+}
+
+RSPass_Normal::RSPass_Normal(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mRenderTargetView(nullptr),
+    mRasterizerState(nullptr), mDepthStencilView(nullptr),
+    mPixelShader(nullptr),
+    mDrawCallType(DRAWCALL_TYPE::OPACITY),
+    mDrawCallPipe(nullptr),
+    mViewProjStructedBuffer(nullptr),
+    mViewProjStructedBufferSrv(nullptr),
+    mInstanceStructedBuffer(nullptr),
+    mInstanceStructedBufferSrv(nullptr)
+{
+
+}
+
+RSPass_Normal::RSPass_Normal(const RSPass_Normal& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mRasterizerState(_source.mRasterizerState),
+    mDepthStencilView(_source.mDepthStencilView),
+    mRenderTargetView(_source.mRenderTargetView),
+    mDrawCallType(_source.mDrawCallType),
+    mDrawCallPipe(_source.mDrawCallPipe),
+    mViewProjStructedBuffer(_source.mViewProjStructedBuffer),
+    mViewProjStructedBufferSrv(_source.mViewProjStructedBufferSrv),
+    mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
+    mInstanceStructedBufferSrv(_source.mInstanceStructedBufferSrv)
+{
+
+}
+
+RSPass_Normal::~RSPass_Normal()
+{
+
+}
+
+RSPass_Normal* RSPass_Normal::ClonePass()
+{
+    return new RSPass_Normal(*this);
+}
+
+bool RSPass_Normal::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateStates()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    mDrawCallType = DRAWCALL_TYPE::OPACITY;
+    mDrawCallPipe = g_Root->DrawCallsPool()->
+        GetDrawCallsPipe(mDrawCallType);
+
+    return true;
+}
+
+void RSPass_Normal::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mRasterizerState);
+    RS_RELEASE(mViewProjStructedBufferSrv);
+    RS_RELEASE(mViewProjStructedBuffer);
+    RS_RELEASE(mInstanceStructedBufferSrv);
+    RS_RELEASE(mInstanceStructedBuffer);
+
+    std::string name = "normal-depth-ssao";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "normal-tex-ssao";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+}
+
+void RSPass_Normal::ExecuatePass()
+{
+
+}
+
+bool RSPass_Normal::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\normal_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\normal_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Normal::CreateStates()
+{
+    return true;
+}
+
+bool RSPass_Normal::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bdc = {};
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mInstanceStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bdc.ByteWidth = sizeof(ViewProj);
+    bdc.StructureByteStride = sizeof(ViewProj);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mViewProjStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Normal::CreateViews()
+{
+    HRESULT hr = S_OK;
+    ID3D11Texture2D* depthTex = nullptr;
+    D3D11_TEXTURE2D_DESC texDepSte = {};
+    texDepSte.Width = 1280;
+    texDepSte.Height = 720;
+    texDepSte.MipLevels = 1;
+    texDepSte.ArraySize = 1;
+    texDepSte.Format = DXGI_FORMAT_R24G8_TYPELESS;
+    texDepSte.SampleDesc.Count = 1;
+    texDepSte.SampleDesc.Quality = 0;
+    texDepSte.Usage = D3D11_USAGE_DEFAULT;
+    texDepSte.BindFlags = D3D11_BIND_DEPTH_STENCIL |
+        D3D11_BIND_SHADER_RESOURCE;
+    texDepSte.CPUAccessFlags = 0;
+    texDepSte.MiscFlags = 0;
+    hr = Device()->CreateTexture2D(
+        &texDepSte, nullptr, &depthTex);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC desDSV = {};
+    desDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    desDSV.Texture2D.MipSlice = 0;
+    hr = Device()->CreateDepthStencilView(
+        depthTex, &desDSV, &mDepthStencilView);
+    if (FAILED(hr)) { return false; }
+
+    ID3D11ShaderResourceView* srv = nullptr;
+    D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
+    desSRV.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    desSRV.Texture2D.MostDetailedMip = 0;
+    desSRV.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(
+        depthTex, &desSRV, &srv);
+    if (FAILED(hr)) { return false; }
+
+    DATA_TEXTURE_INFO dti = {};
+    std::string name = "normal-depth-ssao";
+    dti.mTexture = depthTex;
+    dti.mDsv = mDepthStencilView;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    ID3D11Texture2D* normalTex = nullptr;
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width = 1280;
+    texDesc.Height = 720;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &normalTex);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+    rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        normalTex, &rtvDesc, &mRenderTargetView);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(normalTex,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "normal-tex-ssao";
+    dti.mTexture = normalTex;
+    dti.mRtv = mRenderTargetView;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    ZeroMemory(&desSRV, sizeof(desSRV));
+    desSRV.Format = DXGI_FORMAT_UNKNOWN;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    desSRV.Buffer.ElementWidth = 256;
+    hr = Device()->CreateShaderResourceView(
+        mInstanceStructedBuffer,
+        &desSRV, &mInstanceStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    desSRV.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mViewProjStructedBuffer,
+        &desSRV, &mViewProjStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Normal::CreateSamplers()
 {
     return true;
 }
