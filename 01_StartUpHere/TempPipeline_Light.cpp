@@ -7,6 +7,8 @@
 #include "RSDrawCallsPool.h"
 #include "RSStaticResources.h"
 #include "RSPipelinesManager.h"
+#include "RSCamera.h"
+#include "RSCamerasContainer.h"
 #include <DirectXColors.h>
 #include "TempMesh.h"
 
@@ -68,7 +70,9 @@ RSPass_Light::RSPass_Light(
     mLightInfoStructedBuffer(nullptr),
     mLightInfoStructedBufferSrv(nullptr),
     mAmbientStructedBuffer(nullptr),
-    mAmbientStructedBufferSrv(nullptr)
+    mAmbientStructedBufferSrv(nullptr),
+    mMaterialStructedBuffer(nullptr),
+    mMaterialStructedBufferSrv(nullptr)
 {
 
 }
@@ -92,7 +96,9 @@ RSPass_Light::RSPass_Light(const RSPass_Light& _source) :
     mLightInfoStructedBuffer(_source.mLightInfoStructedBuffer),
     mLightInfoStructedBufferSrv(_source.mLightInfoStructedBufferSrv),
     mAmbientStructedBuffer(_source.mAmbientStructedBuffer),
-    mAmbientStructedBufferSrv(_source.mAmbientStructedBufferSrv)
+    mAmbientStructedBufferSrv(_source.mAmbientStructedBufferSrv),
+    mMaterialStructedBuffer(_source.mMaterialStructedBuffer),
+    mMaterialStructedBufferSrv(_source.mMaterialStructedBufferSrv)
 {
 
 }
@@ -195,6 +201,40 @@ void RSPass_Light::ExecuatePass()
         DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
         STContext()->Unmap(mViewProjStructedBuffer, 0);
 
+        STContext()->Map(mAmbientStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        Ambient* amb_data = (Ambient*)msr.pData;
+        amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
+        STContext()->Unmap(mAmbientStructedBuffer, 0);
+
+        STContext()->Map(mLightInfoStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        LightInfo* li_data = (LightInfo*)msr.pData;
+        static std::string name = "temp-cam";
+        li_data[0].mCameraPos = g_Root->CamerasContainer()->
+            GetRSCamera(name)->GetRSCameraPosition();
+        li_data[0].mDirectLightNum = 1;
+        STContext()->Unmap(mLightInfoStructedBuffer, 0);
+
+        STContext()->Map(mLightStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_LIGHT_INFO* l_data = (RS_LIGHT_INFO*)msr.pData;
+        // TEMP-----------------------
+        l_data[0].mPosition = { 0.f,5.f,0.f };
+        l_data[0].mDirection = { 0.f,-1.f,1.f };
+        l_data[0].mStrength = { 1.f,1.f,1.f };
+        l_data[0].mSpotPower = 2.f;
+        l_data[0].mFalloffStart = 5.f;
+        l_data[0].mFalloffEnd = 15.f;
+        // TEMP-----------------------
+        STContext()->Unmap(mLightStructedBuffer, 0);
+
+        STContext()->Map(mMaterialStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_MATERIAL_INFO* m_data = (RS_MATERIAL_INFO*)msr.pData;
+        m_data[0] = call.mMaterialData;
+        STContext()->Unmap(mMaterialStructedBuffer, 0);
+
         STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
         STContext()->IASetPrimitiveTopology(
@@ -209,7 +249,15 @@ void RSPass_Light::ExecuatePass()
         STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
         STContext()->PSSetShaderResources(
-            0, 1, &call.mTextureDatas[0].mSrv);
+            0, 1, &mAmbientStructedBufferSrv);
+        STContext()->PSSetShaderResources(
+            1, 1, &mLightInfoStructedBufferSrv);
+        STContext()->PSSetShaderResources(
+            2, 1, &mMaterialStructedBufferSrv);
+        STContext()->PSSetShaderResources(
+            3, 1, &mLightStructedBufferSrv);
+        STContext()->PSSetShaderResources(
+            4, 1, &call.mTextureDatas[0].mSrv);
 
         STContext()->DrawIndexedInstanced(
             call.mMeshData.mIndexCount,
@@ -303,6 +351,12 @@ bool RSPass_Light::CreateBuffers()
         &bdc, nullptr, &mLightInfoStructedBuffer);
     if (FAILED(hr)) { return false; }
 
+    bdc.ByteWidth = sizeof(RS_MATERIAL_INFO);
+    bdc.StructureByteStride = sizeof(RS_MATERIAL_INFO);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mMaterialStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -371,6 +425,11 @@ bool RSPass_Light::CreateViews()
     hr = Device()->CreateShaderResourceView(
         mAmbientStructedBuffer,
         &desSRV, &mAmbientStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateShaderResourceView(
+        mMaterialStructedBuffer,
+        &desSRV, &mMaterialStructedBufferSrv);
     if (FAILED(hr)) { return false; }
 
     return true;

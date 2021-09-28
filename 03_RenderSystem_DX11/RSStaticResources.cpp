@@ -285,9 +285,16 @@ bool RSStaticResources::BuildStaticPipelines()
 
 bool RSStaticResources::BuildStaticMaterials()
 {
-    // TEMP----------------------
+    std::string name = "";
+    RS_MATERIAL_INFO rmi = {};
+
+    name = "copper";
+    rmi.mDiffuseAlbedo = { 0.5f,0.5f,0.5f,1.f };
+    rmi.mFresnelR0 = { 0.95f,0.64f,0.54f };
+    rmi.mShininess = 0.875f;
+    mMaterialMap.insert({ name,rmi });
+
     return true;
-    // TEMP----------------------
 }
 
 ID3D11VertexShader* RSStaticResources::GetStaticVertexShader(

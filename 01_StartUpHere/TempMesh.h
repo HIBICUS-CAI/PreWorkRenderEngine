@@ -10,6 +10,7 @@
 #include "RSRoot_DX11.h"
 #include "RSTexturesManager.h"
 #include "RSCamerasContainer.h"
+#include "RSStaticResources.h"
 
 enum class MESH_FILE_TYPE
 {
@@ -111,6 +112,9 @@ public:
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
+        name = "copper";
+        data.mMaterialData = *(_root->StaticResources()->
+            GetStaticMaterial(name));
 
         _pool->AddDrawCallToPipe(DRAWCALL_TYPE::OPACITY, data);
     }
@@ -220,6 +224,9 @@ public:
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
+        name = "copper";
+        data.mMaterialData = *(_root->StaticResources()->
+            GetStaticMaterial(name));
 
         _pool->AddDrawCallToPipe(DRAWCALL_TYPE::OPACITY, data);
     }

@@ -17,10 +17,12 @@ struct Ambient
 
 struct LightInfo
 {
+    DirectX::XMFLOAT3 mCameraPos = {};
+    float mPad0 = 0.f;
     UINT mDirectLightNum = 0;
     UINT mSpotLightNum = 0;
     UINT mPointLightNum = 0;
-    UINT mPad = 0;
+    UINT mPad1 = 0;
 };
 
 void PassRootToTempLightPipeline(class RSRoot_DX11* _root);
@@ -70,4 +72,6 @@ private:
     ID3D11ShaderResourceView* mLightStructedBufferSrv;
     ID3D11Buffer* mAmbientStructedBuffer;
     ID3D11ShaderResourceView* mAmbientStructedBufferSrv;
+    ID3D11Buffer* mMaterialStructedBuffer;
+    ID3D11ShaderResourceView* mMaterialStructedBufferSrv;
 };

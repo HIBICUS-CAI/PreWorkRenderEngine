@@ -140,6 +140,11 @@ void RSCamera::ChangeRSCameraNearFarZ(float _near, float _far)
     CalcRSProjMat();
 }
 
+DirectX::XMFLOAT3 RSCamera::GetRSCameraPosition()
+{
+    return mCamPosition;
+}
+
 void RSCamera::CalcRSViewMat()
 {
     XMMATRIX view = XMMatrixLookAtLH(
