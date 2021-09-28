@@ -4,6 +4,25 @@
 #include <vector>
 #include "RSPass_Base.h"
 
+struct ViewProj
+{
+    DirectX::XMFLOAT4X4 mViewMat = {};
+    DirectX::XMFLOAT4X4 mProjMat = {};
+};
+
+struct Ambient
+{
+    DirectX::XMFLOAT4 mAmbient = {};
+};
+
+struct LightInfo
+{
+    UINT mDirectLightNum = 0;
+    UINT mSpotLightNum = 0;
+    UINT mPointLightNum = 0;
+    UINT mPad = 0;
+};
+
 void PassRootToTempLightPipeline(class RSRoot_DX11* _root);
 
 bool CreateTempLightPipeline();
@@ -36,6 +55,7 @@ private:
     ID3D11VertexShader* mVertexShader;
     ID3D11PixelShader* mPixelShader;
     ID3D11RasterizerState* mRasterizerState;
+    ID3D11RenderTargetView* mRenderTargetView;
     ID3D11DepthStencilView* mDepthStencilView;
     ID3D11SamplerState* mMeshTexSampler;
     DRAWCALL_TYPE mDrawCallType;
@@ -44,6 +64,8 @@ private:
     ID3D11ShaderResourceView* mViewProjStructedBufferSrv;
     ID3D11Buffer* mInstanceStructedBuffer;
     ID3D11ShaderResourceView* mInstanceStructedBufferSrv;
+    ID3D11Buffer* mLightInfoStructedBuffer;
+    ID3D11ShaderResourceView* mLightInfoStructedBufferSrv;
     ID3D11Buffer* mLightStructedBuffer;
     ID3D11ShaderResourceView* mLightStructedBufferSrv;
     ID3D11Buffer* mAmbientStructedBuffer;
