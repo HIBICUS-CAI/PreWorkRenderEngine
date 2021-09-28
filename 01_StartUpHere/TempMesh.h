@@ -179,8 +179,7 @@ public:
     void UploadDrawCall(RSDrawCallsPool* _pool,
         RSRoot_DX11* _root)
     {
-        static std::vector<RS_INSTANCE_DATA> instance = {};
-        instance.clear();
+        mInstance.clear();
 
         for (size_t i = 0; i < mPostions.size(); i++)
         {
@@ -205,7 +204,7 @@ public:
                     mPostions[i].z));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
-            instance.emplace_back(ins_data);
+            mInstance.emplace_back(ins_data);
         }
 
         std::string name = "temp-cam";
@@ -215,7 +214,7 @@ public:
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
         data.mMeshData.mIndexCount = mData.mIndexCount;
-        data.mInstanceData.mDataPtr = &instance;
+        data.mInstanceData.mDataPtr = &mInstance;
         data.mCameraData = *(_root->CamerasContainer()->
             GetRSCameraInfo(name));
         data.mTextureDatas[0].mUse = true;
@@ -247,4 +246,6 @@ private:
     std::vector<DirectX::XMFLOAT3> mPostions = {};
     std::vector<DirectX::XMFLOAT3> mRotations = {};
     std::vector<DirectX::XMFLOAT3> mScales = {};
+
+    std::vector<RS_INSTANCE_DATA> mInstance = {};
 };

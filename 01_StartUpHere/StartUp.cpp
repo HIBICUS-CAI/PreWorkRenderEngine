@@ -34,17 +34,21 @@ int WINAPI WinMain(
         return -2;
     }
 
-    TempGeoMesh* geo = new TempGeoMesh(root->MeshHelper()->
+    TempGeoMesh* floor = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateGrid(
-            10.f, 10.f, 10, 10,
+            50.f, 50.f, 10, 10,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
-    geo->AddInstanceData(
-        { 0.f,0.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
-    geo->AddInstanceData(
-        { 0.f,10.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
-    geo->AddInstanceData(
-        { 0.f,20.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    floor->AddInstanceData(
+        { 0.f,-5.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+
+    TempGeoMesh* walls = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateBox(
+            5.f, 5.f, 5.f, 1,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "white.jpg"));
+    walls->AddInstanceData(
+        { 0.f,0.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     mesh->Process(root->MeshHelper());
 
@@ -93,17 +97,20 @@ int WINAPI WinMain(
             cam->RotateRSCamera({ horiR,vertR,0.f });
 
             mesh->UploadDrawCall(root->DrawCallsPool(), root);
-            geo->UploadDrawCall(root->DrawCallsPool(), root);
+            floor->UploadDrawCall(root->DrawCallsPool(), root);
+            walls->UploadDrawCall(root->DrawCallsPool(), root);
             root->PipelinesManager()->ExecuateCurrentPipeline();
         }
     }
 
     mesh->Release(root->MeshHelper());
-    geo->Release(root->MeshHelper());
+    floor->Release(root->MeshHelper());
+    walls->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;
-    delete geo;
+    delete floor;
+    delete walls;
 
     return (int)msg.wParam;
 }
