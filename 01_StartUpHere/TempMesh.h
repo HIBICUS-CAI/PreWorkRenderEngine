@@ -182,19 +182,31 @@ public:
         static std::vector<RS_INSTANCE_DATA> instance = {};
         instance.clear();
 
-        RS_INSTANCE_DATA ins_data = {};
-        DirectX::XMMATRIX mat = {};
-        DirectX::XMFLOAT4X4 flt44 = {};
-        mat = DirectX::XMMatrixMultiply(
-            DirectX::XMMatrixScaling(1.f, 1.f, 1.f),
-            DirectX::XMMatrixRotationY(0.f)
-        );
-        mat = DirectX::XMMatrixMultiply(
-            mat,
-            DirectX::XMMatrixTranslation(0.f, 0.f, 15.f));
-        DirectX::XMStoreFloat4x4(&flt44, mat);
-        ins_data.mWorldMat = flt44;
-        instance.emplace_back(ins_data);
+        for (size_t i = 0; i < mPostions.size(); i++)
+        {
+            RS_INSTANCE_DATA ins_data = {};
+            DirectX::XMMATRIX mat = {};
+            DirectX::XMFLOAT4X4 flt44 = {};
+            mat = DirectX::XMMatrixMultiply(
+                DirectX::XMMatrixScaling(
+                    mScales[i].x,
+                    mScales[i].y,
+                    mScales[i].z),
+                DirectX::XMMatrixRotationRollPitchYaw(
+                    mRotations[i].x,
+                    mRotations[i].y,
+                    mRotations[i].z)
+            );
+            mat = DirectX::XMMatrixMultiply(
+                mat,
+                DirectX::XMMatrixTranslation(
+                    mPostions[i].x,
+                    mPostions[i].y,
+                    mPostions[i].z));
+            DirectX::XMStoreFloat4x4(&flt44, mat);
+            ins_data.mWorldMat = flt44;
+            instance.emplace_back(ins_data);
+        }
 
         std::string name = "temp-cam";
         RS_DRAWCALL_DATA data = {};
@@ -221,6 +233,18 @@ public:
         }
     }
 
+    void AddInstanceData(DirectX::XMFLOAT3 _pos,
+        DirectX::XMFLOAT3 _angle, DirectX::XMFLOAT3 _size)
+    {
+        mPostions.emplace_back(_pos);
+        mRotations.emplace_back(_angle);
+        mScales.emplace_back(_size);
+    }
+
 private:
     RS_SUBMESH_DATA mData;
+
+    std::vector<DirectX::XMFLOAT3> mPostions = {};
+    std::vector<DirectX::XMFLOAT3> mRotations = {};
+    std::vector<DirectX::XMFLOAT3> mScales = {};
 };

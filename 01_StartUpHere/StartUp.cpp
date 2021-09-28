@@ -39,6 +39,12 @@ int WINAPI WinMain(
             10.f, 10.f, 10, 10,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
+    geo->AddInstanceData(
+        { 0.f,0.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    geo->AddInstanceData(
+        { 0.f,10.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+    geo->AddInstanceData(
+        { 0.f,20.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     mesh->Process(root->MeshHelper());
 
