@@ -142,8 +142,8 @@ int WINAPI WinMain(
 
     mesh->Process(root->MeshHelper());
 
-    PassRootToTempPipeline(root);
-    if (!CreateTempPipeline())
+    PassRootToTempWireFramePipeline(root);
+    if (!CreateTempWireFramePipeline())
     {
         return -3;
     }

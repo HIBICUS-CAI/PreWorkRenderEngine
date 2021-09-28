@@ -16,12 +16,12 @@
 static RSRoot_DX11* g_Root = nullptr;
 static RSPipeline* g_TempPipeline = nullptr;
 
-void PassRootToTempPipeline(RSRoot_DX11* _root)
+void PassRootToTempWireFramePipeline(RSRoot_DX11* _root)
 {
     g_Root = _root;
 }
 
-bool CreateTempPipeline()
+bool CreateTempWireFramePipeline()
 {
     std::string name = "test-diffuse";
     RSPass_Diffuse* pass = new RSPass_Diffuse(
