@@ -243,3 +243,50 @@ private:
     ID3D11ShaderResourceView* mNormalMapSrv;
     ID3D11ShaderResourceView* mDepthMapSrv;
 };
+
+struct SkyShpereInfo
+{
+    DirectX::XMFLOAT4X4 mWorldMat = {};
+    DirectX::XMFLOAT4X4 mViewMat = {};
+    DirectX::XMFLOAT4X4 mProjMat = {};
+    DirectX::XMFLOAT3 mEyePosition = {};
+    float mPad = 0.f;
+};
+
+class RSPass_SkyShpere :public RSPass_Base
+{
+public:
+    RSPass_SkyShpere(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_SkyShpere(const RSPass_SkyShpere& _source);
+    virtual ~RSPass_SkyShpere();
+
+public:
+    virtual RSPass_SkyShpere* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateStates();
+    bool CreateBuffers();
+    bool CreateViews();
+    bool CreateSamplers();
+
+private:
+    ID3D11VertexShader* mVertexShader;
+    ID3D11PixelShader* mPixelShader;
+    ID3D11RasterizerState* mRasterizerState;
+    ID3D11DepthStencilState* mDepthStencilState;
+    ID3D11SamplerState* mLinearWrapSampler;
+    ID3D11RenderTargetView* mRenderTargerView;
+    ID3D11DepthStencilView* mDepthStencilView;
+    //ID3D11ShaderResourceView* mSkyShpereSrv;
+    ID3D11Buffer* mSkyShpereInfoStructedBuffer;
+    ID3D11ShaderResourceView* mSkyShpereInfoStructedBufferSrv;
+    RS_SUBMESH_DATA mSkySphereMesh;
+};

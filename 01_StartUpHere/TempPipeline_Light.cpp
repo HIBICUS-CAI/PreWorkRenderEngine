@@ -11,6 +11,7 @@
 #include "RSCamerasContainer.h"
 #include <DirectXColors.h>
 #include <DirectXPackedVector.h>
+#include <DirectXTK\DDSTextureLoader.h>
 #include <cstdlib>
 #include <ctime>
 #include "TempMesh.h"
@@ -51,6 +52,18 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::COMPUTE, g_Root);
     kbblur->SetExecuateOrder(3);
 
+    name = "sky-skysphere";
+    RSPass_SkyShpere* skysphere = new RSPass_SkyShpere(
+        name, PASS_TYPE::RENDER, g_Root);
+    skysphere->SetExecuateOrder(1);
+
+    name = "skysphere-topic";
+    RSTopic* sky_topic = new RSTopic(name);
+    sky_topic->StartTopicAssembly();
+    sky_topic->InsertPass(skysphere);
+    sky_topic->SetExecuateOrder(4);
+    sky_topic->FinishTopicAssembly();
+
     name = "ssao-topic";
     RSTopic* ssao_topic = new RSTopic(name);
     ssao_topic->StartTopicAssembly();
@@ -80,6 +93,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(shadow_topic);
     g_TempPipeline->InsertTopic(light_topic);
     g_TempPipeline->InsertTopic(ssao_topic);
+    g_TempPipeline->InsertTopic(sky_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
@@ -353,7 +367,6 @@ void RSPass_Light::ExecuatePass()
     }
 
     // TEMP-----------------------------
-    g_Root->Devices()->PresentSwapChain();
     mDrawCallPipe->mDatas.clear();
 
     ID3D11RenderTargetView* null = nullptr;
@@ -1825,6 +1838,261 @@ bool RSPass_KBBlur::CreateViews()
     name = "ssao-tex-ssao";
     mSsaoTexUav = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mUav;
+
+    return true;
+}
+
+RSPass_SkyShpere::RSPass_SkyShpere(std::string& _name,
+    PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    mRasterizerState(nullptr), mDepthStencilState(nullptr),
+    mRenderTargerView(nullptr), mDepthStencilView(nullptr),
+    /*mSkyShpereSrv(nullptr), */mSkyShpereInfoStructedBuffer(nullptr),
+    mSkyShpereInfoStructedBufferSrv(nullptr), mSkySphereMesh({}),
+    mLinearWrapSampler(nullptr)
+{
+
+}
+
+RSPass_SkyShpere::RSPass_SkyShpere(
+    const RSPass_SkyShpere& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mRasterizerState(_source.mRasterizerState),
+    mDepthStencilState(_source.mDepthStencilState),
+    mRenderTargerView(_source.mRenderTargerView),
+    mDepthStencilView(_source.mDepthStencilView),
+    //mSkyShpereSrv(_source.mSkyShpereSrv),
+    mSkyShpereInfoStructedBuffer(_source.mSkyShpereInfoStructedBuffer),
+    mSkyShpereInfoStructedBufferSrv(_source.mSkyShpereInfoStructedBufferSrv),
+    mSkySphereMesh(_source.mSkySphereMesh),
+    mLinearWrapSampler(_source.mLinearWrapSampler)
+{
+
+}
+
+RSPass_SkyShpere::~RSPass_SkyShpere()
+{
+
+}
+
+RSPass_SkyShpere* RSPass_SkyShpere::ClonePass()
+{
+    return new RSPass_SkyShpere(*this);
+}
+
+bool RSPass_SkyShpere::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateStates()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    mSkySphereMesh = g_Root->MeshHelper()->GeoGenerate()->
+        CreateGeometrySphere(10.f, 3,
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
+            {}, "snow-cube.dds");
+
+    return true;
+}
+
+void RSPass_SkyShpere::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mRasterizerState);
+    RS_RELEASE(mDepthStencilState);
+    RS_RELEASE(mLinearWrapSampler);
+    RS_RELEASE(mSkyShpereInfoStructedBuffer);
+    //RS_RELEASE(mSkyShpereInfoStructedBufferSrv);
+
+    g_Root->MeshHelper()->ReleaseSubMesh(mSkySphereMesh);
+}
+
+void RSPass_SkyShpere::ExecuatePass()
+{
+    ID3D11RenderTargetView* null = nullptr;
+    STContext()->OMSetRenderTargets(1,
+        &mRenderTargerView, mDepthStencilView);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    STContext()->RSSetState(mRasterizerState);
+    STContext()->OMSetDepthStencilState(mDepthStencilState, 0);
+
+    DirectX::XMMATRIX mat = {};
+    DirectX::XMFLOAT4X4 flt44 = {};
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+
+    STContext()->Map(mSkyShpereInfoStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    SkyShpereInfo* sp_data = (SkyShpereInfo*)msr.pData;
+    static std::string name = "temp-cam";
+    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
+        GetRSCameraInfo(name)->mViewMat));
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&sp_data[0].mViewMat, mat);
+
+    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
+        GetRSCameraInfo(name)->mProjMat));
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&sp_data[0].mProjMat, mat);
+
+    sp_data[0].mEyePosition = g_Root->CamerasContainer()->
+        GetRSCamera(name)->GetRSCameraPosition();
+
+    mat = DirectX::XMMatrixScaling(1000.f, 1000.f, 1000.f);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&sp_data[0].mWorldMat, mat);
+    STContext()->Unmap(mSkyShpereInfoStructedBuffer, 0);
+
+    STContext()->IASetInputLayout(mSkySphereMesh.mLayout);
+    STContext()->IASetPrimitiveTopology(
+        mSkySphereMesh.mTopologyType);
+    STContext()->IASetVertexBuffers(
+        0, 1, &mSkySphereMesh.mVertexBuffer,
+        &stride, &offset);
+    STContext()->IASetIndexBuffer(
+        mSkySphereMesh.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    STContext()->VSSetShaderResources(
+        0, 1, &mSkyShpereInfoStructedBufferSrv);
+    static std::string tex = mSkySphereMesh.mTextures[0];
+    static ID3D11ShaderResourceView* cube = nullptr;
+    cube = g_Root->TexturesManager()->GetMeshSrv(tex);
+    STContext()->PSSetShaderResources(
+        0, 1, &cube);
+    STContext()->PSSetSamplers(0, 1, &mLinearWrapSampler);
+
+    STContext()->DrawIndexedInstanced(mSkySphereMesh.mIndexCount,
+        1, 0, 0, 0);
+
+    STContext()->OMSetRenderTargets(1, &null, nullptr);
+    STContext()->RSSetState(nullptr);
+    STContext()->OMSetDepthStencilState(nullptr, 0);
+
+    // TEMP-----------------------------
+    g_Root->Devices()->PresentSwapChain();
+}
+
+bool RSPass_SkyShpere::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\skysphere_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\skysphere_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_SkyShpere::CreateStates()
+{
+    HRESULT hr = S_OK;
+    D3D11_RASTERIZER_DESC rasDesc = {};
+    D3D11_DEPTH_STENCIL_DESC depDesc = {};
+    ZeroMemory(&rasDesc, sizeof(rasDesc));
+    ZeroMemory(&depDesc, sizeof(depDesc));
+
+    rasDesc.CullMode = D3D11_CULL_NONE;
+    rasDesc.FillMode = D3D11_FILL_SOLID;
+    depDesc.DepthEnable = TRUE;
+    depDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+    hr = Device()->CreateRasterizerState(
+        &rasDesc, &mRasterizerState);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateDepthStencilState(
+        &depDesc, &mDepthStencilState);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_SkyShpere::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bdc = {};
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = sizeof(SkyShpereInfo);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(SkyShpereInfo);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mSkyShpereInfoStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_SkyShpere::CreateViews()
+{
+    mRenderTargerView = g_Root->Devices()->GetSwapChainRtv();
+    std::string name = "tex-depth-light";
+    mDepthStencilView = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mDsv;
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
+    HRESULT hr = S_OK;
+    ZeroMemory(&desSRV, sizeof(desSRV));
+    desSRV.Format = DXGI_FORMAT_UNKNOWN;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    desSRV.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mSkyShpereInfoStructedBuffer,
+        &desSRV, &mSkyShpereInfoStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_SkyShpere::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC samDesc = {};
+    ZeroMemory(&samDesc, sizeof(samDesc));
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &samDesc, &mLinearWrapSampler);
+    if (FAILED(hr)) { return false; }
 
     return true;
 }
