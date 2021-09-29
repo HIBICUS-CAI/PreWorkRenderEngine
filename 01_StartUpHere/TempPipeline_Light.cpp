@@ -10,6 +10,9 @@
 #include "RSCamera.h"
 #include "RSCamerasContainer.h"
 #include <DirectXColors.h>
+#include <DirectXPackedVector.h>
+#include <cstdlib>
+#include <ctime>
 #include "TempMesh.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
@@ -38,10 +41,16 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     normal->SetExecuateOrder(1);
 
+    name = "basic-ssao";
+    RSPass_Ssao* ssao = new RSPass_Ssao(
+        name, PASS_TYPE::RENDER, g_Root);
+    ssao->SetExecuateOrder(2);
+
     name = "ssao-topic";
     RSTopic* ssao_topic = new RSTopic(name);
     ssao_topic->StartTopicAssembly();
     ssao_topic->InsertPass(normal);
+    ssao_topic->InsertPass(ssao);
     ssao_topic->SetExecuateOrder(1);
     ssao_topic->FinishTopicAssembly();
 
@@ -1170,5 +1179,377 @@ bool RSPass_Normal::CreateViews()
 
 bool RSPass_Normal::CreateSamplers()
 {
+    return true;
+}
+
+RSPass_Ssao::RSPass_Ssao(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    mRenderTargetView(nullptr),
+    mSsaoInfoStructedBuffer(nullptr),
+    mSsaoInfoStructedBufferSrv(nullptr),
+    mNormalMapSrv(nullptr),
+    mDepthMapSrv(nullptr),
+    mRandomMapSrv(nullptr),
+    mSamplePointClamp(nullptr), mSampleLinearClamp(nullptr),
+    mSampleDepthMap(nullptr), mSampleLinearWrap(nullptr)
+{
+    for (UINT i = 0; i < 14; i++)
+    {
+        mOffsetVec[i] = {};
+    }
+}
+
+RSPass_Ssao::RSPass_Ssao(const RSPass_Ssao& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mRenderTargetView(_source.mRenderTargetView),
+    mSamplePointClamp(_source.mSamplePointClamp),
+    mSampleLinearClamp(_source.mSampleLinearClamp),
+    mSampleDepthMap(_source.mSampleDepthMap),
+    mSampleLinearWrap(_source.mSampleLinearWrap),
+    mSsaoInfoStructedBuffer(_source.mSsaoInfoStructedBuffer),
+    mSsaoInfoStructedBufferSrv(_source.mSsaoInfoStructedBufferSrv),
+    mNormalMapSrv(_source.mNormalMapSrv),
+    mDepthMapSrv(_source.mDepthMapSrv),
+    mRandomMapSrv(_source.mRandomMapSrv)
+{
+    for (UINT i = 0; i < 14; i++)
+    {
+        mOffsetVec[i] = _source.mOffsetVec[i];
+    }
+}
+
+RSPass_Ssao::~RSPass_Ssao()
+{
+
+}
+
+RSPass_Ssao* RSPass_Ssao::ClonePass()
+{
+    return new RSPass_Ssao(*this);
+}
+
+bool RSPass_Ssao::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateTextures()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    DirectX::XMFLOAT4 vec[14] = {};
+    vec[0] = DirectX::XMFLOAT4(+1.0f, +1.0f, +1.0f, 0.0f);
+    vec[1] = DirectX::XMFLOAT4(-1.0f, -1.0f, -1.0f, 0.0f);
+    vec[2] = DirectX::XMFLOAT4(-1.0f, +1.0f, +1.0f, 0.0f);
+    vec[3] = DirectX::XMFLOAT4(+1.0f, -1.0f, -1.0f, 0.0f);
+    vec[4] = DirectX::XMFLOAT4(+1.0f, +1.0f, -1.0f, 0.0f);
+    vec[5] = DirectX::XMFLOAT4(-1.0f, -1.0f, +1.0f, 0.0f);
+    vec[6] = DirectX::XMFLOAT4(-1.0f, +1.0f, -1.0f, 0.0f);
+    vec[7] = DirectX::XMFLOAT4(+1.0f, -1.0f, +1.0f, 0.0f);
+    vec[8] = DirectX::XMFLOAT4(-1.0f, 0.0f, 0.0f, 0.0f);
+    vec[9] = DirectX::XMFLOAT4(+1.0f, 0.0f, 0.0f, 0.0f);
+    vec[10] = DirectX::XMFLOAT4(0.0f, -1.0f, 0.0f, 0.0f);
+    vec[11] = DirectX::XMFLOAT4(0.0f, +1.0f, 0.0f, 0.0f);
+    vec[12] = DirectX::XMFLOAT4(0.0f, 0.0f, -1.0f, 0.0f);
+    vec[13] = DirectX::XMFLOAT4(0.0f, 0.0f, +1.0f, 0.0f);
+    const int basic = 25;
+    const int range = 75;
+    for (int i = 0; i < 14; i++)
+    {
+        std::srand((unsigned int)std::time(nullptr) +
+            (unsigned int)std::rand());
+        float s = (float)(std::rand() % range + basic) / 100.f;
+        DirectX::XMVECTOR v = DirectX::XMVector4Normalize(
+            DirectX::XMLoadFloat4(&vec[i]));
+        DirectX::XMStoreFloat4(&vec[i], v);
+        vec[i].x *= s;
+        vec[i].y *= s;
+        vec[i].z *= s;
+        mOffsetVec[i] = vec[i];
+    }
+
+    return true;
+}
+
+void RSPass_Ssao::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mSamplePointClamp);
+    RS_RELEASE(mSampleLinearClamp);
+    RS_RELEASE(mSampleDepthMap);
+    RS_RELEASE(mSampleLinearWrap);
+    RS_RELEASE(mSsaoInfoStructedBuffer);
+    RS_RELEASE(mSsaoInfoStructedBufferSrv);
+
+    std::string name = "random-tex-ssao";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "ssao-tex-ssao";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+}
+
+void RSPass_Ssao::ExecuatePass()
+{
+
+}
+
+bool RSPass_Ssao::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\ssao_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\ssao_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Ssao::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bdc = {};
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = 256 * sizeof(SsaoInfo);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(SsaoInfo);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mSsaoInfoStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Ssao::CreateTextures()
+{
+    HRESULT hr = S_OK;
+    std::string name = "";
+    DATA_TEXTURE_INFO dti = {};
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+    D3D11_SUBRESOURCE_DATA iniData = {};
+    ZeroMemory(&texDesc, sizeof(texDesc));
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    ZeroMemory(&rtvDesc, sizeof(rtvDesc));
+    ZeroMemory(&uavDesc, sizeof(uavDesc));
+    ZeroMemory(&iniData, sizeof(iniData));
+
+    ID3D11Texture2D* texture = nullptr;
+    ID3D11RenderTargetView* rtv = nullptr;
+    ID3D11ShaderResourceView* srv = nullptr;
+    ID3D11UnorderedAccessView* uav = nullptr;
+
+    DirectX::PackedVector::XMCOLOR* random = nullptr;
+    random = new DirectX::PackedVector::XMCOLOR[256 * 256];
+    int basic = 1;
+    int range = 100;
+    DirectX::XMFLOAT3 v = { 0.f,0.f,0.f };
+    std::srand((unsigned int)std::time(nullptr) +
+        (unsigned int)std::rand());
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 256; j++)
+        {
+            v.x = (float)(std::rand() % range + basic) / 100.f;
+            v.y = (float)(std::rand() % range + basic) / 100.f;
+            v.z = (float)(std::rand() % range + basic) / 100.f;
+            random[i * 256 + j] =
+                DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, 0.f);
+        }
+    }
+
+    iniData.SysMemPitch = 256 *
+        sizeof(DirectX::PackedVector::XMCOLOR);
+    iniData.pSysMem = random;
+
+    texDesc.Width = 256;
+    texDesc.Height = 256;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, &iniData, &texture);
+
+    delete[] random;
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "random-tex-ssao";
+    dti.mTexture = texture;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = 1280;
+    texDesc.Height = 720;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE |
+        D3D11_BIND_UNORDERED_ACCESS;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &rtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(
+        texture, &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+    hr = Device()->CreateUnorderedAccessView(
+        texture, &uavDesc, &uav);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "ssao-tex-ssao";
+    dti.mTexture = texture;
+    dti.mRtv = rtv;
+    dti.mSrv = srv;
+    dti.mUav = uav;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    return true;
+}
+
+bool RSPass_Ssao::CreateViews()
+{
+    std::string name = "random-tex-ssao";
+    mRandomMapSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "normal-tex-ssao";
+    mNormalMapSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "normal-depth-ssao";
+    mDepthMapSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "ssao-tex-ssao";
+    mRenderTargetView = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mRtv;
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
+    HRESULT hr = S_OK;
+    ZeroMemory(&desSRV, sizeof(desSRV));
+    desSRV.Format = DXGI_FORMAT_UNKNOWN;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    desSRV.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mSsaoInfoStructedBuffer,
+        &desSRV, &mSsaoInfoStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Ssao::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC samDesc = {};
+    ZeroMemory(&samDesc, sizeof(samDesc));
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &samDesc, &mSamplePointClamp);
+    if (FAILED(hr)) { return false; }
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &samDesc, &mSampleLinearClamp);
+    if (FAILED(hr)) { return false; }
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &samDesc, &mSampleDepthMap);
+    if (FAILED(hr)) { return false; }
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &samDesc, &mSampleLinearWrap);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }

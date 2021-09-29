@@ -159,3 +159,55 @@ private:
     ID3D11Buffer* mInstanceStructedBuffer;
     ID3D11ShaderResourceView* mInstanceStructedBufferSrv;
 };
+
+struct SsaoInfo
+{
+    DirectX::XMFLOAT4X4 mProj;
+    DirectX::XMFLOAT4X4 mInvProj;
+    DirectX::XMFLOAT4X4 mTexProj;
+    DirectX::XMFLOAT4 mOffsetVec;
+    float mOcclusionRadius;
+    float mOcclusionFadeStart;
+    float mOcclusionFadeEnd;
+    float mSurfaceEpsilon;
+};
+
+class RSPass_Ssao :public RSPass_Base
+{
+public:
+    RSPass_Ssao(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_Ssao(const RSPass_Ssao& _source);
+    virtual ~RSPass_Ssao();
+
+public:
+    virtual RSPass_Ssao* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateBuffers();
+    bool CreateTextures();
+    bool CreateViews();
+    bool CreateSamplers();
+
+private:
+    ID3D11VertexShader* mVertexShader;
+    ID3D11PixelShader* mPixelShader;
+    ID3D11RenderTargetView* mRenderTargetView;
+    ID3D11SamplerState* mSamplePointClamp;
+    ID3D11SamplerState* mSampleLinearClamp;
+    ID3D11SamplerState* mSampleDepthMap;
+    ID3D11SamplerState* mSampleLinearWrap;
+    ID3D11Buffer* mSsaoInfoStructedBuffer;
+    ID3D11ShaderResourceView* mSsaoInfoStructedBufferSrv;
+    ID3D11ShaderResourceView* mNormalMapSrv;
+    ID3D11ShaderResourceView* mDepthMapSrv;
+    ID3D11ShaderResourceView* mRandomMapSrv;
+    DirectX::XMFLOAT4 mOffsetVec[14];
+};
