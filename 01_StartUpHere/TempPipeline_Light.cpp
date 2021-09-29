@@ -1193,7 +1193,8 @@ RSPass_Ssao::RSPass_Ssao(
     mDepthMapSrv(nullptr),
     mRandomMapSrv(nullptr),
     mSamplePointClamp(nullptr), mSampleLinearClamp(nullptr),
-    mSampleDepthMap(nullptr), mSampleLinearWrap(nullptr)
+    mSampleDepthMap(nullptr), mSampleLinearWrap(nullptr),
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr)
 {
     for (UINT i = 0; i < 14; i++)
     {
@@ -1214,7 +1215,8 @@ RSPass_Ssao::RSPass_Ssao(const RSPass_Ssao& _source) :
     mSsaoInfoStructedBufferSrv(_source.mSsaoInfoStructedBufferSrv),
     mNormalMapSrv(_source.mNormalMapSrv),
     mDepthMapSrv(_source.mDepthMapSrv),
-    mRandomMapSrv(_source.mRandomMapSrv)
+    mRandomMapSrv(_source.mRandomMapSrv),
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr)
 {
     for (UINT i = 0; i < 14; i++)
     {
@@ -1284,6 +1286,8 @@ void RSPass_Ssao::ReleasePass()
     RS_RELEASE(mSampleLinearWrap);
     RS_RELEASE(mSsaoInfoStructedBuffer);
     RS_RELEASE(mSsaoInfoStructedBufferSrv);
+    RS_RELEASE(mVertexBuffer);
+    RS_RELEASE(mIndexBuffer);
 
     std::string name = "random-tex-ssao";
     g_Root->TexturesManager()->DeleteDataTex(name);
@@ -1293,7 +1297,84 @@ void RSPass_Ssao::ReleasePass()
 
 void RSPass_Ssao::ExecuatePass()
 {
+    ID3D11RenderTargetView* null = nullptr;
+    STContext()->OMSetRenderTargets(1,
+        &mRenderTargetView, nullptr);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    STContext()->RSSetState(nullptr);
 
+    DirectX::XMMATRIX mat = {};
+    DirectX::XMFLOAT4X4 flt44 = {};
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+
+    STContext()->Map(mSsaoInfoStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    SsaoInfo* ss_data = (SsaoInfo*)msr.pData;
+    // TEMP---------------------
+    static std::string name = "temp-cam";
+    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
+        GetRSCameraInfo(name)->mProjMat));
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&ss_data[0].mProj, mat);
+
+    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
+        GetRSCameraInfo(name)->mInvProjMat));
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&ss_data[0].mInvProj, mat);
+
+    static DirectX::XMMATRIX T(
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f);
+    mat = DirectX::XMMatrixTranspose(
+        DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
+            GetRSCameraInfo(name)->mProjMat)) * T);
+    DirectX::XMStoreFloat4x4(&ss_data[0].mTexProj, mat);
+
+    for (UINT i = 0; i < 14; i++)
+    {
+        ss_data[0].mOffsetVec[i] = mOffsetVec[i];
+    }
+
+    ss_data[0].mOcclusionRadius = 0.5f;
+    ss_data[0].mOcclusionFadeStart = 0.2f;
+    ss_data[0].mOcclusionFadeEnd = 1.0f;
+    ss_data[0].mSurfaceEpsilon = 0.05f;
+    // TEMP---------------------
+    STContext()->Unmap(mSsaoInfoStructedBuffer, 0);
+
+    STContext()->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    STContext()->IASetVertexBuffers(
+        0, 1, &mVertexBuffer,
+        &stride, &offset);
+    STContext()->IASetIndexBuffer(
+        mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    STContext()->VSSetShaderResources(
+        0, 1, &mSsaoInfoStructedBufferSrv);
+    STContext()->PSSetShaderResources(
+        0, 1, &mSsaoInfoStructedBufferSrv);
+    STContext()->PSSetShaderResources(
+        1, 1, &mNormalMapSrv);
+    STContext()->PSSetShaderResources(
+        2, 1, &mDepthMapSrv);
+    STContext()->PSSetShaderResources(
+        3, 1, &mRandomMapSrv);
+
+    STContext()->PSSetSamplers(0, 1, &mSamplePointClamp);
+    STContext()->PSSetSamplers(1, 1, &mSampleLinearClamp);
+    STContext()->PSSetSamplers(2, 1, &mSampleDepthMap);
+    STContext()->PSSetSamplers(3, 1, &mSampleLinearWrap);
+
+    STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+    STContext()->OMSetRenderTargets(1, &null, nullptr);
+    STContext()->RSSetState(nullptr);
 }
 
 bool RSPass_Ssao::CreateShaders()
@@ -1339,11 +1420,61 @@ bool RSPass_Ssao::CreateBuffers()
     bdc.Usage = D3D11_USAGE_DYNAMIC;
     bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    bdc.ByteWidth = 256 * sizeof(SsaoInfo);
+    bdc.ByteWidth = sizeof(SsaoInfo);
     bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     bdc.StructureByteStride = sizeof(SsaoInfo);
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mSsaoInfoStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    VERTEX_INFO v[4] = {};
+    v[0].mPosition = DirectX::XMFLOAT3(-1.0f, -1.0f, 0.0f);
+    v[1].mPosition = DirectX::XMFLOAT3(-1.0f, +1.0f, 0.0f);
+    v[2].mPosition = DirectX::XMFLOAT3(+1.0f, +1.0f, 0.0f);
+    v[3].mPosition = DirectX::XMFLOAT3(+1.0f, -1.0f, 0.0f);
+    v[0].mNormal = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mNormal = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mNormal = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mNormal = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTangent = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mTangent = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mTangent = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mTangent = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTexCoord = DirectX::XMFLOAT2(0.0f, 1.0f);
+    v[1].mTexCoord = DirectX::XMFLOAT2(0.0f, 0.0f);
+    v[2].mTexCoord = DirectX::XMFLOAT2(1.0f, 0.0f);
+    v[3].mTexCoord = DirectX::XMFLOAT2(1.0f, 1.0f);
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_IMMUTABLE;
+    bdc.ByteWidth = sizeof(VERTEX_INFO) * 4;
+    bdc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    bdc.MiscFlags = 0;
+    bdc.StructureByteStride = 0;
+    D3D11_SUBRESOURCE_DATA vinitData = {};
+    ZeroMemory(&vinitData, sizeof(vinitData));
+    vinitData.pSysMem = v;
+    hr = Device()->CreateBuffer(
+        &bdc, &vinitData, &mVertexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    UINT indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_IMMUTABLE;
+    bdc.ByteWidth = sizeof(UINT) * 6;
+    bdc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    bdc.StructureByteStride = 0;
+    bdc.MiscFlags = 0;
+    D3D11_SUBRESOURCE_DATA iinitData = {};
+    ZeroMemory(&iinitData, sizeof(iinitData));
+    iinitData.pSysMem = indices;
+    hr = Device()->CreateBuffer(
+        &bdc, &iinitData, &mIndexBuffer);
     if (FAILED(hr)) { return false; }
 
     return true;

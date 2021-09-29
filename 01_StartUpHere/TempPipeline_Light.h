@@ -165,7 +165,7 @@ struct SsaoInfo
     DirectX::XMFLOAT4X4 mProj;
     DirectX::XMFLOAT4X4 mInvProj;
     DirectX::XMFLOAT4X4 mTexProj;
-    DirectX::XMFLOAT4 mOffsetVec;
+    DirectX::XMFLOAT4 mOffsetVec[14];
     float mOcclusionRadius;
     float mOcclusionFadeStart;
     float mOcclusionFadeEnd;
@@ -210,4 +210,6 @@ private:
     ID3D11ShaderResourceView* mDepthMapSrv;
     ID3D11ShaderResourceView* mRandomMapSrv;
     DirectX::XMFLOAT4 mOffsetVec[14];
+    ID3D11Buffer* mVertexBuffer;
+    ID3D11Buffer* mIndexBuffer;
 };
