@@ -84,6 +84,7 @@ private:
     ID3D11ShaderResourceView* mMaterialStructedBufferSrv;
     ID3D11Buffer* mShadowStructedBuffer;
     ID3D11ShaderResourceView* mShadowStructedBufferSrv;
+    ID3D11ShaderResourceView* mSsaoSrv;
 };
 
 class RSPass_Shadow :public RSPass_Base

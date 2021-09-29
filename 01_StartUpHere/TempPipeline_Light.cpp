@@ -115,7 +115,8 @@ RSPass_Light::RSPass_Light(
     mMaterialStructedBuffer(nullptr),
     mMaterialStructedBufferSrv(nullptr),
     mShadowStructedBuffer(nullptr),
-    mShadowStructedBufferSrv(nullptr)
+    mShadowStructedBufferSrv(nullptr),
+    mSsaoSrv(nullptr)
 {
 
 }
@@ -144,7 +145,8 @@ RSPass_Light::RSPass_Light(const RSPass_Light& _source) :
     mMaterialStructedBuffer(_source.mMaterialStructedBuffer),
     mMaterialStructedBufferSrv(_source.mMaterialStructedBufferSrv),
     mShadowStructedBuffer(_source.mShadowStructedBuffer),
-    mShadowStructedBufferSrv(_source.mShadowStructedBufferSrv)
+    mShadowStructedBufferSrv(_source.mShadowStructedBufferSrv),
+    mSsaoSrv(_source.mSsaoSrv)
 {
 
 }
@@ -342,6 +344,8 @@ void RSPass_Light::ExecuatePass()
         STContext()->PSSetShaderResources(
             5, 1, &g_Root->TexturesManager()->
             GetDataTexInfo(depthtex)->mSrv);
+        STContext()->PSSetShaderResources(
+            6, 1, &mSsaoSrv);
 
         STContext()->DrawIndexedInstanced(
             call.mMeshData.mIndexCount,
@@ -361,6 +365,7 @@ void RSPass_Light::ExecuatePass()
     STContext()->PSSetShaderResources(3, 1, &nullsrv);
     STContext()->PSSetShaderResources(4, 1, &nullsrv);
     STContext()->PSSetShaderResources(5, 1, &nullsrv);
+    STContext()->PSSetShaderResources(6, 1, &nullsrv);
 }
 
 bool RSPass_Light::CreateShaders()
@@ -533,6 +538,10 @@ bool RSPass_Light::CreateViews()
         mShadowStructedBuffer,
         &desSRV, &mShadowStructedBufferSrv);
     if (FAILED(hr)) { return false; }
+
+    name = "ssao-tex-ssao";
+    mSsaoSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
 
     return true;
 }

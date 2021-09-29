@@ -5,6 +5,7 @@ struct VS_OUTPUT
     float4 PosH : SV_POSITION;
     float3 PosW : POSITION0;
     float4 ShadowPosH : POSITION1;
+    float4 SsaoPosH : POSITION2;
     float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
     float2 TexCoordL : TEXCOORD;
@@ -34,7 +35,8 @@ StructuredBuffer<MATERIAL> gMaterial : register(t2);
 StructuredBuffer<LIGHT> gLights : register(t3);
 
 Texture2D gDiffuse : register(t4);
-Texture2D<float> ShadowMap : register(t5);
+Texture2D<float> gShadowMap : register(t5);
+Texture2D gSsaoMap : register(t6);
 
 float CalcShadowFactor(float4 _shadowPosH)
 {
@@ -43,7 +45,7 @@ float CalcShadowFactor(float4 _shadowPosH)
     _shadowPosH.y = -0.5f * _shadowPosH.y + 0.5f;
 
     uint width, height, numMips;
-    ShadowMap.GetDimensions(0, width, height, numMips);
+    gShadowMap.GetDimensions(0, width, height, numMips);
 
     const float WIDTH = (float)width;
     const float DX = 1.0f / WIDTH;
@@ -62,7 +64,7 @@ float CalcShadowFactor(float4 _shadowPosH)
     [unroll]
     for(int i = 0; i < 9; ++i)
     {
-        percentLit += ShadowMap.SampleCmpLevelZero(gShadowComSam,
+        percentLit += gShadowMap.SampleCmpLevelZero(gShadowComSam,
             _shadowPosH.xy + offsets[i], depth).r;
     }
 
@@ -73,7 +75,9 @@ float4 main(VS_OUTPUT _in) : SV_TARGET
 {
 	_in.NormalW = normalize(_in.NormalW);
     float3 toEyeW = normalize(gLightInfo[0].gCameraPos - _in.PosW);
-    float4 ambientL = gAmbient[0].gAmbient * gMaterial[0].gDiffuseAlbedo;
+    _in.SsaoPosH /= _in.SsaoPosH.w;
+    float access = gSsaoMap.SampleLevel(gSampler, _in.SsaoPosH.xy, 0.0f).r;
+    float4 ambientL = gAmbient[0].gAmbient * gMaterial[0].gDiffuseAlbedo * access;
     float4 directL = float4(ComputeDirectionalLight(gLights[0], gMaterial[0],
         _in.NormalW, toEyeW), 0.0f);
     float shadow = CalcShadowFactor(_in.ShadowPosH);

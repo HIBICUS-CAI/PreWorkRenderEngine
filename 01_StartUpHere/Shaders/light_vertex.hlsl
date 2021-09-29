@@ -11,6 +11,7 @@ struct VS_OUTPUT
     float4 PosH : SV_POSITION;
     float3 PosW : POSITION0;
     float4 ShadowPosH : POSITION1;
+    float4 SsaoPosH : POSITION2;
     float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
     float2 TexCoordL : TEXCOORD;
@@ -60,6 +61,7 @@ VS_OUTPUT main(VS_INPUT _in, uint _instanceID : SV_InstanceID)
     _out.PosH = mul(_out.PosH, gViewProj[0].gProjection);
     _out.ShadowPosH = mul(float4(_out.PosW, 1.0f), gShadowInfo[0].gShadowViewMat);
     _out.ShadowPosH = mul(_out.ShadowPosH, gShadowInfo[0].gShadowProjMat);
+    _out.SsaoPosH = mul(float4(_out.PosW, 1.0f), gShadowInfo[0].gSSAOMat);
     _out.TexCoordL = _in.TexCoordL;
 
     return _out;
