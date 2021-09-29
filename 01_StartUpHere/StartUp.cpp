@@ -185,10 +185,10 @@ int WINAPI WinMain(
 
             auto sticksL = InputInterface::LeftStickOffset();
             auto sticksR = InputInterface::RightStickOffset();
-            float vertL = (float)-sticksL.x / 100000.f;
-            float horiL = (float)-sticksL.y / 100000.f;
-            float vertR = (float)sticksR.x / 1000000.f;
-            float horiR = (float)-sticksR.y / 1000000.f;
+            float vertL = (float)-sticksL.x / 50000.f;
+            float horiL = (float)-sticksL.y / 50000.f;
+            float vertR = (float)sticksR.x / 500000.f;
+            float horiR = (float)-sticksR.y / 500000.f;
             cam->TranslateRSCamera({ vertL,0.f,horiL });
             cam->RotateRSCamera({ horiR,vertR,0.f });
 

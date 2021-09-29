@@ -77,7 +77,7 @@ public:
             DirectX::XMFLOAT4X4 flt44 = {};
             mat = DirectX::XMMatrixMultiply(
                 DirectX::XMMatrixScaling(0.15f, 0.15f, 0.15f),
-                DirectX::XMMatrixRotationY(time)
+                DirectX::XMMatrixRotationY(time * 3.f)
             );
             mat = DirectX::XMMatrixMultiply(
                 mat,
