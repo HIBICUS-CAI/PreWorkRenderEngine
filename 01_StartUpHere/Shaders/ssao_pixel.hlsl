@@ -87,5 +87,5 @@ float4 main(VS_OUTPUT _input) : SV_TARGET
 
     float accsee = 1.0f - occlusionSum;
 
-    return saturate(pow(accsee, 2.5f));
+    return saturate(pow(accsee, 5.0f));
 }

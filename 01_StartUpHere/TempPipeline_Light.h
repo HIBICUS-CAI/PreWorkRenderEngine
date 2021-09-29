@@ -213,3 +213,32 @@ private:
     ID3D11Buffer* mVertexBuffer;
     ID3D11Buffer* mIndexBuffer;
 };
+
+class RSPass_KBBlur :public RSPass_Base
+{
+public:
+    RSPass_KBBlur(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_KBBlur(const RSPass_KBBlur& _source);
+    virtual ~RSPass_KBBlur();
+
+public:
+    virtual RSPass_KBBlur* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateViews();
+
+private:
+    ID3D11ComputeShader* mHoriBlurShader;
+    ID3D11ComputeShader* mVertBlurShader;
+    ID3D11UnorderedAccessView* mSsaoTexUav;
+    ID3D11ShaderResourceView* mNormalMapSrv;
+    ID3D11ShaderResourceView* mDepthMapSrv;
+};

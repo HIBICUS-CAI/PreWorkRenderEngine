@@ -46,11 +46,17 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     ssao->SetExecuateOrder(2);
 
+    name = "kbblur-ssao";
+    RSPass_KBBlur* kbblur = new RSPass_KBBlur(
+        name, PASS_TYPE::COMPUTE, g_Root);
+    kbblur->SetExecuateOrder(3);
+
     name = "ssao-topic";
     RSTopic* ssao_topic = new RSTopic(name);
     ssao_topic->StartTopicAssembly();
     ssao_topic->InsertPass(normal);
     ssao_topic->InsertPass(ssao);
+    ssao_topic->InsertPass(kbblur);
     ssao_topic->SetExecuateOrder(1);
     ssao_topic->FinishTopicAssembly();
 
@@ -1681,6 +1687,135 @@ bool RSPass_Ssao::CreateSamplers()
     hr = Device()->CreateSamplerState(
         &samDesc, &mSampleLinearWrap);
     if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+RSPass_KBBlur::RSPass_KBBlur(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mHoriBlurShader(nullptr), mVertBlurShader(nullptr),
+    mSsaoTexUav(nullptr),
+    mNormalMapSrv(nullptr),
+    mDepthMapSrv(nullptr)
+{
+
+}
+
+RSPass_KBBlur::RSPass_KBBlur(const RSPass_KBBlur& _source) :
+    RSPass_Base(_source),
+    mHoriBlurShader(_source.mHoriBlurShader),
+    mVertBlurShader(_source.mVertBlurShader),
+    mSsaoTexUav(_source.mSsaoTexUav),
+    mNormalMapSrv(_source.mNormalMapSrv),
+    mDepthMapSrv(_source.mDepthMapSrv)
+{
+
+}
+
+RSPass_KBBlur::~RSPass_KBBlur()
+{
+
+}
+
+RSPass_KBBlur* RSPass_KBBlur::ClonePass()
+{
+    return new RSPass_KBBlur(*this);
+}
+
+bool RSPass_KBBlur::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateViews()) { return false; }
+
+    return true;
+}
+
+void RSPass_KBBlur::ReleasePass()
+{
+    RS_RELEASE(mHoriBlurShader);
+    RS_RELEASE(mVertBlurShader);
+}
+
+void RSPass_KBBlur::ExecuatePass()
+{
+    ID3D11ShaderResourceView* srv[] =
+    {
+        mNormalMapSrv, mDepthMapSrv
+    };
+    static ID3D11UnorderedAccessView* nullUav = nullptr;
+    static ID3D11ShaderResourceView* nullSrv[] =
+    {
+        nullptr, nullptr
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &mSsaoTexUav, nullptr);
+        STContext()->CSSetShaderResources(0, 2, srv);
+        STContext()->Dispatch(5, 720, 1);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &nullUav, nullptr);
+        STContext()->CSSetShaderResources(0, 2, nullSrv);
+
+        STContext()->CSSetShader(mVertBlurShader, nullptr, 0);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &mSsaoTexUav, nullptr);
+        STContext()->CSSetShaderResources(0, 2, srv);
+        STContext()->Dispatch(1280, 3, 1);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &nullUav, nullptr);
+        STContext()->CSSetShaderResources(0, 2, nullSrv);
+    }
+}
+
+bool RSPass_KBBlur::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\ssao_compute.hlsl",
+        "HMain", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mHoriBlurShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\ssao_compute.hlsl",
+        "VMain", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertBlurShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_KBBlur::CreateViews()
+{
+    std::string name = "normal-tex-ssao";
+    mNormalMapSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "normal-depth-ssao";
+    mDepthMapSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "ssao-tex-ssao";
+    mSsaoTexUav = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mUav;
 
     return true;
 }
