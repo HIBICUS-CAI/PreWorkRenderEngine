@@ -33,7 +33,7 @@ VS_OUTPUT main(VS_INPUT _input)
     posW.xyz += gSkySphereInfo[0].gEyePos;
 
     output.PosH = mul(posW, gSkySphereInfo[0].gView);
-    output.PosH = mul(posW, gSkySphereInfo[0].gProj);
+    output.PosH = mul(output.PosH, gSkySphereInfo[0].gProj);
     output.PosH = output.PosH.xyww;
 
     return output;
