@@ -47,7 +47,7 @@ int WINAPI WinMain(
         GeoGenerate()->CreateBox(
             5.f, 5.f, 5.f, 1,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
-            {}, "white.jpg"));
+            {}, "dark-red.jpg"));
     walls->AddInstanceData(
         { 0.f,1.25f,25.f },
         { 0.f,0.f,0.f },
@@ -69,7 +69,7 @@ int WINAPI WinMain(
         GeoGenerate()->CreateBox(
             4.f, 4.f, 4.f, 1,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
-            {}, "white.jpg"));
+            {}, "sand.jpg"));
     box->AddInstanceData(
         { 15.f,-3.f,15.f },
         { 0.f,0.f,0.f },
@@ -91,7 +91,7 @@ int WINAPI WinMain(
         GeoGenerate()->CreateCylinder(
             2.5f, 1.5f, 30.f, 15, 5,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
-            {}, "white.jpg"));
+            {}, "dark-wood.jpg"));
     pillars->AddInstanceData(
         { 20.f,10.f,20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
     pillars->AddInstanceData(
