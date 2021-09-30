@@ -1,4 +1,4 @@
-#include "TempPipeline_Light.h"
+﻿#include "TempPipeline_Light.h"
 #include "RSRoot_DX11.h"
 #include "RSPipeline.h"
 #include "RSTopic.h"
@@ -57,11 +57,23 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     skysphere->SetExecuateOrder(1);
 
+    name = "font-pass";
+    RSPass_Font* font = new RSPass_Font(
+        name, PASS_TYPE::RENDER, g_Root);
+    font->SetExecuateOrder(1);
+
+    name = "font-topic";
+    RSTopic* font_topic = new RSTopic(name);
+    font_topic->StartTopicAssembly();
+    font_topic->InsertPass(font);
+    font_topic->SetExecuateOrder(4);
+    font_topic->FinishTopicAssembly();
+
     name = "skysphere-topic";
     RSTopic* sky_topic = new RSTopic(name);
     sky_topic->StartTopicAssembly();
     sky_topic->InsertPass(skysphere);
-    sky_topic->SetExecuateOrder(4);
+    sky_topic->SetExecuateOrder(5);
     sky_topic->FinishTopicAssembly();
 
     name = "ssao-topic";
@@ -94,6 +106,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(light_topic);
     g_TempPipeline->InsertTopic(ssao_topic);
     g_TempPipeline->InsertTopic(sky_topic);
+    g_TempPipeline->InsertTopic(font_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
@@ -2093,6 +2106,86 @@ bool RSPass_SkyShpere::CreateSamplers()
     hr = Device()->CreateSamplerState(
         &samDesc, &mLinearWrapSampler);
     if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+RSPass_Font::RSPass_Font(std::string& _name,
+    PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mSpriteBatch(nullptr), mSpriteFont(nullptr),
+    mRenderTargetView(nullptr),
+    mDepthStencilView(nullptr)
+{
+
+}
+
+RSPass_Font::RSPass_Font(const RSPass_Font& _source) :
+    RSPass_Base(_source),
+    mSpriteBatch(_source.mSpriteBatch),
+    mSpriteFont(_source.mSpriteFont),
+    mRenderTargetView(_source.mRenderTargetView),
+    mDepthStencilView(_source.mDepthStencilView)
+{
+
+}
+
+RSPass_Font::~RSPass_Font()
+{
+
+}
+
+RSPass_Font* RSPass_Font::ClonePass()
+{
+    return new RSPass_Font(*this);
+}
+
+bool RSPass_Font::InitPass()
+{
+    if (!CreateFonts()) { return false; }
+
+    return true;
+}
+
+void RSPass_Font::ReleasePass()
+{
+    if (mSpriteFont) { delete mSpriteFont; }
+
+    if (mSpriteBatch) { delete mSpriteBatch; }
+}
+
+void RSPass_Font::ExecuatePass()
+{
+    STContext()->OMSetRenderTargets(1, &mRenderTargetView,
+        mDepthStencilView);
+
+    mSpriteBatch->Begin();
+
+    static std::string output = "wtf why only english?";
+    static const DirectX::XMFLOAT2 pos = { 64.f,100.f };
+    static const DirectX::XMFLOAT2 offset = { 0.f,0.f };
+    static const DirectX::XMFLOAT2 scale = { 1.f,1.f };
+
+    mSpriteFont->DrawString(mSpriteBatch, output.c_str(),
+        pos, DirectX::Colors::White, 0.f, offset, scale,
+        DirectX::SpriteEffects_None, 0.f);
+
+    mSpriteBatch->End();
+}
+
+bool RSPass_Font::CreateFonts()
+{
+    mSpriteFont = new DirectX::SpriteFont(Device(),
+        L"Assets\\font1.spritefont");
+    if (!mSpriteFont) { return false; }
+
+    mSpriteBatch = new DirectX::SpriteBatch(STContext());
+    if (!mSpriteFont) { return false; }
+
+    mRenderTargetView = g_Root->Devices()->GetSwapChainRtv();
+    std::string name = "tex-depth-light";
+    mDepthStencilView = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mDsv;
 
     return true;
 }

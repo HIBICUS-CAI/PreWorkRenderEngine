@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "RSPass_Base.h"
+#include <DirectXTK\SpriteFont.h>
 
 struct ViewProj
 {
@@ -289,4 +290,31 @@ private:
     ID3D11Buffer* mSkyShpereInfoStructedBuffer;
     ID3D11ShaderResourceView* mSkyShpereInfoStructedBufferSrv;
     RS_SUBMESH_DATA mSkySphereMesh;
+};
+
+class RSPass_Font :public RSPass_Base
+{
+public:
+    RSPass_Font(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_Font(const RSPass_Font& _source);
+    virtual ~RSPass_Font();
+
+public:
+    virtual RSPass_Font* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateFonts();
+
+private:
+    DirectX::SpriteBatch* mSpriteBatch;
+    DirectX::SpriteFont* mSpriteFont;
+    ID3D11RenderTargetView* mRenderTargetView;
+    ID3D11DepthStencilView* mDepthStencilView;
 };
