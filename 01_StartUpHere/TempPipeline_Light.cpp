@@ -378,6 +378,11 @@ void RSPass_Light::ExecuatePass()
             GetDataTexInfo(depthtex)->mSrv);
         STContext()->PSSetShaderResources(
             6, 1, &mSsaoSrv);
+        if (call.mTextureDatas[1].mUse)
+        {
+            STContext()->PSSetShaderResources(
+                7, 1, &(call.mTextureDatas[1].mSrv));
+        }
 
         STContext()->DrawIndexedInstanced(
             call.mMeshData.mIndexCount,
@@ -394,6 +399,7 @@ void RSPass_Light::ExecuatePass()
     STContext()->PSSetShaderResources(4, 1, &nullsrv);
     STContext()->PSSetShaderResources(5, 1, &nullsrv);
     STContext()->PSSetShaderResources(6, 1, &nullsrv);
+    STContext()->PSSetShaderResources(7, 1, &nullsrv);
     STContext()->OMSetDepthStencilState(nullptr, 0);
 }
 

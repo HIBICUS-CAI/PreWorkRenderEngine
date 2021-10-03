@@ -15,6 +15,7 @@ struct VS_OUTPUT
     float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
     float2 TexCoordL : TEXCOORD;
+    uint UseBumped : BLENDINDICES;
 };
 
 struct VIEWPROJ
@@ -63,6 +64,15 @@ VS_OUTPUT main(VS_INPUT _in, uint _instanceID : SV_InstanceID)
     _out.ShadowPosH = mul(_out.ShadowPosH, gShadowInfo[0].gShadowProjMat);
     _out.SsaoPosH = mul(float4(_out.PosW, 1.0f), gShadowInfo[0].gSSAOMat);
     _out.TexCoordL = _in.TexCoordL;
+
+    if (gInstances[_instanceID].gCustomizedData1.x > 0.0f)
+    {
+        _out.UseBumped = 1;
+    }
+    else
+    {
+        _out.UseBumped = 0;
+    }
 
     return _out;
 }

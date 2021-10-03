@@ -45,6 +45,8 @@ PS_OUTPUT main(VS_OUTPUT _input)
     {
         float noramlSample = gBumped.Sample(gLinearSampler, _input.TexCoordL).rgb;
         _input.NormalW = ClacBumpedNormal(noramlSample, unitNormal, _input.TangentW);
+        _input.NormalW = mul(_input.NormalW, (float3x3)gViewProj[0].gView);
+        _input.NormalW = normalize(_input.NormalW);
     }
     else
     {
