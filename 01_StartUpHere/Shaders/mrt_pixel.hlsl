@@ -11,6 +11,7 @@ struct PS_OUTPUT
 {
     float4 Diffuse : SV_TARGET0;
     float4 Normal : SV_TARGET1;
+    float4 BumpedNormal : SV_TARGET2;
 };
 
 struct VIEWPROJ
@@ -43,19 +44,19 @@ PS_OUTPUT main(VS_OUTPUT _input)
     
     if (_input.UseBumped == 1)
     {
-        float noramlSample = gBumped.Sample(gLinearSampler, _input.TexCoordL).rgb;
+        float3 noramlSample = gBumped.Sample(gLinearSampler, _input.TexCoordL).rgb;
         _input.NormalW = ClacBumpedNormal(noramlSample, unitNormal, _input.TangentW);
-        _input.NormalW = mul(_input.NormalW, (float3x3)gViewProj[0].gView);
-        _input.NormalW = normalize(_input.NormalW);
-    }
-    else
-    {
-        _input.NormalW = mul(_input.NormalW, (float3x3)gViewProj[0].gView);
-        _input.NormalW = normalize(_input.NormalW);
     }
 
+    _input.NormalW = mul(_input.NormalW, (float3x3)gViewProj[0].gView);
+    _input.NormalW = normalize(_input.NormalW);
+
+    unitNormal = mul(unitNormal, (float3x3)gViewProj[0].gView);
+    unitNormal = normalize(unitNormal);
+
     PS_OUTPUT _out = (PS_OUTPUT)0;
-    _out.Normal = float4(_input.NormalW, 0.0f);
+    _out.Normal = float4(unitNormal, 0.0f);
+    _out.BumpedNormal = float4(_input.NormalW, 0.0f);
     _out.Diffuse = gDiffuse.Sample(gLinearSampler,_input.TexCoordL);
     
     return _out;

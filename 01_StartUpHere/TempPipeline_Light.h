@@ -334,5 +334,6 @@ private:
     ID3D11SamplerState* mLinearSampler;
     ID3D11RenderTargetView* mDiffuseRtv;
     ID3D11RenderTargetView* mNormalRtv;
+    ID3D11RenderTargetView* mBumpedNormalRtv;
     ID3D11DepthStencilView* mDepthDsv;
 };

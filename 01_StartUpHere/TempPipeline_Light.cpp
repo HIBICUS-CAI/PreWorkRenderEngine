@@ -2066,7 +2066,8 @@ RSPass_MRT::RSPass_MRT(std::string& _name, PASS_TYPE _type,
     mInstanceStructedBuffer(nullptr),
     mInstanceStructedBufferSrv(nullptr),
     mLinearSampler(nullptr), mDepthDsv(nullptr),
-    mDiffuseRtv(nullptr), mNormalRtv(nullptr)
+    mDiffuseRtv(nullptr), mNormalRtv(nullptr),
+    mBumpedNormalRtv(nullptr)
 {
 
 }
@@ -2084,6 +2085,7 @@ RSPass_MRT::RSPass_MRT(const RSPass_MRT& _source) :
     mLinearSampler(_source.mLinearSampler),
     mDiffuseRtv(_source.mDiffuseRtv),
     mNormalRtv(_source.mNormalRtv),
+    mBumpedNormalRtv(_source.mBumpedNormalRtv),
     mDepthDsv(_source.mDepthDsv)
 {
 
@@ -2135,13 +2137,15 @@ void RSPass_MRT::ExecuatePass()
 {
     ID3D11RenderTargetView* rtvnull = nullptr;
     static ID3D11RenderTargetView* mrt[] = { mDiffuseRtv,
-        mNormalRtv };
-    STContext()->OMSetRenderTargets(2,
+        mNormalRtv,mBumpedNormalRtv };
+    STContext()->OMSetRenderTargets(3,
         mrt, mDepthDsv);
     STContext()->ClearRenderTargetView(
         mDiffuseRtv, DirectX::Colors::DarkGreen);
     STContext()->ClearRenderTargetView(
         mNormalRtv, DirectX::Colors::Black);
+    STContext()->ClearRenderTargetView(
+        mBumpedNormalRtv, DirectX::Colors::Black);
     STContext()->ClearDepthStencilView(
         mDepthDsv, D3D11_CLEAR_DEPTH, 1.f, 0);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
@@ -2383,6 +2387,43 @@ bool RSPass_MRT::CreateViews()
     name = "mrt-normal";
     dti.mTexture = texture;
     dti.mRtv = mNormalRtv;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = 1280;
+    texDesc.Height = 720;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &mBumpedNormalRtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "mrt-bumped-normal";
+    dti.mTexture = texture;
+    dti.mRtv = mBumpedNormalRtv;
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
