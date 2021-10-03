@@ -38,7 +38,7 @@ bool RSMeshHelper::StartUp(
     mRootPtr = _root;
     mTexManagerPtr = _texManager;
     mDevicesPtr = _root->Devices();
-    mGeoGeneratorPtr = new RSGeometryGenerator(this);
+    mGeoGeneratorPtr = new RSGeometryGenerator(_root);
 
     return true;
 }
@@ -309,8 +309,10 @@ void RSMeshHelper::ReleaseSubMesh(RS_SUBMESH_DATA& _result)
     SAFE_RELEASE(_result.mVertexBuffer);
 }
 
-RSGeometryGenerator::RSGeometryGenerator(RSMeshHelper* _helper) :
-    mMeshHelperPtr(_helper) {}
+RSGeometryGenerator::RSGeometryGenerator(RSRoot_DX11* _root) :
+    mMeshHelperPtr(_root->MeshHelper()),
+    mDevicesPtr(_root->Devices()),
+    mTexManagerPtr(_root->TexturesManager()) {}
 
 RSGeometryGenerator::~RSGeometryGenerator() {}
 
@@ -1576,6 +1578,122 @@ RS_SUBMESH_DATA RSGeometryGenerator::CreateGrid(
     default:
         bool nullLayout = false;
         assert(nullLayout);
+    }
+
+    return rsd;
+}
+
+RS_SUBMESH_DATA RSGeometryGenerator::CreateSpriteRect(
+    LAYOUT_TYPE _layout, std::string&& _texPath)
+{
+    static bool hasCreated = false;
+    static RS_SUBMESH_DATA rsd = {};
+    static SUBMESH_INFO si = {};
+    static MATERIAL_INFO mi = {};
+    static std::vector<UINT> indeices = {};
+    static std::vector<VertexType::BasicVertex> basic = {};
+    static std::vector<VertexType::TangentVertex> tangent = {};
+    static std::vector<std::string> textures = {};
+
+    if (!hasCreated)
+    {
+        basic.resize(4);
+        tangent.resize(4);
+        indeices.resize(6);
+
+        basic[0].Position = { -0.5f, -0.5f, 0.f };
+        basic[0].Normal = { 0.0f, 0.0f, -1.0f };
+        basic[0].TexCoord = { 0.0f, 1.0f };
+        basic[1].Position = { -0.5f, +0.5f, 0.f };
+        basic[1].Normal = { 0.0f, 0.0f, -1.0f };
+        basic[1].TexCoord = { 0.0f, 0.0f };
+        basic[2].Position = { +0.5f, +0.5f, 0.f };
+        basic[2].Normal = { 0.0f, 0.0f, -1.0f };
+        basic[2].TexCoord = { 1.0f, 0.0f };
+        basic[3].Position = { +0.5f, -0.5f, 0.f };
+        basic[3].Normal = { 0.0f, 0.0f, -1.0f };
+        basic[3].TexCoord = { 1.0f, 1.0f };
+        tangent[0].Position = basic[0].Position;
+        tangent[0].Normal = basic[0].Normal;
+        tangent[0].Tangent = { 1.0f, 0.0f, 0.0f };
+        tangent[0].TexCoord = basic[0].TexCoord;
+        tangent[1].Position = basic[1].Position;
+        tangent[1].Normal = basic[1].Normal;
+        tangent[1].Tangent = { 1.0f, 0.0f, 0.0f };
+        tangent[1].TexCoord = basic[1].TexCoord;
+        tangent[2].Position = basic[2].Position;
+        tangent[2].Normal = basic[2].Normal;
+        tangent[2].Tangent = { 1.0f, 0.0f, 0.0f };
+        tangent[2].TexCoord = basic[2].TexCoord;
+        tangent[3].Position = basic[3].Position;
+        tangent[3].Normal = basic[3].Normal;
+        tangent[3].Tangent = { 1.0f, 0.0f, 0.0f };
+        tangent[3].TexCoord = basic[3].TexCoord;
+        indeices[0] = 0; indeices[1] = 1; indeices[2] = 2;
+        indeices[3] = 0; indeices[4] = 2; indeices[5] = 3;
+
+        bool nullLayout = false;
+        si.mTopologyType = TOPOLOGY_TYPE::TRIANGLELIST;
+        si.mIndeices = &indeices;
+        switch (_layout)
+        {
+        case LAYOUT_TYPE::NORMAL_TEX:
+            si.mVerteices = &basic;
+            break;
+        case LAYOUT_TYPE::NORMAL_TANGENT_TEX:
+            si.mVerteices = &tangent;
+            break;
+        default:
+            assert(nullLayout);
+            break;
+        }
+        si.mTextures = &textures;
+        si.mMaterial = &mi;
+        mMeshHelperPtr->ProcessSubMesh(&rsd, &si, _layout);
+        hasCreated = true;
+    }
+
+    rsd.mTextures.resize(1);
+    static std::wstring wstr = L"";
+    static std::string name = "";
+    static HRESULT hr = S_OK;
+    ID3D11ShaderResourceView* srv = nullptr;
+    wstr = std::wstring(_texPath.begin(), _texPath.end());
+    wstr = L".\\Textures\\" + wstr;
+    if (_texPath.find(".dds") != std::string::npos ||
+        _texPath.find(".DDS") != std::string::npos)
+    {
+        hr = DirectX::CreateDDSTextureFromFile(
+            mDevicesPtr->GetDevice(),
+            wstr.c_str(), nullptr, &srv);
+        if (SUCCEEDED(hr))
+        {
+            name = _texPath;
+            mTexManagerPtr->AddMeshSrv(name, srv);
+            rsd.mTextures[0] = name;
+        }
+        else
+        {
+            bool texture_load_fail = false;
+            assert(texture_load_fail);
+        }
+    }
+    else
+    {
+        hr = DirectX::CreateWICTextureFromFile(
+            mDevicesPtr->GetDevice(),
+            wstr.c_str(), nullptr, &srv);
+        if (SUCCEEDED(hr))
+        {
+            name = _texPath;
+            mTexManagerPtr->AddMeshSrv(name, srv);
+            rsd.mTextures[0] = name;
+        }
+        else
+        {
+            bool texture_load_fail = false;
+            assert(texture_load_fail);
+        }
     }
 
     return rsd;

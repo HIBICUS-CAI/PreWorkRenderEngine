@@ -143,6 +143,20 @@ int WINAPI WinMain(
     geosph2->AddInstanceData(
         { -15.f,1.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
+    TempGeoMesh* sp1 = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateSpriteRect(
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX,
+            "title.png"));
+    sp1->AddInstanceData(
+        { -25.f,40.f,0.f }, { 0.f,0.f,0.f }, { 16.f,9.f,1.f });
+
+    TempGeoMesh* sp2 = new TempGeoMesh(root->MeshHelper()->
+        GeoGenerate()->CreateSpriteRect(
+            LAYOUT_TYPE::NORMAL_TANGENT_TEX,
+            "mode.png"));
+    sp2->AddInstanceData(
+        { 25.f,40.f,0.f }, { 0.f,0.f,0.f }, { 16.f,9.f,1.f });
+
     mesh->Process(root->MeshHelper());
 
     PassRootToTempWireFramePipeline(root);
@@ -225,6 +239,8 @@ int WINAPI WinMain(
             sphere2->UploadDrawCall(root->DrawCallsPool(), root);
             geosph1->UploadDrawCall(root->DrawCallsPool(), root);
             geosph2->UploadDrawCall(root->DrawCallsPool(), root);
+            sp1->UploadDrawCall(root->DrawCallsPool(), root);
+            sp2->UploadDrawCall(root->DrawCallsPool(), root);
             root->PipelinesManager()->ExecuateCurrentPipeline();
 
             root->Devices()->PresentSwapChain();
@@ -241,6 +257,8 @@ int WINAPI WinMain(
     sphere2->Release(root->MeshHelper());
     geosph1->Release(root->MeshHelper());
     geosph2->Release(root->MeshHelper());
+    sp1->Release(root->MeshHelper());
+    //sp2->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;
@@ -252,6 +270,8 @@ int WINAPI WinMain(
     delete sphere2;
     delete geosph1;
     delete geosph2;
+    delete sp1;
+    delete sp2;
 
     return (int)msg.wParam;
 }

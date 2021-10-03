@@ -39,6 +39,7 @@ enum class DRAWCALL_TYPE
     COLOR_GEO,
     MIRROR_SELF,
     MIRRO_INSIDE,
+    UI_SPRITE,
 
     MAX
 };

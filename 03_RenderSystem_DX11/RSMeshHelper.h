@@ -53,7 +53,7 @@ private:
 class RSGeometryGenerator
 {
 public:
-    RSGeometryGenerator(RSMeshHelper* _helper);
+    RSGeometryGenerator(class RSRoot_DX11* _root);
     ~RSGeometryGenerator();
 
     RS_SUBMESH_DATA CreateBox(
@@ -87,6 +87,9 @@ public:
         DirectX::XMFLOAT4&& _vertColor = { 1.f,1.f,1.f,1.f },
         std::string&& _texColorName = "");
 
+    RS_SUBMESH_DATA CreateSpriteRect(
+        LAYOUT_TYPE _layout, std::string&& _texPath = "");
+
 private:
     void SubDivide(LAYOUT_TYPE _layout, void* _vertexVec,
         std::vector<UINT>* _indexVec);
@@ -119,4 +122,6 @@ private:
 
 private:
     RSMeshHelper* mMeshHelperPtr;
+    class RSDevices* mDevicesPtr;
+    class RSTexturesManager* mTexManagerPtr;
 };
