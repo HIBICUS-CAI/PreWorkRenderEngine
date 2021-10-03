@@ -148,7 +148,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX,
             "title.png"));
     sp1->AddInstanceData({ -500.f,300.f }, { 160.f,90.f },
-        { 1.f,0.f,1.f,0.2f });
+        { 0.f,0.5f,0.5f,0.4f });
 
     TempSpriteMesh* sp2 = new TempSpriteMesh(root->MeshHelper()->
         GeoGenerate()->CreateSpriteRect(

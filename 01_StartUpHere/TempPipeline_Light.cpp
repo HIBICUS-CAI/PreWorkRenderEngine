@@ -2112,7 +2112,7 @@ RSPass_Sprite::RSPass_Sprite(std::string& _name,
     mProjStructedBuffer(nullptr), mProjStructedBufferSrv(nullptr),
     mInstanceStructedBuffer(nullptr),
     mInstanceStructedBufferSrv(nullptr),
-    mLinearSampler(nullptr),
+    mLinearSampler(nullptr), mBlendState(nullptr),
     mDrawCallType(DRAWCALL_TYPE::MAX), mDrawCallPipe(nullptr)
 {
 
@@ -2124,6 +2124,7 @@ RSPass_Sprite::RSPass_Sprite(
     mVertexShader(_source.mVertexShader),
     mPixelShader(_source.mPixelShader),
     mDepthStencilState(_source.mDepthStencilState),
+    mBlendState(_source.mBlendState),
     mRenderTargetView(_source.mRenderTargetView),
     mDrawCallType(_source.mDrawCallType),
     mDrawCallPipe(_source.mDrawCallPipe),
@@ -2179,6 +2180,8 @@ void RSPass_Sprite::ExecuatePass()
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, nullptr);
     STContext()->OMSetDepthStencilState(mDepthStencilState, 0);
+    static float factor[4] = { 0.f,0.f,0.f,0.f };
+    STContext()->OMSetBlendState(mBlendState, factor, 0xFFFFFFFF);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->PSSetSamplers(0, 1, &mLinearSampler);
@@ -2243,6 +2246,7 @@ void RSPass_Sprite::ExecuatePass()
 
     STContext()->OMSetRenderTargets(1, &rtvnull, nullptr);
     STContext()->OMSetDepthStencilState(nullptr, 0);
+    STContext()->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
 bool RSPass_Sprite::CreateShaders()
@@ -2288,6 +2292,21 @@ bool RSPass_Sprite::CreateStates()
     depDesc.StencilEnable = FALSE;
     hr = Device()->CreateDepthStencilState(
         &depDesc, &mDepthStencilState);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_BLEND_DESC bldDesc = {};
+    bldDesc.AlphaToCoverageEnable = FALSE;
+    bldDesc.IndependentBlendEnable = FALSE;
+    bldDesc.RenderTarget[0].BlendEnable = TRUE;
+    bldDesc.RenderTarget[0].RenderTargetWriteMask =
+        D3D11_COLOR_WRITE_ENABLE_ALL;
+    bldDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    bldDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    bldDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    bldDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    bldDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    bldDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    hr = Device()->CreateBlendState(&bldDesc, &mBlendState);
     if (FAILED(hr)) { return false; }
 
     return true;

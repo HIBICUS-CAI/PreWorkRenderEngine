@@ -325,6 +325,7 @@ private:
     ID3D11VertexShader* mVertexShader;
     ID3D11PixelShader* mPixelShader;
     ID3D11DepthStencilState* mDepthStencilState;
+    ID3D11BlendState* mBlendState;
     ID3D11RenderTargetView* mRenderTargetView;
     DRAWCALL_TYPE mDrawCallType;
     RSDrawCallsPipe* mDrawCallPipe;
