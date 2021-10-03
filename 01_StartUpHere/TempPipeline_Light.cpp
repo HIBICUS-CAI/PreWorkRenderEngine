@@ -150,7 +150,7 @@ RSPass_Light::RSPass_Light(
     mMaterialStructedBufferSrv(nullptr),
     mShadowStructedBuffer(nullptr),
     mShadowStructedBufferSrv(nullptr),
-    mSsaoSrv(nullptr)
+    mSsaoSrv(nullptr), mDepthStencilState(nullptr)
 {
 
 }
@@ -160,6 +160,7 @@ RSPass_Light::RSPass_Light(const RSPass_Light& _source) :
     mVertexShader(_source.mVertexShader),
     mPixelShader(_source.mPixelShader),
     mRasterizerState(_source.mRasterizerState),
+    mDepthStencilState(_source.mDepthStencilState),
     mDepthStencilView(_source.mDepthStencilView),
     mRenderTargetView(_source.mRenderTargetView),
     mMeshTexSampler(_source.mMeshTexSampler),
@@ -215,6 +216,7 @@ void RSPass_Light::ReleasePass()
     RS_RELEASE(mVertexShader);
     RS_RELEASE(mPixelShader);
     RS_RELEASE(mRasterizerState);
+    RS_RELEASE(mDepthStencilState);
     RS_RELEASE(mMeshTexSampler);
     RS_RELEASE(mShadowTexSampler);
     RS_RELEASE(mViewProjStructedBufferSrv);
@@ -225,9 +227,6 @@ void RSPass_Light::ReleasePass()
     RS_RELEASE(mLightStructedBuffer);
     RS_RELEASE(mAmbientStructedBufferSrv);
     RS_RELEASE(mAmbientStructedBuffer);
-
-    std::string name = "tex-depth-light";
-    g_Root->TexturesManager()->DeleteDataTex(name);
 }
 
 void RSPass_Light::ExecuatePass()
@@ -236,13 +235,12 @@ void RSPass_Light::ExecuatePass()
         &mRenderTargetView, mDepthStencilView);
     STContext()->ClearRenderTargetView(
         mRenderTargetView, DirectX::Colors::DarkGreen);
-    STContext()->ClearDepthStencilView(
-        mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->PSSetSamplers(0, 1, &mMeshTexSampler);
     STContext()->PSSetSamplers(1, 1, &mShadowTexSampler);
     STContext()->RSSetState(mRasterizerState);
+    STContext()->OMSetDepthStencilState(mDepthStencilState, 0);
 
     DirectX::XMMATRIX mat = {};
     DirectX::XMFLOAT4X4 flt44 = {};
@@ -396,6 +394,7 @@ void RSPass_Light::ExecuatePass()
     STContext()->PSSetShaderResources(4, 1, &nullsrv);
     STContext()->PSSetShaderResources(5, 1, &nullsrv);
     STContext()->PSSetShaderResources(6, 1, &nullsrv);
+    STContext()->OMSetDepthStencilState(nullptr, 0);
 }
 
 bool RSPass_Light::CreateShaders()
@@ -434,6 +433,15 @@ bool RSPass_Light::CreateShaders()
 
 bool RSPass_Light::CreateStates()
 {
+    HRESULT hr = S_OK;
+    D3D11_DEPTH_STENCIL_DESC depDesc = {};
+
+    depDesc.DepthEnable = TRUE;
+    depDesc.DepthFunc = D3D11_COMPARISON_EQUAL;
+    hr = Device()->CreateDepthStencilState(&depDesc,
+        &mDepthStencilState);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -497,36 +505,9 @@ bool RSPass_Light::CreateViews()
     mRenderTargetView = g_Root->Devices()->GetSwapChainRtv();
 
     HRESULT hr = S_OK;
-    ID3D11Texture2D* depthTex = nullptr;
-    D3D11_TEXTURE2D_DESC texDepSte = {};
-    texDepSte.Width = 1280;
-    texDepSte.Height = 720;
-    texDepSte.MipLevels = 1;
-    texDepSte.ArraySize = 1;
-    texDepSte.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    texDepSte.SampleDesc.Count = 1;
-    texDepSte.SampleDesc.Quality = 0;
-    texDepSte.Usage = D3D11_USAGE_DEFAULT;
-    texDepSte.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    texDepSte.CPUAccessFlags = 0;
-    texDepSte.MiscFlags = 0;
-    hr = Device()->CreateTexture2D(
-        &texDepSte, nullptr, &depthTex);
-    if (FAILED(hr)) { return false; }
-
-    D3D11_DEPTH_STENCIL_VIEW_DESC desDSV = {};
-    desDSV.Format = texDepSte.Format;
-    desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-    desDSV.Texture2D.MipSlice = 0;
-    hr = Device()->CreateDepthStencilView(
-        depthTex, &desDSV, &mDepthStencilView);
-    if (FAILED(hr)) { return false; }
-
-    DATA_TEXTURE_INFO dti = {};
-    std::string name = "tex-depth-light";
-    dti.mTexture = depthTex;
-    dti.mDsv = mDepthStencilView;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    std::string name = "mrt-depth";
+    mDepthStencilView = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mDsv;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     ZeroMemory(&desSRV, sizeof(desSRV));
@@ -1017,6 +998,7 @@ void RSPass_Ssao::ReleasePass()
 void RSPass_Ssao::ExecuatePass()
 {
     ID3D11RenderTargetView* null = nullptr;
+    ID3D11ShaderResourceView* srvnull = nullptr;
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, nullptr);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
@@ -1094,6 +1076,12 @@ void RSPass_Ssao::ExecuatePass()
 
     STContext()->OMSetRenderTargets(1, &null, nullptr);
     STContext()->RSSetState(nullptr);
+    STContext()->PSSetShaderResources(
+        1, 1, &srvnull);
+    STContext()->PSSetShaderResources(
+        2, 1, &srvnull);
+    STContext()->PSSetShaderResources(
+        3, 1, &srvnull);
 }
 
 bool RSPass_Ssao::CreateShaders()
