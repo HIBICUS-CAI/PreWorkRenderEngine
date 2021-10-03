@@ -256,3 +256,80 @@ private:
 
     std::vector<RS_INSTANCE_DATA> mInstance = {};
 };
+
+class TempSpriteMesh
+{
+public:
+    TempSpriteMesh(RS_SUBMESH_DATA&& _data) :mData(_data) {}
+    ~TempSpriteMesh() {}
+
+    void UploadDrawCall(RSDrawCallsPool* _pool,
+        RSRoot_DX11* _root)
+    {
+        mInstance.clear();
+
+        for (size_t i = 0; i < mPostions.size(); i++)
+        {
+            RS_INSTANCE_DATA ins_data = {};
+            DirectX::XMMATRIX mat = {};
+            DirectX::XMFLOAT4X4 flt44 = {};
+            mat = DirectX::XMMatrixMultiply(
+                DirectX::XMMatrixScaling(
+                    mScales[i].x, mScales[i].y, 1.f),
+                DirectX::XMMatrixRotationRollPitchYaw(
+                    0.f, 0.f, 0.f));
+            mat = DirectX::XMMatrixMultiply(
+                mat,
+                DirectX::XMMatrixTranslation(
+                    mPostions[i].x, mPostions[i].y, 0.f));
+            DirectX::XMStoreFloat4x4(&flt44, mat);
+            ins_data.mWorldMat = flt44;
+            ins_data.mCustomizedData1 = mColors[i];
+            mInstance.emplace_back(ins_data);
+        }
+
+        std::string name = "temp-ui-cam";
+        RS_DRAWCALL_DATA data = {};
+        data.mMeshData.mLayout = mData.mLayout;
+        data.mMeshData.mTopologyType = mData.mTopologyType;
+        data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
+        data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
+        data.mMeshData.mIndexCount = mData.mIndexCount;
+        data.mInstanceData.mDataPtr = &mInstance;
+        data.mCameraData = *(_root->CamerasContainer()->
+            GetRSCameraInfo(name));
+        data.mTextureDatas[0].mUse = true;
+        data.mTextureDatas[0].mSrv = _root->TexturesManager()->
+            GetMeshSrv(mData.mTextures[0]);
+
+        _pool->AddDrawCallToPipe(DRAWCALL_TYPE::UI_SPRITE, data);
+    }
+
+    void Release(RSMeshHelper* _helper)
+    {
+        static bool finish = false;
+        if (_helper && !finish)
+        {
+            _helper->ReleaseSubMesh(mData);
+            finish = true;
+        }
+    }
+
+    void AddInstanceData(DirectX::XMFLOAT2 _pos,
+        DirectX::XMFLOAT2 _size,
+        DirectX::XMFLOAT4 _offsetColor)
+    {
+        mPostions.emplace_back(_pos);
+        mScales.emplace_back(_size);
+        mColors.emplace_back(_offsetColor);
+    }
+
+private:
+    RS_SUBMESH_DATA mData;
+
+    std::vector<DirectX::XMFLOAT2> mPostions = {};
+    std::vector<DirectX::XMFLOAT2> mScales = {};
+    std::vector<DirectX::XMFLOAT4> mColors = {};
+
+    std::vector<RS_INSTANCE_DATA> mInstance = {};
+};

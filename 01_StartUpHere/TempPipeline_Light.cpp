@@ -57,6 +57,18 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     skysphere->SetExecuateOrder(1);
 
+    name = "sprite-ui";
+    RSPass_Sprite* sprite = new RSPass_Sprite(
+        name, PASS_TYPE::RENDER, g_Root);
+    sprite->SetExecuateOrder(1);
+
+    name = "sprite-topic";
+    RSTopic* sprite_topic = new RSTopic(name);
+    sprite_topic->StartTopicAssembly();
+    sprite_topic->InsertPass(sprite);
+    sprite_topic->SetExecuateOrder(6);
+    sprite_topic->FinishTopicAssembly();
+
     name = "skysphere-topic";
     RSTopic* sky_topic = new RSTopic(name);
     sky_topic->StartTopicAssembly();
@@ -94,6 +106,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(light_topic);
     g_TempPipeline->InsertTopic(ssao_topic);
     g_TempPipeline->InsertTopic(sky_topic);
+    g_TempPipeline->InsertTopic(sprite_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics()) { return false; }
@@ -2086,6 +2099,264 @@ bool RSPass_SkyShpere::CreateSamplers()
     samDesc.MaxLOD = D3D11_FLOAT32_MAX;
     hr = Device()->CreateSamplerState(
         &samDesc, &mLinearWrapSampler);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+RSPass_Sprite::RSPass_Sprite(std::string& _name,
+    PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    mDepthStencilState(nullptr), mRenderTargetView(nullptr),
+    mProjStructedBuffer(nullptr), mProjStructedBufferSrv(nullptr),
+    mInstanceStructedBuffer(nullptr),
+    mInstanceStructedBufferSrv(nullptr),
+    mLinearSampler(nullptr),
+    mDrawCallType(DRAWCALL_TYPE::MAX), mDrawCallPipe(nullptr)
+{
+
+}
+
+RSPass_Sprite::RSPass_Sprite(
+    const RSPass_Sprite& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mDepthStencilState(_source.mDepthStencilState),
+    mRenderTargetView(_source.mRenderTargetView),
+    mDrawCallType(_source.mDrawCallType),
+    mDrawCallPipe(_source.mDrawCallPipe),
+    mProjStructedBuffer(_source.mProjStructedBuffer),
+    mProjStructedBufferSrv(_source.mProjStructedBufferSrv),
+    mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
+    mInstanceStructedBufferSrv(_source.mInstanceStructedBufferSrv),
+    mLinearSampler(_source.mLinearSampler)
+{
+
+}
+
+RSPass_Sprite::~RSPass_Sprite()
+{
+
+}
+
+RSPass_Sprite* RSPass_Sprite::ClonePass()
+{
+    return new RSPass_Sprite(*this);
+}
+
+bool RSPass_Sprite::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateStates()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    mDrawCallType = DRAWCALL_TYPE::UI_SPRITE;
+    mDrawCallPipe = g_Root->DrawCallsPool()->
+        GetDrawCallsPipe(mDrawCallType);
+
+    return true;
+}
+
+void RSPass_Sprite::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mDepthStencilState);
+    RS_RELEASE(mLinearSampler);
+    RS_RELEASE(mProjStructedBufferSrv);
+    RS_RELEASE(mProjStructedBuffer);
+    RS_RELEASE(mInstanceStructedBufferSrv);
+    RS_RELEASE(mInstanceStructedBuffer);
+}
+
+void RSPass_Sprite::ExecuatePass()
+{
+    ID3D11RenderTargetView* rtvnull = nullptr;
+    STContext()->OMSetRenderTargets(1,
+        &mRenderTargetView, nullptr);
+    STContext()->OMSetDepthStencilState(mDepthStencilState, 0);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    STContext()->PSSetSamplers(0, 1, &mLinearSampler);
+
+    DirectX::XMMATRIX mat = {};
+    DirectX::XMFLOAT4X4 flt44 = {};
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+
+    for (auto& call : mDrawCallPipe->mDatas)
+    {
+        auto vecPtr = call.mInstanceData.mDataPtr;
+        auto size = vecPtr->size();
+        D3D11_MAPPED_SUBRESOURCE msr = {};
+        STContext()->Map(mInstanceStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
+        for (size_t i = 0; i < size; i++)
+        {
+            mat = DirectX::XMLoadFloat4x4(
+                &(*vecPtr)[i].mWorldMat);
+            mat = DirectX::XMMatrixTranspose(mat);
+            DirectX::XMStoreFloat4x4(&ins_data[i].mWorldMat, mat);
+            ins_data[i].mMaterialData =
+                (*vecPtr)[i].mMaterialData;
+            ins_data[i].mCustomizedData1 =
+                (*vecPtr)[i].mCustomizedData1;
+            ins_data[i].mCustomizedData2 =
+                (*vecPtr)[i].mCustomizedData2;
+        }
+        STContext()->Unmap(mInstanceStructedBuffer, 0);
+
+        STContext()->Map(mProjStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        OnlyProj* vp_data = (OnlyProj*)msr.pData;
+        mat = DirectX::XMLoadFloat4x4(
+            &call.mCameraData.mProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+        STContext()->Unmap(mProjStructedBuffer, 0);
+
+        STContext()->IASetInputLayout(
+            call.mMeshData.mLayout);
+        STContext()->IASetPrimitiveTopology(
+            call.mMeshData.mTopologyType);
+        STContext()->IASetVertexBuffers(
+            0, 1, &call.mMeshData.mVertexBuffer,
+            &stride, &offset);
+        STContext()->IASetIndexBuffer(
+            call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        STContext()->VSSetShaderResources(
+            0, 1, &mProjStructedBufferSrv);
+        STContext()->VSSetShaderResources(
+            1, 1, &mInstanceStructedBufferSrv);
+        STContext()->PSSetShaderResources(
+            0, 1, &(call.mTextureDatas[0].mSrv));
+
+        STContext()->DrawIndexedInstanced(
+            call.mMeshData.mIndexCount,
+            (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
+    }
+
+    STContext()->OMSetRenderTargets(1, &rtvnull, nullptr);
+    STContext()->OMSetDepthStencilState(nullptr, 0);
+}
+
+bool RSPass_Sprite::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\sprite_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\sprite_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Sprite::CreateStates()
+{
+    HRESULT hr = S_OK;
+
+    D3D11_DEPTH_STENCIL_DESC depDesc = {};
+    depDesc.DepthEnable = FALSE;
+    depDesc.StencilEnable = FALSE;
+    hr = Device()->CreateDepthStencilState(
+        &depDesc, &mDepthStencilState);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Sprite::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bdc = {};
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mInstanceStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bdc.ByteWidth = sizeof(OnlyProj);
+    bdc.StructureByteStride = sizeof(OnlyProj);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mProjStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Sprite::CreateViews()
+{
+    mRenderTargetView = g_Root->Devices()->GetSwapChainRtv();
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
+    HRESULT hr = S_OK;
+    ZeroMemory(&desSRV, sizeof(desSRV));
+    desSRV.Format = DXGI_FORMAT_UNKNOWN;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    desSRV.Buffer.ElementWidth = 256;
+    hr = Device()->CreateShaderResourceView(
+        mInstanceStructedBuffer,
+        &desSRV, &mInstanceStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    desSRV.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mProjStructedBuffer,
+        &desSRV, &mProjStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Sprite::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mLinearSampler);
     if (FAILED(hr)) { return false; }
 
     return true;

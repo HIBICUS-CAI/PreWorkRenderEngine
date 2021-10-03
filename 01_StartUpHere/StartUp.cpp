@@ -143,19 +143,19 @@ int WINAPI WinMain(
     geosph2->AddInstanceData(
         { -15.f,1.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
-    TempGeoMesh* sp1 = new TempGeoMesh(root->MeshHelper()->
+    TempSpriteMesh* sp1 = new TempSpriteMesh(root->MeshHelper()->
         GeoGenerate()->CreateSpriteRect(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX,
             "title.png"));
-    sp1->AddInstanceData(
-        { -25.f,40.f,0.f }, { 0.f,0.f,0.f }, { 16.f,9.f,1.f });
+    sp1->AddInstanceData({ -500.f,300.f }, { 160.f,90.f },
+        { 1.f,0.f,1.f,0.2f });
 
-    TempGeoMesh* sp2 = new TempGeoMesh(root->MeshHelper()->
+    TempSpriteMesh* sp2 = new TempSpriteMesh(root->MeshHelper()->
         GeoGenerate()->CreateSpriteRect(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX,
             "mode.png"));
-    sp2->AddInstanceData(
-        { 25.f,40.f,0.f }, { 0.f,0.f,0.f }, { 16.f,9.f,1.f });
+    sp2->AddInstanceData({ 500.f,300.f }, { 160.f,90.f },
+        { 1.f,1.f,1.f,1.f });
 
     mesh->Process(root->MeshHelper());
 
@@ -180,6 +180,18 @@ int WINAPI WinMain(
     ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
     ci.mOWidthAndHeight = { 12.8f,7.2f };
     auto cam = root->CamerasContainer()->CreateRSCamera(
+        name, &ci);
+
+    name = "temp-ui-cam";
+    ci = {};
+    ci.mType = LENS_TYPE::ORTHOGRAPHIC;
+    ci.mPosition = { 0.f,0.f,0.f };
+    ci.mLookAt = { 0.f,0.f,1.f };
+    ci.mUpVec = { 0.f,1.f,0.f };
+    ci.mNearFarZ = { 1.f,100.f };
+    ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
+    ci.mOWidthAndHeight = { 1280.f,720.f };
+    root->CamerasContainer()->CreateRSCamera(
         name, &ci);
 
     MSG msg = { 0 };
@@ -258,7 +270,7 @@ int WINAPI WinMain(
     geosph1->Release(root->MeshHelper());
     geosph2->Release(root->MeshHelper());
     sp1->Release(root->MeshHelper());
-    //sp2->Release(root->MeshHelper());
+    sp2->Release(root->MeshHelper());
     root->CleanAndStop();
     delete root;
     delete mesh;
