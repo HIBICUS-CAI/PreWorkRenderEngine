@@ -84,6 +84,14 @@ public:
                 DirectX::XMMatrixTranslation(0.f, 2.6f, 0.f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
+            if (mData.mTextures.size() > 1)
+            {
+                ins_data.mCustomizedData1.x = 1.f;
+            }
+            else
+            {
+                ins_data.mCustomizedData1.x = -1.f;
+            }
             instance.emplace_back(ins_data);
 
             ins_data = {};
@@ -96,6 +104,14 @@ public:
                 DirectX::XMMatrixTranslation(-8.5f, -4.f, 0.f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
+            if (mData.mTextures.size() > 1)
+            {
+                ins_data.mCustomizedData1.x = 1.f;
+            }
+            else
+            {
+                ins_data.mCustomizedData1.x = -1.f;
+            }
             instance.emplace_back(ins_data);
         }
 
@@ -208,6 +224,14 @@ public:
                     mPostions[i].z));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
+            if (mData.mTextures.size() > 1)
+            {
+                ins_data.mCustomizedData1.x = 1.f;
+            }
+            else
+            {
+                ins_data.mCustomizedData1.x = -1.f;
+            }
             mInstance.emplace_back(ins_data);
         }
 
@@ -224,6 +248,12 @@ public:
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
+        if (mData.mTextures.size() > 1)
+        {
+            data.mTextureDatas[1].mUse = true;
+            data.mTextureDatas[1].mSrv = _root->TexturesManager()->
+                GetMeshSrv(mData.mTextures[1]);
+        }
         name = "copper";
         data.mMaterialData = *(_root->StaticResources()->
             GetStaticMaterial(name));
@@ -246,6 +276,10 @@ public:
         mRotations.emplace_back(_angle);
         mScales.emplace_back(_size);
     }
+
+    bool CreateBumpedTex(std::string&& _texPath,
+        class RSDevices* _devices,
+        class RSTexturesManager* _texManager);
 
 private:
     RS_SUBMESH_DATA mData;

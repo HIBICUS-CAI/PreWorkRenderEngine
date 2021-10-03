@@ -2200,6 +2200,11 @@ void RSPass_MRT::ExecuatePass()
             1, 1, &mInstanceStructedBufferSrv);
         STContext()->PSSetShaderResources(
             1, 1, &(call.mTextureDatas[0].mSrv));
+        if (call.mTextureDatas[1].mUse)
+        {
+            STContext()->PSSetShaderResources(
+                2, 1, &(call.mTextureDatas[1].mSrv));
+        }
 
         STContext()->DrawIndexedInstanced(
             call.mMeshData.mIndexCount,

@@ -7,12 +7,16 @@
 #include <rapidjson\filereadstream.h>
 #include <rapidjson\writer.h>
 #include <rapidjson\document.h>
+#include <DirectXTK\DDSTextureLoader.h>
+#include <DirectXTK\WICTextureLoader.h>
+#include "RSDevices.h"
+#include "RSTexturesManager.h"
 
 TempSubMesh::TempSubMesh(
     std::vector<UINT>& _index,
     std::vector<VERTEX_INFO>& _vertex,
     std::vector<TEXTURE_INFO>& _tex) :
-    mIndeices(_index), mVerteices(_vertex), mTextures(_tex) ,
+    mIndeices(_index), mVerteices(_vertex), mTextures(_tex),
     mData({})
 {
 
@@ -291,5 +295,56 @@ bool TempMesh::LoadByBinary(const std::string& _path)
 
     inFile.close();
 
+    return true;
+}
+
+bool TempGeoMesh::CreateBumpedTex(std::string&& _texPath,
+    RSDevices* _devices, RSTexturesManager* _texManager)
+{
+    static std::wstring wstr = L"";
+    static std::string name = "";
+    static HRESULT hr = S_OK;
+    ID3D11ShaderResourceView* srv = nullptr;
+
+    wstr = std::wstring(_texPath.begin(), _texPath.end());
+    wstr = L".\\Textures\\" + wstr;
+
+    if (_texPath.find(".dds") != std::string::npos ||
+        _texPath.find(".DDS") != std::string::npos)
+    {
+        hr = DirectX::CreateDDSTextureFromFile(
+            _devices->GetDevice(),
+            wstr.c_str(), nullptr, &srv);
+        if (SUCCEEDED(hr))
+        {
+            name = _texPath;
+            _texManager->AddMeshSrv(name, srv);
+        }
+        else
+        {
+            bool texture_load_fail = false;
+            assert(texture_load_fail);
+            return false;
+        }
+    }
+    else
+    {
+        hr = DirectX::CreateWICTextureFromFile(
+            _devices->GetDevice(),
+            wstr.c_str(), nullptr, &srv);
+        if (SUCCEEDED(hr))
+        {
+            name = _texPath;
+            _texManager->AddMeshSrv(name, srv);
+        }
+        else
+        {
+            bool texture_load_fail = false;
+            assert(texture_load_fail);
+            return false;
+        }
+    }
+
+    mData.mTextures.emplace_back(name);
     return true;
 }

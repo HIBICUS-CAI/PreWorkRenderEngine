@@ -41,7 +41,9 @@ int WINAPI WinMain(
         GeoGenerate()->CreateGrid(
             50.f, 50.f, 10, 10,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
-            {}, "white.jpg"));
+            {}, "tile.dds"));
+    floor->CreateBumpedTex("tile_nmap.dds",
+        root->Devices(), root->TexturesManager());
     floor->AddInstanceData(
         { 0.f,-5.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
@@ -49,7 +51,9 @@ int WINAPI WinMain(
         GeoGenerate()->CreateBox(
             5.f, 5.f, 5.f, 1,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
-            {}, "dark-red.jpg"));
+            {}, "bricks.dds"));
+    walls->CreateBumpedTex("bricks_nmap.dds",
+        root->Devices(), root->TexturesManager());
     walls->AddInstanceData(
         { 0.f,1.25f,25.f },
         { 0.f,0.f,0.f },
@@ -93,7 +97,9 @@ int WINAPI WinMain(
         GeoGenerate()->CreateCylinder(
             2.5f, 1.5f, 30.f, 15, 5,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
-            {}, "dark-wood.jpg"));
+            {}, "bricks2.dds"));
+    pillars->CreateBumpedTex("bricks2_nmap.dds",
+        root->Devices(), root->TexturesManager());
     pillars->AddInstanceData(
         { 20.f,10.f,20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
     pillars->AddInstanceData(

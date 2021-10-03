@@ -9,9 +9,10 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 PosH : SV_POSITION;
-    float3 NormalV : NORMAL;
+    float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
     float2 TexCoordL : TEXCOORD;
+    uint UseBumped : BLENDINDICES;
 };
 
 struct VIEWPROJ
@@ -43,11 +44,19 @@ VS_OUTPUT main(VS_INPUT _in, uint _instanceID : SV_InstanceID)
     VS_OUTPUT _out = (VS_OUTPUT)0;
 
     _out.PosH = mul(float4(_in.PosL, 1.0f), gInstances[_instanceID].gWorld);
-    _out.NormalV = mul(_in.NormalL, (float3x3)gInstances[_instanceID].gWorld);
+    _out.NormalW = mul(_in.NormalL, (float3x3)gInstances[_instanceID].gWorld);
     _out.TangentW = mul(_in.TangentL, (float3x3)gInstances[_instanceID].gWorld);
     _out.PosH = mul(_out.PosH, gViewProj[0].gView);
     _out.PosH = mul(_out.PosH, gViewProj[0].gProjection);
     _out.TexCoordL = _in.TexCoordL;
+    if (gInstances[_instanceID].gCustomizedData1.x > 0.0f)
+    {
+        _out.UseBumped = 1;
+    }
+    else
+    {
+        _out.UseBumped = 0;
+    }
 
     return _out;
 }
