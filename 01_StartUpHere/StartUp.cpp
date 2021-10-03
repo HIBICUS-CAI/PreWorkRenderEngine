@@ -8,6 +8,8 @@
 #include "RSCamera.h"
 #include "RSCamerasContainer.h"
 #include "RSPipelinesManager.h"
+#include "RSDrawCallsPool.h"
+#include "RSDevices.h"
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -224,6 +226,9 @@ int WINAPI WinMain(
             geosph1->UploadDrawCall(root->DrawCallsPool(), root);
             geosph2->UploadDrawCall(root->DrawCallsPool(), root);
             root->PipelinesManager()->ExecuateCurrentPipeline();
+
+            root->Devices()->PresentSwapChain();
+            root->DrawCallsPool()->ClearAllDrawCallsInPipes();
         }
     }
 

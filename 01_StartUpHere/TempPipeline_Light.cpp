@@ -366,9 +366,6 @@ void RSPass_Light::ExecuatePass()
             (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
     }
 
-    // TEMP-----------------------------
-    mDrawCallPipe->mDatas.clear();
-
     ID3D11RenderTargetView* null = nullptr;
     ID3D11ShaderResourceView* nullsrv = nullptr;
     STContext()->OMSetRenderTargets(1, &null, nullptr);
@@ -1892,7 +1889,7 @@ bool RSPass_SkyShpere::InitPass()
     if (!CreateSamplers()) { return false; }
 
     mSkySphereMesh = g_Root->MeshHelper()->GeoGenerate()->
-        CreateGeometrySphere(10.f, 3,
+        CreateGeometrySphere(10.f, 0,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "snow-cube.dds");
 
@@ -1974,9 +1971,6 @@ void RSPass_SkyShpere::ExecuatePass()
     STContext()->OMSetRenderTargets(1, &null, nullptr);
     STContext()->RSSetState(nullptr);
     STContext()->OMSetDepthStencilState(nullptr, 0);
-
-    // TEMP-----------------------------
-    g_Root->Devices()->PresentSwapChain();
 }
 
 bool RSPass_SkyShpere::CreateShaders()
