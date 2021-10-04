@@ -123,8 +123,6 @@ public:
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
         data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &instance;
-        data.mCameraData = *(_root->CamerasContainer()->
-            GetRSCameraInfo(name));
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
@@ -243,8 +241,6 @@ public:
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
         data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &mInstance;
-        data.mCameraData = *(_root->CamerasContainer()->
-            GetRSCameraInfo(name));
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
@@ -330,8 +326,6 @@ public:
         data.mMeshData.mVertexBuffer = mData.mVertexBuffer;
         data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &mInstance;
-        data.mCameraData = *(_root->CamerasContainer()->
-            GetRSCameraInfo(name));
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);

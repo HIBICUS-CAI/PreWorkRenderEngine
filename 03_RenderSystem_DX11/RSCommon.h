@@ -188,7 +188,6 @@ struct RS_DRAWCALL_DATA
 {
     RS_SUBMESH_DRAWCALL_DATA mMeshData = {};
     RS_INSTANCE_DRAWCALL_DATA mInstanceData = {};
-    RS_CAM_INFO mCameraData = {};
     RS_MATERIAL_INFO mMaterialData = {};
     RS_MESH_TEXTURE_INFO mTextureDatas[MESH_TEX_MAX] = { {} };
     RS_MISC_INFO mMiscData = {};

@@ -87,6 +87,7 @@ private:
     ID3D11Buffer* mShadowStructedBuffer;
     ID3D11ShaderResourceView* mShadowStructedBufferSrv;
     ID3D11ShaderResourceView* mSsaoSrv;
+    RS_CAM_INFO* mRSCameraInfo;
 };
 
 class RSPass_Shadow :public RSPass_Base
@@ -177,6 +178,7 @@ private:
     DirectX::XMFLOAT4 mOffsetVec[14];
     ID3D11Buffer* mVertexBuffer;
     ID3D11Buffer* mIndexBuffer;
+    RS_CAM_INFO* mRSCameraInfo;
 };
 
 class RSPass_KBBlur :public RSPass_Base
@@ -253,6 +255,7 @@ private:
     ID3D11Buffer* mSkyShpereInfoStructedBuffer;
     ID3D11ShaderResourceView* mSkyShpereInfoStructedBufferSrv;
     RS_SUBMESH_DATA mSkySphereMesh;
+    RS_CAM_INFO* mRSCameraInfo;
 };
 
 struct OnlyProj
@@ -297,6 +300,7 @@ private:
     ID3D11Buffer* mInstanceStructedBuffer;
     ID3D11ShaderResourceView* mInstanceStructedBufferSrv;
     ID3D11SamplerState* mLinearSampler;
+    RS_CAM_INFO* mRSCameraInfo;
 };
 
 class RSPass_MRT :public RSPass_Base
@@ -335,4 +339,5 @@ private:
     ID3D11RenderTargetView* mDiffuseRtv;
     ID3D11RenderTargetView* mNormalRtv;
     ID3D11DepthStencilView* mDepthDsv;
+    RS_CAM_INFO* mRSCameraInfo;
 };

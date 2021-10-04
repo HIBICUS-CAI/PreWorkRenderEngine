@@ -91,7 +91,7 @@ RSPass_Diffuse::RSPass_Diffuse(
     mSampler(nullptr), mDrawCallType(DRAWCALL_TYPE::OPACITY),
     mDrawCallPipe(nullptr), mWVPBuffer(nullptr),
     mCPUBuffer({}), mStructedBuffer(nullptr),
-    mStructedBufferSrv(nullptr)
+    mStructedBufferSrv(nullptr), mRSCameraInfo(nullptr)
 {
 
 }
@@ -112,7 +112,8 @@ RSPass_Diffuse::RSPass_Diffuse(
     mWVPBuffer(_source.mWVPBuffer),
     mCPUBuffer(_source.mCPUBuffer),
     mStructedBuffer(_source.mStructedBuffer),
-    mStructedBufferSrv(_source.mStructedBufferSrv)
+    mStructedBufferSrv(_source.mStructedBufferSrv),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -138,6 +139,10 @@ bool RSPass_Diffuse::InitPass()
     mDrawCallType = DRAWCALL_TYPE::OPACITY;
     mDrawCallPipe = g_Root->DrawCallsPool()->
         GetDrawCallsPipe(mDrawCallType);
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
 
     return true;
 }
@@ -197,11 +202,11 @@ void RSPass_Diffuse::ExecuatePass()
         }
         STContext()->Unmap(mStructedBuffer, 0);
 
-        mat = DirectX::XMLoadFloat4x4(&call.mCameraData.mViewMat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
         mat = DirectX::XMMatrixTranspose(mat);
         DirectX::XMStoreFloat4x4(&flt44, mat);
         mCPUBuffer.mView = flt44;
-        mat = DirectX::XMLoadFloat4x4(&call.mCameraData.mProjMat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
         mat = DirectX::XMMatrixTranspose(mat);
         DirectX::XMStoreFloat4x4(&flt44, mat);
         mCPUBuffer.mProjection = flt44;
@@ -227,9 +232,6 @@ void RSPass_Diffuse::ExecuatePass()
             call.mMeshData.mIndexCount,
             (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
     }
-
-    // TEMP-----------------------------
-    mDrawCallPipe->mDatas.clear();
 
     ID3D11RenderTargetView* null = nullptr;
     STContext()->OMSetRenderTargets(1, &null, nullptr);
@@ -501,7 +503,6 @@ void RSPass_FromTex::ExecuatePass()
     STContext()->RSSetState(nullptr);
 
     STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
-    g_Root->Devices()->PresentSwapChain();
 
     ID3D11ShaderResourceView* null = nullptr;
     STContext()->PSSetShaderResources(0, 1, &null);

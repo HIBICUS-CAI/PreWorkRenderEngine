@@ -150,7 +150,8 @@ RSPass_Light::RSPass_Light(
     mMaterialStructedBufferSrv(nullptr),
     mShadowStructedBuffer(nullptr),
     mShadowStructedBufferSrv(nullptr),
-    mSsaoSrv(nullptr), mDepthStencilState(nullptr)
+    mSsaoSrv(nullptr), mDepthStencilState(nullptr),
+    mRSCameraInfo(nullptr)
 {
 
 }
@@ -181,7 +182,8 @@ RSPass_Light::RSPass_Light(const RSPass_Light& _source) :
     mMaterialStructedBufferSrv(_source.mMaterialStructedBufferSrv),
     mShadowStructedBuffer(_source.mShadowStructedBuffer),
     mShadowStructedBufferSrv(_source.mShadowStructedBufferSrv),
-    mSsaoSrv(_source.mSsaoSrv)
+    mSsaoSrv(_source.mSsaoSrv),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -207,6 +209,10 @@ bool RSPass_Light::InitPass()
     mDrawCallType = DRAWCALL_TYPE::OPACITY;
     mDrawCallPipe = g_Root->DrawCallsPool()->
         GetDrawCallsPipe(mDrawCallType);
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
 
     return true;
 }
@@ -247,11 +253,95 @@ void RSPass_Light::ExecuatePass()
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
 
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+    STContext()->Map(mViewProjStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    ViewProj* vp_data = (ViewProj*)msr.pData;
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+    STContext()->Unmap(mViewProjStructedBuffer, 0);
+
+    STContext()->Map(mAmbientStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    Ambient* amb_data = (Ambient*)msr.pData;
+    amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
+    STContext()->Unmap(mAmbientStructedBuffer, 0);
+
+    STContext()->Map(mLightInfoStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    LightInfo* li_data = (LightInfo*)msr.pData;
+    li_data[0].mCameraPos = mRSCameraInfo->mEyePosition;
+    li_data[0].mDirectLightNum = 1;
+    STContext()->Unmap(mLightInfoStructedBuffer, 0);
+
+    STContext()->Map(mLightStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    RS_LIGHT_INFO* l_data = (RS_LIGHT_INFO*)msr.pData;
+    // TEMP-----------------------
+    l_data[0].mPosition = { 0.f,30.f,-30.f };
+    l_data[0].mDirection = { 0.f,-1.f,1.f };
+    l_data[0].mStrength = { 1.f,1.f,1.f };
+    l_data[0].mSpotPower = 2.f;
+    l_data[0].mFalloffStart = 5.f;
+    l_data[0].mFalloffEnd = 15.f;
+    // TEMP-----------------------
+    STContext()->Unmap(mLightStructedBuffer, 0);
+
+    STContext()->Map(mShadowStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    ShadowInfo* s_data = (ShadowInfo*)msr.pData;
+    // TEMP---------------------
+    DirectX::XMFLOAT3 pos = { 0.f,30.f,-30.f };
+    DirectX::XMFLOAT3 look = { 0.f,-1.f,1.f };
+    DirectX::XMFLOAT3 up = { 0.f,1.f,1.f };
+    mat = DirectX::XMMatrixLookAtLH(
+        DirectX::XMLoadFloat3(&pos),
+        DirectX::XMLoadFloat3(&look),
+        DirectX::XMLoadFloat3(&up));
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&s_data[0].mShadowViewMat, mat);
+    mat = DirectX::XMMatrixOrthographicLH(
+        12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&s_data[0].mShadowProjMat, mat);
+    static DirectX::XMMATRIX T(
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f);
+    mat = DirectX::XMMatrixTranspose(
+        DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat) *
+        DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat) *
+        T);
+    DirectX::XMStoreFloat4x4(&s_data[0].mSSAOMat, mat);
+    // TEMP---------------------
+    STContext()->Unmap(mShadowStructedBuffer, 0);
+
+    STContext()->VSSetShaderResources(
+        0, 1, &mViewProjStructedBufferSrv);
+    STContext()->VSSetShaderResources(
+        2, 1, &mShadowStructedBufferSrv);
+    STContext()->PSSetShaderResources(
+        0, 1, &mAmbientStructedBufferSrv);
+    STContext()->PSSetShaderResources(
+        1, 1, &mLightInfoStructedBufferSrv);
+    STContext()->PSSetShaderResources(
+        3, 1, &mLightStructedBufferSrv);
+    static std::string depthtex = "light-depth-light";
+    STContext()->PSSetShaderResources(
+        5, 1, &g_Root->TexturesManager()->
+        GetDataTexInfo(depthtex)->mSrv);
+    STContext()->PSSetShaderResources(
+        6, 1, &mSsaoSrv);
+
     for (auto& call : mDrawCallPipe->mDatas)
     {
         auto vecPtr = call.mInstanceData.mDataPtr;
         auto size = vecPtr->size();
-        D3D11_MAPPED_SUBRESOURCE msr = {};
         STContext()->Map(mInstanceStructedBuffer, 0,
             D3D11_MAP_WRITE_DISCARD, 0, &msr);
         RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
@@ -270,82 +360,11 @@ void RSPass_Light::ExecuatePass()
         }
         STContext()->Unmap(mInstanceStructedBuffer, 0);
 
-        STContext()->Map(mViewProjStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        ViewProj* vp_data = (ViewProj*)msr.pData;
-        mat = DirectX::XMLoadFloat4x4(
-            &call.mCameraData.mViewMat);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
-        mat = DirectX::XMLoadFloat4x4(
-            &call.mCameraData.mProjMat);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
-        STContext()->Unmap(mViewProjStructedBuffer, 0);
-
-        STContext()->Map(mAmbientStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        Ambient* amb_data = (Ambient*)msr.pData;
-        amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
-        STContext()->Unmap(mAmbientStructedBuffer, 0);
-
-        STContext()->Map(mLightInfoStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        LightInfo* li_data = (LightInfo*)msr.pData;
-        static std::string name = "temp-cam";
-        li_data[0].mCameraPos = g_Root->CamerasContainer()->
-            GetRSCamera(name)->GetRSCameraPosition();
-        li_data[0].mDirectLightNum = 1;
-        STContext()->Unmap(mLightInfoStructedBuffer, 0);
-
-        STContext()->Map(mLightStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        RS_LIGHT_INFO* l_data = (RS_LIGHT_INFO*)msr.pData;
-        // TEMP-----------------------
-        l_data[0].mPosition = { 0.f,30.f,-30.f };
-        l_data[0].mDirection = { 0.f,-1.f,1.f };
-        l_data[0].mStrength = { 1.f,1.f,1.f };
-        l_data[0].mSpotPower = 2.f;
-        l_data[0].mFalloffStart = 5.f;
-        l_data[0].mFalloffEnd = 15.f;
-        // TEMP-----------------------
-        STContext()->Unmap(mLightStructedBuffer, 0);
-
         STContext()->Map(mMaterialStructedBuffer, 0,
             D3D11_MAP_WRITE_DISCARD, 0, &msr);
         RS_MATERIAL_INFO* m_data = (RS_MATERIAL_INFO*)msr.pData;
         m_data[0] = call.mMaterialData;
         STContext()->Unmap(mMaterialStructedBuffer, 0);
-
-        STContext()->Map(mShadowStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        ShadowInfo* s_data = (ShadowInfo*)msr.pData;
-        // TEMP---------------------
-        DirectX::XMFLOAT3 pos = { 0.f,30.f,-30.f };
-        DirectX::XMFLOAT3 look = { 0.f,-1.f,1.f };
-        DirectX::XMFLOAT3 up = { 0.f,1.f,1.f };
-        mat = DirectX::XMMatrixLookAtLH(
-            DirectX::XMLoadFloat3(&pos),
-            DirectX::XMLoadFloat3(&look),
-            DirectX::XMLoadFloat3(&up));
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&s_data[0].mShadowViewMat, mat);
-        mat = DirectX::XMMatrixOrthographicLH(
-            12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&s_data[0].mShadowProjMat, mat);
-        static DirectX::XMMATRIX T(
-            0.5f, 0.0f, 0.0f, 0.0f,
-            0.0f, -0.5f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.5f, 0.5f, 0.0f, 1.0f);
-        mat = DirectX::XMMatrixTranspose(
-            DirectX::XMLoadFloat4x4(&call.mCameraData.mViewMat) *
-            DirectX::XMLoadFloat4x4(&call.mCameraData.mProjMat) *
-            T);
-        DirectX::XMStoreFloat4x4(&s_data[0].mSSAOMat, mat);
-        // TEMP---------------------
-        STContext()->Unmap(mShadowStructedBuffer, 0);
 
         STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
@@ -357,27 +376,12 @@ void RSPass_Light::ExecuatePass()
         STContext()->IASetIndexBuffer(
             call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         STContext()->VSSetShaderResources(
-            0, 1, &mViewProjStructedBufferSrv);
-        STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
-        STContext()->VSSetShaderResources(
-            2, 1, &mShadowStructedBufferSrv);
-        STContext()->PSSetShaderResources(
-            0, 1, &mAmbientStructedBufferSrv);
-        STContext()->PSSetShaderResources(
-            1, 1, &mLightInfoStructedBufferSrv);
         STContext()->PSSetShaderResources(
             2, 1, &mMaterialStructedBufferSrv);
         STContext()->PSSetShaderResources(
-            3, 1, &mLightStructedBufferSrv);
-        STContext()->PSSetShaderResources(
             4, 1, &call.mTextureDatas[0].mSrv);
-        static std::string depthtex = "light-depth-light";
-        STContext()->PSSetShaderResources(
-            5, 1, &g_Root->TexturesManager()->
-            GetDataTexInfo(depthtex)->mSrv);
-        STContext()->PSSetShaderResources(
-            6, 1, &mSsaoSrv);
+
         if (call.mTextureDatas[1].mUse)
         {
             STContext()->PSSetShaderResources(
@@ -680,11 +684,34 @@ void RSPass_Shadow::ExecuatePass()
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
 
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+    STContext()->Map(mViewProjStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    ViewProj* vp_data = (ViewProj*)msr.pData;
+    // TEMP---------------------
+    DirectX::XMFLOAT3 pos = { 0.f,30.f,-30.f };
+    DirectX::XMFLOAT3 look = { 0.f,-1.f,1.f };
+    DirectX::XMFLOAT3 up = { 0.f,1.f,1.f };
+    mat = DirectX::XMMatrixLookAtLH(
+        DirectX::XMLoadFloat3(&pos),
+        DirectX::XMLoadFloat3(&look),
+        DirectX::XMLoadFloat3(&up));
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
+    mat = DirectX::XMMatrixOrthographicLH(
+        12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+    // TEMP---------------------
+    STContext()->Unmap(mViewProjStructedBuffer, 0);
+
+    STContext()->VSSetShaderResources(
+        0, 1, &mViewProjStructedBufferSrv);
+
     for (auto& call : mDrawCallPipe->mDatas)
     {
         auto vecPtr = call.mInstanceData.mDataPtr;
         auto size = vecPtr->size();
-        D3D11_MAPPED_SUBRESOURCE msr = {};
         STContext()->Map(mInstanceStructedBuffer, 0,
             D3D11_MAP_WRITE_DISCARD, 0, &msr);
         RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
@@ -703,26 +730,6 @@ void RSPass_Shadow::ExecuatePass()
         }
         STContext()->Unmap(mInstanceStructedBuffer, 0);
 
-        STContext()->Map(mViewProjStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        ViewProj* vp_data = (ViewProj*)msr.pData;
-        // TEMP---------------------
-        DirectX::XMFLOAT3 pos = { 0.f,30.f,-30.f };
-        DirectX::XMFLOAT3 look = { 0.f,-1.f,1.f };
-        DirectX::XMFLOAT3 up = { 0.f,1.f,1.f };
-        mat = DirectX::XMMatrixLookAtLH(
-            DirectX::XMLoadFloat3(&pos),
-            DirectX::XMLoadFloat3(&look),
-            DirectX::XMLoadFloat3(&up));
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
-        mat = DirectX::XMMatrixOrthographicLH(
-            12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
-        // TEMP---------------------
-        STContext()->Unmap(mViewProjStructedBuffer, 0);
-
         STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
         STContext()->IASetPrimitiveTopology(
@@ -732,8 +739,6 @@ void RSPass_Shadow::ExecuatePass()
             &stride, &offset);
         STContext()->IASetIndexBuffer(
             call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        STContext()->VSSetShaderResources(
-            0, 1, &mViewProjStructedBufferSrv);
         STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
 
@@ -900,7 +905,8 @@ RSPass_Ssao::RSPass_Ssao(
     mRandomMapSrv(nullptr),
     mSamplePointClamp(nullptr), mSampleLinearClamp(nullptr),
     mSampleDepthMap(nullptr), mSampleLinearWrap(nullptr),
-    mVertexBuffer(nullptr), mIndexBuffer(nullptr)
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr),
+    mRSCameraInfo(nullptr)
 {
     for (UINT i = 0; i < 14; i++)
     {
@@ -922,7 +928,8 @@ RSPass_Ssao::RSPass_Ssao(const RSPass_Ssao& _source) :
     mNormalMapSrv(_source.mNormalMapSrv),
     mDepthMapSrv(_source.mDepthMapSrv),
     mRandomMapSrv(_source.mRandomMapSrv),
-    mVertexBuffer(nullptr), mIndexBuffer(nullptr)
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
     for (UINT i = 0; i < 14; i++)
     {
@@ -979,6 +986,10 @@ bool RSPass_Ssao::InitPass()
         mOffsetVec[i] = vec[i];
     }
 
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
+
     return true;
 }
 
@@ -1021,15 +1032,12 @@ void RSPass_Ssao::ExecuatePass()
     STContext()->Map(mSsaoInfoStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     SsaoInfo* ss_data = (SsaoInfo*)msr.pData;
-    // TEMP---------------------
-    static std::string name = "temp-cam";
-    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
-        GetRSCameraInfo(name)->mProjMat));
+
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&ss_data[0].mProj, mat);
 
-    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
-        GetRSCameraInfo(name)->mInvProjMat));
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvProjMat);
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&ss_data[0].mInvProj, mat);
 
@@ -1039,8 +1047,7 @@ void RSPass_Ssao::ExecuatePass()
         0.0f, 0.0f, 1.0f, 0.0f,
         0.5f, 0.5f, 0.0f, 1.0f);
     mat = DirectX::XMMatrixTranspose(
-        DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
-            GetRSCameraInfo(name)->mProjMat)) * T);
+        DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat) * T);
     DirectX::XMStoreFloat4x4(&ss_data[0].mTexProj, mat);
 
     for (UINT i = 0; i < 14; i++)
@@ -1535,7 +1542,7 @@ RSPass_SkyShpere::RSPass_SkyShpere(std::string& _name,
     mRenderTargerView(nullptr), mDepthStencilView(nullptr),
     /*mSkyShpereSrv(nullptr), */mSkyShpereInfoStructedBuffer(nullptr),
     mSkyShpereInfoStructedBufferSrv(nullptr), mSkySphereMesh({}),
-    mLinearWrapSampler(nullptr)
+    mLinearWrapSampler(nullptr), mRSCameraInfo(nullptr)
 {
 
 }
@@ -1553,7 +1560,8 @@ RSPass_SkyShpere::RSPass_SkyShpere(
     mSkyShpereInfoStructedBuffer(_source.mSkyShpereInfoStructedBuffer),
     mSkyShpereInfoStructedBufferSrv(_source.mSkyShpereInfoStructedBufferSrv),
     mSkySphereMesh(_source.mSkySphereMesh),
-    mLinearWrapSampler(_source.mLinearWrapSampler)
+    mLinearWrapSampler(_source.mLinearWrapSampler),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -1580,6 +1588,10 @@ bool RSPass_SkyShpere::InitPass()
         CreateGeometrySphere(10.f, 0,
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "snow-cube.dds");
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
 
     return true;
 }
@@ -1617,19 +1629,15 @@ void RSPass_SkyShpere::ExecuatePass()
     STContext()->Map(mSkyShpereInfoStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     SkyShpereInfo* sp_data = (SkyShpereInfo*)msr.pData;
-    static std::string name = "temp-cam";
-    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
-        GetRSCameraInfo(name)->mViewMat));
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&sp_data[0].mViewMat, mat);
 
-    mat = DirectX::XMLoadFloat4x4(&(g_Root->CamerasContainer()->
-        GetRSCameraInfo(name)->mProjMat));
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&sp_data[0].mProjMat, mat);
 
-    sp_data[0].mEyePosition = g_Root->CamerasContainer()->
-        GetRSCamera(name)->GetRSCameraPosition();
+    sp_data[0].mEyePosition = mRSCameraInfo->mEyePosition;
 
     mat = DirectX::XMMatrixScaling(1000.f, 1000.f, 1000.f);
     mat = DirectX::XMMatrixTranspose(mat);
@@ -1788,7 +1796,8 @@ RSPass_Sprite::RSPass_Sprite(std::string& _name,
     mInstanceStructedBuffer(nullptr),
     mInstanceStructedBufferSrv(nullptr),
     mLinearSampler(nullptr), mBlendState(nullptr),
-    mDrawCallType(DRAWCALL_TYPE::MAX), mDrawCallPipe(nullptr)
+    mDrawCallType(DRAWCALL_TYPE::MAX), mDrawCallPipe(nullptr),
+    mRSCameraInfo(nullptr)
 {
 
 }
@@ -1807,7 +1816,8 @@ RSPass_Sprite::RSPass_Sprite(
     mProjStructedBufferSrv(_source.mProjStructedBufferSrv),
     mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
     mInstanceStructedBufferSrv(_source.mInstanceStructedBufferSrv),
-    mLinearSampler(_source.mLinearSampler)
+    mLinearSampler(_source.mLinearSampler),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -1833,6 +1843,10 @@ bool RSPass_Sprite::InitPass()
     mDrawCallType = DRAWCALL_TYPE::UI_SPRITE;
     mDrawCallPipe = g_Root->DrawCallsPool()->
         GetDrawCallsPipe(mDrawCallType);
+
+    std::string name = "temp-ui-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
 
     return true;
 }
@@ -1866,11 +1880,22 @@ void RSPass_Sprite::ExecuatePass()
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
 
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+    STContext()->Map(mProjStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    OnlyProj* vp_data = (OnlyProj*)msr.pData;
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+    STContext()->Unmap(mProjStructedBuffer, 0);
+
+    STContext()->VSSetShaderResources(
+        0, 1, &mProjStructedBufferSrv);
+
     for (auto& call : mDrawCallPipe->mDatas)
     {
         auto vecPtr = call.mInstanceData.mDataPtr;
         auto size = vecPtr->size();
-        D3D11_MAPPED_SUBRESOURCE msr = {};
         STContext()->Map(mInstanceStructedBuffer, 0,
             D3D11_MAP_WRITE_DISCARD, 0, &msr);
         RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
@@ -1889,15 +1914,6 @@ void RSPass_Sprite::ExecuatePass()
         }
         STContext()->Unmap(mInstanceStructedBuffer, 0);
 
-        STContext()->Map(mProjStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        OnlyProj* vp_data = (OnlyProj*)msr.pData;
-        mat = DirectX::XMLoadFloat4x4(
-            &call.mCameraData.mProjMat);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
-        STContext()->Unmap(mProjStructedBuffer, 0);
-
         STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
         STContext()->IASetPrimitiveTopology(
@@ -1907,8 +1923,6 @@ void RSPass_Sprite::ExecuatePass()
             &stride, &offset);
         STContext()->IASetIndexBuffer(
             call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        STContext()->VSSetShaderResources(
-            0, 1, &mProjStructedBufferSrv);
         STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
         STContext()->PSSetShaderResources(
@@ -2066,7 +2080,8 @@ RSPass_MRT::RSPass_MRT(std::string& _name, PASS_TYPE _type,
     mInstanceStructedBuffer(nullptr),
     mInstanceStructedBufferSrv(nullptr),
     mLinearSampler(nullptr), mDepthDsv(nullptr),
-    mDiffuseRtv(nullptr), mNormalRtv(nullptr)
+    mDiffuseRtv(nullptr), mNormalRtv(nullptr),
+    mRSCameraInfo(nullptr)
 {
 
 }
@@ -2084,7 +2099,8 @@ RSPass_MRT::RSPass_MRT(const RSPass_MRT& _source) :
     mLinearSampler(_source.mLinearSampler),
     mDiffuseRtv(_source.mDiffuseRtv),
     mNormalRtv(_source.mNormalRtv),
-    mDepthDsv(_source.mDepthDsv)
+    mDepthDsv(_source.mDepthDsv),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -2109,6 +2125,10 @@ bool RSPass_MRT::InitPass()
     mDrawCallType = DRAWCALL_TYPE::OPACITY;
     mDrawCallPipe = g_Root->DrawCallsPool()->
         GetDrawCallsPipe(mDrawCallType);
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
 
     return true;
 }
@@ -2153,11 +2173,27 @@ void RSPass_MRT::ExecuatePass()
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
 
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+    STContext()->Map(mViewProjStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    ViewProj* vp_data = (ViewProj*)msr.pData;
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+    STContext()->Unmap(mViewProjStructedBuffer, 0);
+
+    STContext()->VSSetShaderResources(
+        0, 1, &mViewProjStructedBufferSrv);
+    STContext()->PSSetShaderResources(
+        0, 1, &mViewProjStructedBufferSrv);
+
     for (auto& call : mDrawCallPipe->mDatas)
     {
         auto vecPtr = call.mInstanceData.mDataPtr;
         auto size = vecPtr->size();
-        D3D11_MAPPED_SUBRESOURCE msr = {};
         STContext()->Map(mInstanceStructedBuffer, 0,
             D3D11_MAP_WRITE_DISCARD, 0, &msr);
         RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
@@ -2176,19 +2212,6 @@ void RSPass_MRT::ExecuatePass()
         }
         STContext()->Unmap(mInstanceStructedBuffer, 0);
 
-        STContext()->Map(mViewProjStructedBuffer, 0,
-            D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        ViewProj* vp_data = (ViewProj*)msr.pData;
-        mat = DirectX::XMLoadFloat4x4(
-            &call.mCameraData.mViewMat);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
-        mat = DirectX::XMLoadFloat4x4(
-            &call.mCameraData.mProjMat);
-        mat = DirectX::XMMatrixTranspose(mat);
-        DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
-        STContext()->Unmap(mViewProjStructedBuffer, 0);
-
         STContext()->IASetInputLayout(
             call.mMeshData.mLayout);
         STContext()->IASetPrimitiveTopology(
@@ -2198,10 +2221,6 @@ void RSPass_MRT::ExecuatePass()
             &stride, &offset);
         STContext()->IASetIndexBuffer(
             call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        STContext()->VSSetShaderResources(
-            0, 1, &mViewProjStructedBufferSrv);
-        STContext()->PSSetShaderResources(
-            0, 1, &mViewProjStructedBufferSrv);
         STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
         STContext()->PSSetShaderResources(

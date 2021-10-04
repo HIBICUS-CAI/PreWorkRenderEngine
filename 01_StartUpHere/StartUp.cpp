@@ -165,17 +165,6 @@ int WINAPI WinMain(
 
     mesh->Process(root->MeshHelper());
 
-    PassRootToTempWireFramePipeline(root);
-    PassRootToTempLightPipeline(root);
-    if (!CreateTempWireFramePipeline())
-    {
-        return -3;
-    }
-    if (!CreateTempLightPipeline())
-    {
-        return -4;
-    }
-
     std::string name = "temp-cam";
     CAM_INFO ci = {};
     ci.mType = LENS_TYPE::PERSPECTIVE;
@@ -199,6 +188,17 @@ int WINAPI WinMain(
     ci.mOWidthAndHeight = { 1280.f,720.f };
     root->CamerasContainer()->CreateRSCamera(
         name, &ci);
+
+    PassRootToTempWireFramePipeline(root);
+    PassRootToTempLightPipeline(root);
+    if (!CreateTempWireFramePipeline())
+    {
+        return -3;
+    }
+    if (!CreateTempLightPipeline())
+    {
+        return -4;
+    }
 
     MSG msg = { 0 };
     while (WM_QUIT != msg.message)

@@ -52,6 +52,7 @@ private:
     TEMP_WVPBuffer mCPUBuffer;
     ID3D11Buffer* mStructedBuffer;
     ID3D11ShaderResourceView* mStructedBufferSrv;
+    RS_CAM_INFO* mRSCameraInfo;
 };
 
 class RSPass_FromTex :public RSPass_Base
