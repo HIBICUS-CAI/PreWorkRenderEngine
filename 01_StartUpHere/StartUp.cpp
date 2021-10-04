@@ -262,6 +262,7 @@ int WINAPI WinMain(
             root->PipelinesManager()->ExecuateCurrentPipeline();
 
             root->Devices()->PresentSwapChain();
+
             root->DrawCallsPool()->ClearAllDrawCallsInPipes();
         }
     }
