@@ -8,6 +8,7 @@
 //---------------------------------------------------------------
 
 #include "RSLight.h"
+#include "RSCamerasContainer.h"
 
 RSLight::RSLight(LIGHT_INFO* _info) :
     mLightType(_info->mType),
@@ -20,7 +21,8 @@ RSLight::RSLight(LIGHT_INFO* _info) :
     mRSLightInfo({
         mLightStrength, mLightFallOffStart, mLightDirection,
         mLightFallOffEnd, mLightPosition, mLightSpotPower
-        })
+        }),
+    mRSLightCamera(nullptr)
 {
 
 }
@@ -75,4 +77,20 @@ void RSLight::SetRSLightSpotPower(float _power)
 {
     mLightSpotPower = _power;
     mRSLightInfo.mSpotPower = _power;
+}
+
+RSCamera* RSLight::CreateLightCamera(std::string& _lightName,
+    CAM_INFO* _info, RSCamerasContainer* _camContainer)
+{
+    if (!_info || !_camContainer) { return nullptr; }
+
+    std::string name = _lightName + "-light-cam";
+    mRSLightCamera = _camContainer->CreateRSCamera(name, _info);
+
+    return mRSLightCamera;
+}
+
+RSCamera* RSLight::GetRSLightCamera()
+{
+    return mRSLightCamera;
 }

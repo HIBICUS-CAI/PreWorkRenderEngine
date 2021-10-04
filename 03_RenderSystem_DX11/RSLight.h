@@ -17,7 +17,11 @@ public:
     RSLight(LIGHT_INFO* _info);
     ~RSLight();
 
+    class RSCamera* CreateLightCamera(std::string& _lightName,
+        CAM_INFO* _info, class RSCamerasContainer* _camContainer);
+
     RS_LIGHT_INFO* GetRSLightInfo();
+    class RSCamera* GetRSLightCamera();
     void ResetRSLight(LIGHT_INFO* _info);
 
     void SetRSLightStrength(DirectX::XMFLOAT3 _strength);
@@ -37,5 +41,6 @@ private:
     float mLightSpotPower;
 
     RS_LIGHT_INFO mRSLightInfo;
+    class RSCamera* mRSLightCamera;
 };
 

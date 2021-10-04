@@ -8,6 +8,7 @@
 //---------------------------------------------------------------
 
 #include "RSLightsContainer.h"
+#include "RSCamerasContainer.h"
 #include "RSRoot_DX11.h"
 #include "RSLight.h"
 
@@ -88,5 +89,28 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
     {
         delete found->second;
         mLightMap.erase(found);
+    }
+}
+
+bool RSLightsContainer::CreateLightCameraFor(
+    std::string& _name, CAM_INFO* _info)
+{
+    auto found = mLightMap.find(_name);
+    if (found != mLightMap.end())
+    {
+        auto cam = found->second->CreateLightCamera(
+            _name, _info, mRootPtr->CamerasContainer());
+        if (cam)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
     }
 }

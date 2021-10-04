@@ -26,6 +26,8 @@ public:
     RS_LIGHT_INFO* GetRSLightInfo(std::string& _name);
     void DeleteRSLight(std::string& _name);
 
+    bool CreateLightCameraFor(std::string& _name, CAM_INFO* _info);
+
 private:
     class RSRoot_DX11* mRootPtr;
 

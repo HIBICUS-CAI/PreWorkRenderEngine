@@ -8,7 +8,9 @@
 #include "RSStaticResources.h"
 #include "RSPipelinesManager.h"
 #include "RSCamera.h"
+#include "RSLight.h"
 #include "RSCamerasContainer.h"
+#include "RSLightsContainer.h"
 #include <DirectXColors.h>
 #include <DirectXPackedVector.h>
 #include <DirectXTK\DDSTextureLoader.h>
@@ -282,12 +284,12 @@ void RSPass_Light::ExecuatePass()
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     RS_LIGHT_INFO* l_data = (RS_LIGHT_INFO*)msr.pData;
     // TEMP-----------------------
-    l_data[0].mPosition = { 0.f,30.f,-30.f };
-    l_data[0].mDirection = { 0.f,-1.f,1.f };
-    l_data[0].mStrength = { 1.f,1.f,1.f };
-    l_data[0].mSpotPower = 2.f;
-    l_data[0].mFalloffStart = 5.f;
-    l_data[0].mFalloffEnd = 15.f;
+    static std::string lightName = "direct-light-1";
+    static auto light = g_Root->LightsContainer()->
+        GetRSLight(lightName);
+    static auto info = light->GetRSLightInfo();
+    static auto lcam = light->GetRSLightCamera();
+    l_data[0] = *info;
     // TEMP-----------------------
     STContext()->Unmap(mLightStructedBuffer, 0);
 
@@ -295,17 +297,12 @@ void RSPass_Light::ExecuatePass()
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     ShadowInfo* s_data = (ShadowInfo*)msr.pData;
     // TEMP---------------------
-    DirectX::XMFLOAT3 pos = { 0.f,30.f,-30.f };
-    DirectX::XMFLOAT3 look = { 0.f,-1.f,1.f };
-    DirectX::XMFLOAT3 up = { 0.f,1.f,1.f };
-    mat = DirectX::XMMatrixLookAtLH(
-        DirectX::XMLoadFloat3(&pos),
-        DirectX::XMLoadFloat3(&look),
-        DirectX::XMLoadFloat3(&up));
+    mat = DirectX::XMLoadFloat4x4(
+        &(lcam->GetRSCameraInfo()->mViewMat));
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&s_data[0].mShadowViewMat, mat);
-    mat = DirectX::XMMatrixOrthographicLH(
-        12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
+    mat = DirectX::XMLoadFloat4x4(
+        &(lcam->GetRSCameraInfo()->mProjMat));
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&s_data[0].mShadowProjMat, mat);
     static DirectX::XMMATRIX T(
@@ -689,17 +686,16 @@ void RSPass_Shadow::ExecuatePass()
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     ViewProj* vp_data = (ViewProj*)msr.pData;
     // TEMP---------------------
-    DirectX::XMFLOAT3 pos = { 0.f,30.f,-30.f };
-    DirectX::XMFLOAT3 look = { 0.f,-1.f,1.f };
-    DirectX::XMFLOAT3 up = { 0.f,1.f,1.f };
-    mat = DirectX::XMMatrixLookAtLH(
-        DirectX::XMLoadFloat3(&pos),
-        DirectX::XMLoadFloat3(&look),
-        DirectX::XMLoadFloat3(&up));
+    static std::string lightName = "direct-light-1";
+    static auto light = g_Root->LightsContainer()->
+        GetRSLight(lightName);
+    static auto lcam = light->GetRSLightCamera();
+    mat = DirectX::XMLoadFloat4x4(
+        &(lcam->GetRSCameraInfo()->mViewMat));
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
-    mat = DirectX::XMMatrixOrthographicLH(
-        12.8f * 9.5f, 7.2f * 9.5f, 1.f, 100.f);
+    mat = DirectX::XMLoadFloat4x4(
+        &(lcam->GetRSCameraInfo()->mProjMat));
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
     // TEMP---------------------

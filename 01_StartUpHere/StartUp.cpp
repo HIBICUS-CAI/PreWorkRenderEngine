@@ -7,6 +7,7 @@
 #include "TempPipeline_Light.h"
 #include "RSCamera.h"
 #include "RSCamerasContainer.h"
+#include "RSLightsContainer.h"
 #include "RSPipelinesManager.h"
 #include "RSDrawCallsPool.h"
 #include "RSDevices.h"
@@ -186,8 +187,28 @@ int WINAPI WinMain(
     ci.mNearFarZ = { 1.f,100.f };
     ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
     ci.mOWidthAndHeight = { 1280.f,720.f };
-    root->CamerasContainer()->CreateRSCamera(
-        name, &ci);
+    root->CamerasContainer()->CreateRSCamera(name, &ci);
+
+    name = "direct-light-1";
+    LIGHT_INFO li = {};
+    li.mType = LIGHT_TYPE::DIRECT;
+    li.mPosition = { 0.f,30.f,-30.f };
+    li.mDirection = { 0.f,-1.f,1.f };
+    li.mStrength = { 1.f,1.f,1.f };
+    li.mSpotPower = 2.f;
+    li.mFalloffStart = 5.f;
+    li.mFalloffEnd = 15.f;
+    ci = {};
+    ci.mType = LENS_TYPE::ORTHOGRAPHIC;
+    ci.mPosition = li.mPosition;
+    ci.mLookAt = li.mDirection;
+    ci.mUpVec = { 0.f,1.f,1.f };
+    ci.mNearFarZ = { 1.f,100.f };
+    ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
+    ci.mOWidthAndHeight = { 12.8f * 9.5f,7.2f * 9.5f };
+    auto light1 = root->LightsContainer()->CreateRSLight(
+        name, &li);
+    root->LightsContainer()->CreateLightCameraFor(name, &ci);
 
     PassRootToTempWireFramePipeline(root);
     PassRootToTempLightPipeline(root);
