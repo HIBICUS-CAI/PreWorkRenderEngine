@@ -103,7 +103,6 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
     auto found = mLightMap.find(_name);
     if (found != mLightMap.end())
     {
-        mLightMap.erase(found);
         for (auto i = mLights.begin(); i != mLights.end(); i++)
         {
             if ((*i) == found->second)
@@ -122,6 +121,8 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
             }
         }
         delete found->second;
+        mLightMap.erase(found);
+
     }
 }
 

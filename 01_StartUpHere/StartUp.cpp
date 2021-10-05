@@ -11,6 +11,8 @@
 #include "RSPipelinesManager.h"
 #include "RSDrawCallsPool.h"
 #include "RSDevices.h"
+#include <cstdlib>
+#include <ctime>
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -294,6 +296,51 @@ int WINAPI WinMain(
                 }
                 root->PipelinesManager()->SetPipeline(pipeName);
                 root->PipelinesManager()->ProcessNextPipeline();
+            }
+
+            static bool pointLightBoom = false;
+            if (InputInterface::IsKeyPushedInSingle(
+                GP_LEFTFORESHDBTN))
+            {
+                std::string name = "";
+                if (pointLightBoom)
+                {
+                    for (int i = 0; i < 64; i++)
+                    {
+                        name = "point-light-" + std::to_string(i + 2);
+                        root->LightsContainer()-> DeleteRSLight(name);
+                    }
+                }
+                else
+                {
+                    std::srand((UINT)std::time(nullptr) + std::rand());
+                    for (int i = 0; i < 64; i++)
+                    {
+                        int range = 4000;
+                        int basic = range / -2;
+                        float x = (float)(std::rand() % range + basic) / 100.f;
+                        float z = (float)(std::rand() % range + basic) / 100.f;
+                        range = 1000;
+                        basic = range / -2;
+                        float y = (float)(std::rand() % range + basic) / 100.f;
+                        range = 1000;
+                        float r = (float)(std::rand() % range) / 1000.f;
+                        float g = (float)(std::rand() % range) / 1000.f;
+                        float b = (float)(std::rand() % range) / 1000.f;
+                        name = "point-light-" + std::to_string(i + 2);
+                        li = {};
+                        li.mType = LIGHT_TYPE::POINT;
+                        li.mWithShadow = false;
+                        li.mPosition = { x,y,z };
+                        li.mDirection = { 1.f,-1.f,0.f };
+                        li.mStrength = { r,g,b };
+                        li.mSpotPower = 2.f;
+                        li.mFalloffStart = 3.f;
+                        li.mFalloffEnd = 8.f;
+                        root->LightsContainer()->CreateRSLight(name, &li);
+                    }
+                }
+                pointLightBoom = !pointLightBoom;
             }
 
             auto sticksL = InputInterface::LeftStickOffset();
