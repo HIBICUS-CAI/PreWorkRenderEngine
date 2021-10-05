@@ -340,6 +340,9 @@ private:
     ID3D11SamplerState* mLinearSampler;
     ID3D11RenderTargetView* mDiffuseRtv;
     ID3D11RenderTargetView* mNormalRtv;
+    ID3D11RenderTargetView* mWorldPosRtv;
+    ID3D11RenderTargetView* mDiffAlbeRtv;
+    ID3D11RenderTargetView* mFresShinRtv;
     ID3D11DepthStencilView* mDepthDsv;
     RS_CAM_INFO* mRSCameraInfo;
 };

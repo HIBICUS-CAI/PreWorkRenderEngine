@@ -84,6 +84,9 @@ public:
                 DirectX::XMMatrixTranslation(0.f, 2.6f, 0.f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
+            std::string name = "copper";
+            ins_data.mMaterialData = *(_root->StaticResources()->
+                GetStaticMaterial(name));
             if (mData.mTextures.size() > 1)
             {
                 ins_data.mCustomizedData1.x = 1.f;
@@ -104,6 +107,9 @@ public:
                 DirectX::XMMatrixTranslation(-8.5f, -4.f, 0.f));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
+            name = "copper";
+            ins_data.mMaterialData = *(_root->StaticResources()->
+                GetStaticMaterial(name));
             if (mData.mTextures.size() > 1)
             {
                 ins_data.mCustomizedData1.x = 1.f;
@@ -115,7 +121,6 @@ public:
             instance.emplace_back(ins_data);
         }
 
-        std::string name = "temp-cam";
         RS_DRAWCALL_DATA data = {};
         data.mMeshData.mLayout = mData.mLayout;
         data.mMeshData.mTopologyType = mData.mTopologyType;
@@ -126,7 +131,7 @@ public:
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
-        name = "copper";
+        std::string name = "copper";
         data.mMaterialData = *(_root->StaticResources()->
             GetStaticMaterial(name));
 
@@ -222,6 +227,9 @@ public:
                     mPostions[i].z));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
+            std::string name = "copper";
+            ins_data.mMaterialData = *(_root->StaticResources()->
+                GetStaticMaterial(name));
             if (mData.mTextures.size() > 1)
             {
                 ins_data.mCustomizedData1.x = 1.f;

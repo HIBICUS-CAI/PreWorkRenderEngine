@@ -2152,7 +2152,8 @@ RSPass_MRT::RSPass_MRT(std::string& _name, PASS_TYPE _type,
     mInstanceStructedBufferSrv(nullptr),
     mLinearSampler(nullptr), mDepthDsv(nullptr),
     mDiffuseRtv(nullptr), mNormalRtv(nullptr),
-    mRSCameraInfo(nullptr)
+    mRSCameraInfo(nullptr), mWorldPosRtv(nullptr),
+    mDiffAlbeRtv(nullptr), mFresShinRtv(nullptr)
 {
 
 }
@@ -2171,7 +2172,10 @@ RSPass_MRT::RSPass_MRT(const RSPass_MRT& _source) :
     mDiffuseRtv(_source.mDiffuseRtv),
     mNormalRtv(_source.mNormalRtv),
     mDepthDsv(_source.mDepthDsv),
-    mRSCameraInfo(_source.mRSCameraInfo)
+    mRSCameraInfo(_source.mRSCameraInfo),
+    mWorldPosRtv(_source.mWorldPosRtv),
+    mDiffAlbeRtv(_source.mDiffAlbeRtv),
+    mFresShinRtv(_source.mFresShinRtv)
 {
 
 }
@@ -2220,19 +2224,31 @@ void RSPass_MRT::ReleasePass()
     g_Root->TexturesManager()->DeleteDataTex(name);
     name = "mrt-diffuse";
     g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "mrt-worldpos";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "mrt-diffuse-albedo";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "mrt-fresnel-shinese";
+    g_Root->TexturesManager()->DeleteDataTex(name);
 }
 
 void RSPass_MRT::ExecuatePass()
 {
     ID3D11RenderTargetView* rtvnull = nullptr;
     static ID3D11RenderTargetView* mrt[] = { mDiffuseRtv,
-        mNormalRtv };
-    STContext()->OMSetRenderTargets(2,
+        mNormalRtv,mWorldPosRtv,mDiffAlbeRtv,mFresShinRtv };
+    STContext()->OMSetRenderTargets(5,
         mrt, mDepthDsv);
     STContext()->ClearRenderTargetView(
         mDiffuseRtv, DirectX::Colors::DarkGreen);
     STContext()->ClearRenderTargetView(
-        mNormalRtv, DirectX::Colors::Black);
+        mNormalRtv, DirectX::Colors::Transparent);
+    STContext()->ClearRenderTargetView(
+        mWorldPosRtv, DirectX::Colors::Transparent);
+    STContext()->ClearRenderTargetView(
+        mDiffAlbeRtv, DirectX::Colors::Transparent);
+    STContext()->ClearRenderTargetView(
+        mFresShinRtv, DirectX::Colors::Transparent);
     STContext()->ClearDepthStencilView(
         mDepthDsv, D3D11_CLEAR_DEPTH, 1.f, 0);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
@@ -2484,6 +2500,43 @@ bool RSPass_MRT::CreateViews()
     texDesc.Usage = D3D11_USAGE_DEFAULT;
     texDesc.CPUAccessFlags = 0;
     texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &mWorldPosRtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "mrt-worldpos";
+    dti.mTexture = texture;
+    dti.mRtv = mWorldPosRtv;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = 1280;
+    texDesc.Height = 720;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
     texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.BindFlags =
         D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -2510,6 +2563,80 @@ bool RSPass_MRT::CreateViews()
     name = "mrt-diffuse";
     dti.mTexture = texture;
     dti.mRtv = mDiffuseRtv;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = 1280;
+    texDesc.Height = 720;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &mDiffAlbeRtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "mrt-diffuse-albedo";
+    dti.mTexture = texture;
+    dti.mRtv = mDiffAlbeRtv;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = 1280;
+    texDesc.Height = 720;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &mFresShinRtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "mrt-fresnel-shinese";
+    dti.mTexture = texture;
+    dti.mRtv = mFresShinRtv;
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
