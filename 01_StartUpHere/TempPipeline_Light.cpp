@@ -349,7 +349,7 @@ void RSPass_Light::ExecuatePass()
         1, 1, &mLightInfoStructedBufferSrv);
     STContext()->PSSetShaderResources(
         3, 1, &mLightStructedBufferSrv);
-    static std::string depthtex = "light-depth-light";
+    static std::string depthtex = "light-depth-light-other";
     STContext()->PSSetShaderResources(
         5, 1, &g_Root->TexturesManager()->
         GetDataTexInfo(depthtex)->mSrv);
@@ -622,7 +622,8 @@ RSPass_Shadow::RSPass_Shadow(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
     RSPass_Base(_name, _type, _root),
     mVertexShader(nullptr),
-    mRasterizerState(nullptr), mDepthStencilView(nullptr),
+    mRasterizerState(nullptr),
+    mDepthStencilView({ nullptr,nullptr,nullptr,nullptr }),
     mDrawCallType(DRAWCALL_TYPE::OPACITY),
     mDrawCallPipe(nullptr),
     mViewProjStructedBuffer(nullptr),
@@ -682,17 +683,21 @@ void RSPass_Shadow::ReleasePass()
     RS_RELEASE(mInstanceStructedBufferSrv);
     RS_RELEASE(mInstanceStructedBuffer);
 
-    std::string name = "light-depth-light";
+    std::string name = "light-depth-light-other";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "light-depth-light-dep0";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "light-depth-light-dep1";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "light-depth-light-dep2";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "light-depth-light-dep3";
     g_Root->TexturesManager()->DeleteDataTex(name);
 }
 
 void RSPass_Shadow::ExecuatePass()
 {
     ID3D11RenderTargetView* null = nullptr;
-    STContext()->OMSetRenderTargets(1,
-        &null, mDepthStencilView);
-    STContext()->ClearDepthStencilView(
-        mDepthStencilView, D3D11_CLEAR_DEPTH, 1.f, 0);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(nullptr, nullptr, 0);
     STContext()->RSSetState(mRasterizerState);
@@ -701,67 +706,74 @@ void RSPass_Shadow::ExecuatePass()
     DirectX::XMFLOAT4X4 flt44 = {};
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
-
+    auto shadowLights = g_Root->LightsContainer()->
+        GetShadowLights();
+    UINT shadowSize = (UINT)shadowLights->size();
     D3D11_MAPPED_SUBRESOURCE msr = {};
-    STContext()->Map(mViewProjStructedBuffer, 0,
-        D3D11_MAP_WRITE_DISCARD, 0, &msr);
-    ViewProj* vp_data = (ViewProj*)msr.pData;
-    // TEMP---------------------
-    static std::string lightName = "direct-light-1";
-    static auto light = g_Root->LightsContainer()->
-        GetRSLight(lightName);
-    static auto lcam = light->GetRSLightCamera();
-    mat = DirectX::XMLoadFloat4x4(
-        &(lcam->GetRSCameraInfo()->mViewMat));
-    mat = DirectX::XMMatrixTranspose(mat);
-    DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
-    mat = DirectX::XMLoadFloat4x4(
-        &(lcam->GetRSCameraInfo()->mProjMat));
-    mat = DirectX::XMMatrixTranspose(mat);
-    DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
-    // TEMP---------------------
-    STContext()->Unmap(mViewProjStructedBuffer, 0);
 
-    STContext()->VSSetShaderResources(
-        0, 1, &mViewProjStructedBufferSrv);
-
-    for (auto& call : mDrawCallPipe->mDatas)
+    for (UINT i = 0; i < shadowSize; i++)
     {
-        auto vecPtr = call.mInstanceData.mDataPtr;
-        auto size = vecPtr->size();
-        STContext()->Map(mInstanceStructedBuffer, 0,
+        STContext()->OMSetRenderTargets(1,
+            &null, mDepthStencilView[i]);
+        STContext()->ClearDepthStencilView(
+            mDepthStencilView[i], D3D11_CLEAR_DEPTH, 1.f, 0);
+
+        STContext()->Map(mViewProjStructedBuffer, 0,
             D3D11_MAP_WRITE_DISCARD, 0, &msr);
-        RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
-        for (size_t i = 0; i < size; i++)
-        {
-            mat = DirectX::XMLoadFloat4x4(
-                &(*vecPtr)[i].mWorldMat);
-            mat = DirectX::XMMatrixTranspose(mat);
-            DirectX::XMStoreFloat4x4(&ins_data[i].mWorldMat, mat);
-            ins_data[i].mMaterialData =
-                (*vecPtr)[i].mMaterialData;
-            ins_data[i].mCustomizedData1 =
-                (*vecPtr)[i].mCustomizedData1;
-            ins_data[i].mCustomizedData2 =
-                (*vecPtr)[i].mCustomizedData2;
-        }
-        STContext()->Unmap(mInstanceStructedBuffer, 0);
+        ViewProj* vp_data = (ViewProj*)msr.pData;
+        auto light = (*shadowLights)[i];
+        auto lcam = light->GetRSLightCamera();
+        mat = DirectX::XMLoadFloat4x4(
+            &(lcam->GetRSCameraInfo()->mViewMat));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
+        mat = DirectX::XMLoadFloat4x4(
+            &(lcam->GetRSCameraInfo()->mProjMat));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+        STContext()->Unmap(mViewProjStructedBuffer, 0);
 
-        STContext()->IASetInputLayout(
-            call.mMeshData.mLayout);
-        STContext()->IASetPrimitiveTopology(
-            call.mMeshData.mTopologyType);
-        STContext()->IASetVertexBuffers(
-            0, 1, &call.mMeshData.mVertexBuffer,
-            &stride, &offset);
-        STContext()->IASetIndexBuffer(
-            call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         STContext()->VSSetShaderResources(
-            1, 1, &mInstanceStructedBufferSrv);
+            0, 1, &mViewProjStructedBufferSrv);
 
-        STContext()->DrawIndexedInstanced(
-            call.mMeshData.mIndexCount,
-            (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
+        for (auto& call : mDrawCallPipe->mDatas)
+        {
+            auto vecPtr = call.mInstanceData.mDataPtr;
+            auto size = vecPtr->size();
+            STContext()->Map(mInstanceStructedBuffer, 0,
+                D3D11_MAP_WRITE_DISCARD, 0, &msr);
+            RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
+            for (size_t i = 0; i < size; i++)
+            {
+                mat = DirectX::XMLoadFloat4x4(
+                    &(*vecPtr)[i].mWorldMat);
+                mat = DirectX::XMMatrixTranspose(mat);
+                DirectX::XMStoreFloat4x4(&ins_data[i].mWorldMat, mat);
+                ins_data[i].mMaterialData =
+                    (*vecPtr)[i].mMaterialData;
+                ins_data[i].mCustomizedData1 =
+                    (*vecPtr)[i].mCustomizedData1;
+                ins_data[i].mCustomizedData2 =
+                    (*vecPtr)[i].mCustomizedData2;
+            }
+            STContext()->Unmap(mInstanceStructedBuffer, 0);
+
+            STContext()->IASetInputLayout(
+                call.mMeshData.mLayout);
+            STContext()->IASetPrimitiveTopology(
+                call.mMeshData.mTopologyType);
+            STContext()->IASetVertexBuffers(
+                0, 1, &call.mMeshData.mVertexBuffer,
+                &stride, &offset);
+            STContext()->IASetIndexBuffer(
+                call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+            STContext()->VSSetShaderResources(
+                1, 1, &mInstanceStructedBufferSrv);
+
+            STContext()->DrawIndexedInstanced(
+                call.mMeshData.mIndexCount,
+                (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
+        }
     }
 
     STContext()->OMSetRenderTargets(1, &null, nullptr);
@@ -849,7 +861,7 @@ bool RSPass_Shadow::CreateViews()
     texDepSte.Width = 1280;
     texDepSte.Height = 720;
     texDepSte.MipLevels = 1;
-    texDepSte.ArraySize = 1;
+    texDepSte.ArraySize = MAX_SHADOW_SIZE;
     texDepSte.Format = DXGI_FORMAT_R24G8_TYPELESS;
     texDepSte.SampleDesc.Count = 1;
     texDepSte.SampleDesc.Quality = 0;
@@ -864,27 +876,48 @@ bool RSPass_Shadow::CreateViews()
 
     D3D11_DEPTH_STENCIL_VIEW_DESC desDSV = {};
     desDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-    desDSV.Texture2D.MipSlice = 0;
-    hr = Device()->CreateDepthStencilView(
-        depthTex, &desDSV, &mDepthStencilView);
-    if (FAILED(hr)) { return false; }
+    desDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+    desDSV.Texture2DArray.MipSlice = 0;
+    desDSV.Texture2DArray.ArraySize = 1;
+    for (UINT i = 0; i < MAX_SHADOW_SIZE; i++)
+    {
+        desDSV.Texture2DArray.FirstArraySlice =
+            D3D11CalcSubresource(0, i, 1);
+        hr = Device()->CreateDepthStencilView(
+            depthTex, &desDSV, &(mDepthStencilView[i]));
+        if (FAILED(hr)) { return false; }
+    }
 
     ID3D11ShaderResourceView* srv = nullptr;
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     desSRV.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-    desSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    desSRV.Texture2D.MostDetailedMip = 0;
-    desSRV.Texture2D.MipLevels = 1;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D/*ARRAY*/;
+    //desSRV.Texture2DArray.FirstArraySlice = 0;
+    desSRV.Texture2D/*Array*/.MostDetailedMip = 0;
+    desSRV.Texture2D/*Array*/.MipLevels = 1;
+    //desSRV.Texture2DArray.ArraySize = MAX_SHADOW_SIZE;
     hr = Device()->CreateShaderResourceView(
         depthTex, &desSRV, &srv);
     if (FAILED(hr)) { return false; }
 
     DATA_TEXTURE_INFO dti = {};
-    std::string name = "light-depth-light";
+    std::string name = "light-depth-light-other";
     dti.mTexture = depthTex;
-    dti.mDsv = mDepthStencilView;
     dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    dti = {};
+    name = "light-depth-light-dep0";
+    dti.mDsv = mDepthStencilView[0];
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    name = "light-depth-light-dep1";
+    dti.mDsv = mDepthStencilView[1];
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    name = "light-depth-light-dep2";
+    dti.mDsv = mDepthStencilView[2];
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    name = "light-depth-light-dep3";
+    dti.mDsv = mDepthStencilView[3];
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
     ZeroMemory(&desSRV, sizeof(desSRV));

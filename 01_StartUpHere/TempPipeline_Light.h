@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include "RSPass_Base.h"
 #include <DirectXTK\SpriteFont.h>
 
@@ -117,7 +118,7 @@ private:
 private:
     ID3D11VertexShader* mVertexShader;
     ID3D11RasterizerState* mRasterizerState;
-    ID3D11DepthStencilView* mDepthStencilView;
+    std::array<ID3D11DepthStencilView*, MAX_SHADOW_SIZE> mDepthStencilView;
     DRAWCALL_TYPE mDrawCallType;
     RSDrawCallsPipe* mDrawCallPipe;
     ID3D11Buffer* mViewProjStructedBuffer;

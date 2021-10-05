@@ -221,8 +221,17 @@ int WINAPI WinMain(
     li.mSpotPower = 2.f;
     li.mFalloffStart = 5.f;
     li.mFalloffEnd = 15.f;
+    ci = {};
+    ci.mType = LENS_TYPE::ORTHOGRAPHIC;
+    ci.mPosition = li.mPosition;
+    ci.mLookAt = li.mDirection;
+    ci.mUpVec = { 1.f,1.f,0.f };
+    ci.mNearFarZ = { 1.f,100.f };
+    ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
+    ci.mOWidthAndHeight = { 12.8f * 9.5f,7.2f * 9.5f };
     auto light2 = root->LightsContainer()->CreateRSLight(
         name, &li);
+    root->LightsContainer()->CreateLightCameraFor(name, &ci);
 
     name = "point-light-1";
     li = {};
