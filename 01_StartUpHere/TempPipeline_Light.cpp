@@ -273,30 +273,51 @@ void RSPass_Light::ExecuatePass()
     amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
     STContext()->Unmap(mAmbientStructedBuffer, 0);
 
+    static auto lights = g_Root->LightsContainer()->GetLights();
     STContext()->Map(mLightInfoStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     LightInfo* li_data = (LightInfo*)msr.pData;
     li_data[0].mCameraPos = mRSCameraInfo->mEyePosition;
-    li_data[0].mDirectLightNum = 1;
+    UINT dNum = 0;
+    UINT sNum = 0;
+    UINT pNum = 0;
+    for (auto& l : *lights)
+    {
+        auto type = l->GetRSLightType();
+        switch (type)
+        {
+        case LIGHT_TYPE::DIRECT:
+            ++dNum; break;
+        case LIGHT_TYPE::POINT:
+            ++pNum; break;
+        case LIGHT_TYPE::SPOT:
+            ++sNum; break;
+        default: break;
+        }
+    }
+    li_data[0].mDirectLightNum = dNum;
+    li_data[0].mPointLightNum = pNum;
+    li_data[0].mSpotLightNum = sNum;
     STContext()->Unmap(mLightInfoStructedBuffer, 0);
 
     STContext()->Map(mLightStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     RS_LIGHT_INFO* l_data = (RS_LIGHT_INFO*)msr.pData;
-    // TEMP-----------------------
-    static std::string lightName = "direct-light-1";
-    static auto light = g_Root->LightsContainer()->
-        GetRSLight(lightName);
-    static auto info = light->GetRSLightInfo();
-    static auto lcam = light->GetRSLightCamera();
-    l_data[0] = *info;
-    // TEMP-----------------------
+    UINT lightIndex = 0;
+    for (auto& l : *lights)
+    {
+        l_data[lightIndex++] = *(l->GetRSLightInfo());
+    }
     STContext()->Unmap(mLightStructedBuffer, 0);
 
     STContext()->Map(mShadowStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     ShadowInfo* s_data = (ShadowInfo*)msr.pData;
     // TEMP---------------------
+    static std::string lightName = "direct-light-1";
+    static auto light = g_Root->LightsContainer()->
+        GetRSLight(lightName);
+    static auto lcam = light->GetRSLightCamera();
     mat = DirectX::XMLoadFloat4x4(
         &(lcam->GetRSCameraInfo()->mViewMat));
     mat = DirectX::XMMatrixTranspose(mat);

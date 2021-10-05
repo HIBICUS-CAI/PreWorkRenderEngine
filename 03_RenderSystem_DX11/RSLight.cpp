@@ -38,6 +38,11 @@ RS_LIGHT_INFO* RSLight::GetRSLightInfo()
     return &mRSLightInfo;
 }
 
+LIGHT_TYPE RSLight::GetRSLightType()
+{
+    return mLightType;
+}
+
 void RSLight::ResetRSLight(LIGHT_INFO* _info)
 {
     mLightType = _info->mType;

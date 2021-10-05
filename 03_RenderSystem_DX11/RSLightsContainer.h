@@ -28,11 +28,15 @@ public:
 
     bool CreateLightCameraFor(std::string& _name, CAM_INFO* _info);
 
+    std::vector<class RSLight*>* GetLights();
+    std::vector<class RSLight*>* GetShadowLights();
+
 private:
     class RSRoot_DX11* mRootPtr;
 
     std::unordered_map<std::string, class RSLight*> mLightMap;
 
+    std::vector<class RSLight*> mLights;
     std::vector<class RSLight*> mShadowLights;
 };
 

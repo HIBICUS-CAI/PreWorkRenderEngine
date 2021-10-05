@@ -195,7 +195,7 @@ int WINAPI WinMain(
     li.mWithShadow = true;
     li.mPosition = { 0.f,30.f,-30.f };
     li.mDirection = { 0.f,-1.f,1.f };
-    li.mStrength = { 1.f,1.f,1.f };
+    li.mStrength = { 0.5f,0.5f,0.5f };
     li.mSpotPower = 2.f;
     li.mFalloffStart = 5.f;
     li.mFalloffEnd = 15.f;
@@ -210,6 +210,32 @@ int WINAPI WinMain(
     auto light1 = root->LightsContainer()->CreateRSLight(
         name, &li);
     root->LightsContainer()->CreateLightCameraFor(name, &ci);
+
+    name = "direct-light-2";
+    li = {};
+    li.mType = LIGHT_TYPE::DIRECT;
+    li.mWithShadow = true;
+    li.mPosition = { -30.f,30.f,0.f };
+    li.mDirection = { 1.f,-1.f,0.f };
+    li.mStrength = { 0.5f,0.5f,0.5f };
+    li.mSpotPower = 2.f;
+    li.mFalloffStart = 5.f;
+    li.mFalloffEnd = 15.f;
+    auto light2 = root->LightsContainer()->CreateRSLight(
+        name, &li);
+
+    name = "point-light-1";
+    li = {};
+    li.mType = LIGHT_TYPE::POINT;
+    li.mWithShadow = false;
+    li.mPosition = { -17.5f,0.f,-17.5f };
+    li.mDirection = { 1.f,-1.f,0.f };
+    li.mStrength = { 0.7f,0.f,0.7f };
+    li.mSpotPower = 2.f;
+    li.mFalloffStart = 3.f;
+    li.mFalloffEnd = 8.f;
+    auto light3 = root->LightsContainer()->CreateRSLight(
+        name, &li);
 
     PassRootToTempWireFramePipeline(root);
     PassRootToTempLightPipeline(root);

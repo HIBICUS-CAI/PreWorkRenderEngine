@@ -11,6 +11,7 @@
 #include "RSCamerasContainer.h"
 #include "RSRoot_DX11.h"
 #include "RSLight.h"
+#include <algorithm>
 
 RSLightsContainer::RSLightsContainer() :
     mRootPtr(nullptr), mLightMap({}), mShadowLights({})
@@ -41,6 +42,11 @@ void RSLightsContainer::CleanAndStop()
     mLightMap.clear();
 }
 
+bool LightLessCompare(RSLight* a, RSLight* b)
+{
+    return (UINT)a->GetRSLightType() < (UINT)b->GetRSLightType();
+}
+
 RSLight* RSLightsContainer::CreateRSLight(
     std::string& _name, LIGHT_INFO* _info)
 {
@@ -50,6 +56,9 @@ RSLight* RSLightsContainer::CreateRSLight(
     {
         RSLight* light = new RSLight(_info);
         mLightMap.insert({ _name,light });
+        mLights.emplace_back(light);
+        std::sort(mLights.begin(), mLights.end(),
+            LightLessCompare);
         if (_info->mWithShadow)
         {
             mShadowLights.emplace_back(light);
@@ -91,8 +100,24 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
     auto found = mLightMap.find(_name);
     if (found != mLightMap.end())
     {
-        delete found->second;
         mLightMap.erase(found);
+        for (auto i = mLights.begin(); i != mLights.end(); i++)
+        {
+            if ((*i) == found->second)
+            {
+                mLights.erase(i);
+                break;
+            }
+        }
+        for (auto i = mShadowLights.begin();
+            i != mShadowLights.end(); i++)
+        {
+            if ((*i) == found->second)
+            {
+                mShadowLights.erase(i);
+            }
+        }
+        delete found->second;
     }
 }
 
@@ -117,4 +142,14 @@ bool RSLightsContainer::CreateLightCameraFor(
     {
         return false;
     }
+}
+
+std::vector<RSLight*>* RSLightsContainer::GetLights()
+{
+    return &mLights;
+}
+
+std::vector<RSLight*>* RSLightsContainer::GetShadowLights()
+{
+    return &mShadowLights;
 }

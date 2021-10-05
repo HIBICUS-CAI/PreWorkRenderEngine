@@ -21,6 +21,7 @@ public:
         CAM_INFO* _info, class RSCamerasContainer* _camContainer);
 
     RS_LIGHT_INFO* GetRSLightInfo();
+    LIGHT_TYPE GetRSLightType();
     class RSCamera* GetRSLightCamera();
     void ResetRSLight(LIGHT_INFO* _info);
 

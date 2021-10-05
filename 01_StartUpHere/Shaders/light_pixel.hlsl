@@ -101,10 +101,34 @@ float4 main(VS_OUTPUT _in) : SV_TARGET
     _in.SsaoPosH /= _in.SsaoPosH.w;
     float access = gSsaoMap.SampleLevel(gSampler, _in.SsaoPosH.xy, 0.0f).r;
     float4 ambientL = gAmbient[0].gAmbient * gMaterial[0].gDiffuseAlbedo * access;
-    float4 directL = float4(ComputeDirectionalLight(gLights[0], gMaterial[0],
+    
+    float4 directL = (float4)0.0f;
+    uint i = 0;
+    uint dNum = gLightInfo[0].gDirectLightNum;
+    uint pNum = gLightInfo[0].gPointLightNum;
+    uint sNum = gLightInfo[0].gSpotLightNum;
+    for (i = 0; i < dNum; ++i)
+    {
+        directL += float4(ComputeDirectionalLight(gLights[i], gMaterial[0],
         _in.NormalW, toEyeW), 0.0f);
-    float shadow = CalcShadowFactor(_in.ShadowPosH);
-    directL.xyz *= shadow;
+        // TEMP-----------------
+        if (i == 0)
+        {
+            float shadow = CalcShadowFactor(_in.ShadowPosH);
+            directL.xyz *= shadow;
+        }
+        // TEMP-----------------
+    }
+    for (i = dNum; i < dNum + pNum; ++i)
+    {
+        directL += float4(ComputePointLight(gLights[i], gMaterial[0],
+        _in.PosW, _in.NormalW, toEyeW), 0.0f);
+    }
+    for (i = dNum + pNum; i < dNum + pNum + sNum; ++i)
+    {
+        directL += float4(ComputeSpotLight(gLights[i], gMaterial[0],
+        _in.PosW, _in.NormalW, toEyeW), 0.0f);
+    }
     
     float4 litColor = ambientL + directL;
     float4 texColor = gDiffuse.Sample(gSampler,_in.TexCoordL);
