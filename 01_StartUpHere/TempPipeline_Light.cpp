@@ -298,6 +298,8 @@ void RSPass_Light::ExecuatePass()
     li_data[0].mDirectLightNum = dNum;
     li_data[0].mPointLightNum = pNum;
     li_data[0].mSpotLightNum = sNum;
+    li_data[0].mShadowLightNum = (UINT)g_Root->LightsContainer()->
+        GetShadowLights()->size();
     STContext()->Unmap(mLightInfoStructedBuffer, 0);
 
     STContext()->Map(mLightStructedBuffer, 0,
@@ -314,18 +316,22 @@ void RSPass_Light::ExecuatePass()
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     ShadowInfo* s_data = (ShadowInfo*)msr.pData;
     // TEMP---------------------
-    static std::string lightName = "direct-light-1";
-    static auto light = g_Root->LightsContainer()->
-        GetRSLight(lightName);
-    static auto lcam = light->GetRSLightCamera();
-    mat = DirectX::XMLoadFloat4x4(
-        &(lcam->GetRSCameraInfo()->mViewMat));
-    mat = DirectX::XMMatrixTranspose(mat);
-    DirectX::XMStoreFloat4x4(&s_data[0].mShadowViewMat, mat);
-    mat = DirectX::XMLoadFloat4x4(
-        &(lcam->GetRSCameraInfo()->mProjMat));
-    mat = DirectX::XMMatrixTranspose(mat);
-    DirectX::XMStoreFloat4x4(&s_data[0].mShadowProjMat, mat);
+    auto shadowLights = g_Root->LightsContainer()->
+        GetShadowLights();
+    UINT shadowSize = (UINT)shadowLights->size();
+    for (UINT i = 0; i < shadowSize; i++)
+    {
+        auto lcam = (*shadowLights)[i]->GetRSLightCamera();
+        mat = DirectX::XMLoadFloat4x4(
+            &(lcam->GetRSCameraInfo()->mViewMat));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&s_data[i].mShadowViewMat, mat);
+        mat = DirectX::XMLoadFloat4x4(
+            &(lcam->GetRSCameraInfo()->mProjMat));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&s_data[i].mShadowProjMat, mat);
+    }
+
     static DirectX::XMMATRIX T(
         0.5f, 0.0f, 0.0f, 0.0f,
         0.0f, -0.5f, 0.0f, 0.0f,
@@ -519,7 +525,7 @@ bool RSPass_Light::CreateBuffers()
         &bdc, nullptr, &mMaterialStructedBuffer);
     if (FAILED(hr)) { return false; }
 
-    bdc.ByteWidth = sizeof(ShadowInfo);
+    bdc.ByteWidth = MAX_SHADOW_SIZE * sizeof(ShadowInfo);
     bdc.StructureByteStride = sizeof(ShadowInfo);
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mShadowStructedBuffer);
@@ -573,6 +579,7 @@ bool RSPass_Light::CreateViews()
         &desSRV, &mMaterialStructedBufferSrv);
     if (FAILED(hr)) { return false; }
 
+    desSRV.Buffer.ElementWidth = MAX_SHADOW_SIZE;
     hr = Device()->CreateShaderResourceView(
         mShadowStructedBuffer,
         &desSRV, &mShadowStructedBufferSrv);
@@ -891,11 +898,11 @@ bool RSPass_Shadow::CreateViews()
     ID3D11ShaderResourceView* srv = nullptr;
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     desSRV.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-    desSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D/*ARRAY*/;
-    //desSRV.Texture2DArray.FirstArraySlice = 0;
-    desSRV.Texture2D/*Array*/.MostDetailedMip = 0;
-    desSRV.Texture2D/*Array*/.MipLevels = 1;
-    //desSRV.Texture2DArray.ArraySize = MAX_SHADOW_SIZE;
+    desSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+    desSRV.Texture2DArray.FirstArraySlice = 0;
+    desSRV.Texture2DArray.MostDetailedMip = 0;
+    desSRV.Texture2DArray.MipLevels = 1;
+    desSRV.Texture2DArray.ArraySize = MAX_SHADOW_SIZE;
     hr = Device()->CreateShaderResourceView(
         depthTex, &desSRV, &srv);
     if (FAILED(hr)) { return false; }

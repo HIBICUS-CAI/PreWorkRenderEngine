@@ -24,7 +24,7 @@ struct LightInfo
     UINT mDirectLightNum = 0;
     UINT mSpotLightNum = 0;
     UINT mPointLightNum = 0;
-    UINT mPad1 = 0;
+    UINT mShadowLightNum = 0;
 };
 
 struct ShadowInfo

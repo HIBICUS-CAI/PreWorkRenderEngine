@@ -4,8 +4,8 @@ struct VS_OUTPUT
 {
     float4 PosH : SV_POSITION;
     float3 PosW : POSITION0;
-    float4 ShadowPosH : POSITION1;
-    float4 SsaoPosH : POSITION2;
+    float4 ShadowPosH[4] : POSITION1;
+    float4 SsaoPosH : POSITION5;
     float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
     float2 TexCoordL : TEXCOORD;
@@ -24,7 +24,7 @@ struct LIGHT_INFO
     uint gDirectLightNum;
     uint gSpotLightNum;
     uint gPointLightNum;
-    uint gPad1;
+    uint gShadowLightNum;
 };
 
 SamplerState gSampler : register(s0);
@@ -36,18 +36,18 @@ StructuredBuffer<MATERIAL> gMaterial : register(t2);
 StructuredBuffer<LIGHT> gLights : register(t3);
 
 Texture2D gDiffuse : register(t4);
-Texture2D<float> gShadowMap : register(t5);
+Texture2DArray<float> gShadowMap : register(t5);
 Texture2D gSsaoMap : register(t6);
 Texture2D gBumpedMap : register(t7);
 
-float CalcShadowFactor(float4 _shadowPosH)
+float CalcShadowFactor(float4 _shadowPosH, float _slice)
 {
     _shadowPosH.xyz /= _shadowPosH.w;
     _shadowPosH.x = 0.5f * _shadowPosH.x + 0.5f;
     _shadowPosH.y = -0.5f * _shadowPosH.y + 0.5f;
 
-    uint width, height, numMips;
-    gShadowMap.GetDimensions(0, width, height, numMips);
+    uint width, height, numMips, elements;
+    gShadowMap.GetDimensions(0, width, height, elements, numMips);
 
     const float WIDTH = (float)width;
     const float DX = 1.0f / WIDTH;
@@ -63,11 +63,12 @@ float CalcShadowFactor(float4 _shadowPosH)
         float2(-DX,  +DY), float2(0.0f,  +DY), float2(DX,  +DY)
     };
     
+    float3 pos = float3(_shadowPosH.xy, _slice);
     [unroll]
     for(int i = 0; i < 9; ++i)
     {
         percentLit += gShadowMap.SampleCmpLevelZero(gShadowComSam,
-            _shadowPosH.xy + offsets[i], depth).r;
+            pos + float3(offsets[i], 0.0f), depth).r;
     }
 
     return percentLit / 9.0f;
@@ -103,6 +104,7 @@ float4 main(VS_OUTPUT _in) : SV_TARGET
     float4 ambientL = gAmbient[0].gAmbient * gMaterial[0].gDiffuseAlbedo * access;
     
     float4 directL = (float4)0.0f;
+    float shadow = 0.0f;
     uint i = 0;
     uint dNum = gLightInfo[0].gDirectLightNum;
     uint pNum = gLightInfo[0].gPointLightNum;
@@ -114,11 +116,18 @@ float4 main(VS_OUTPUT _in) : SV_TARGET
         // TEMP-----------------
         if (i == 0)
         {
-            float shadow = CalcShadowFactor(_in.ShadowPosH);
-            directL.xyz *= shadow;
+            shadow += CalcShadowFactor(_in.ShadowPosH[0], 0.0f);
+            // directL.xyz *= shadow;
+        }
+        if (i == 1)
+        {
+            shadow += CalcShadowFactor(_in.ShadowPosH[1], 1.0f);
+            // directL.xyz *= shadow;
         }
         // TEMP-----------------
     }
+    shadow /= gLightInfo[0].gShadowLightNum;
+    directL.xyz *= shadow;
     for (i = dNum; i < dNum + pNum; ++i)
     {
         directL += float4(ComputePointLight(gLights[i], gMaterial[0],
