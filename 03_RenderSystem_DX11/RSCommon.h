@@ -25,6 +25,11 @@ enum class PASS_TYPE
 
 constexpr UINT RS_INVALID_ORDER = 0;
 
+constexpr UINT MAX_STRUCTURED_BUFFER_SIZE = 256;
+constexpr UINT MAX_INSTANCE_SIZE = MAX_STRUCTURED_BUFFER_SIZE;
+constexpr UINT MAX_LIGHT_SIZE = MAX_STRUCTURED_BUFFER_SIZE;
+constexpr UINT MAX_SHADOW_SIZE = 4;
+
 enum class LAYOUT_TYPE
 {
     NORMAL_COLOR,
@@ -81,6 +86,7 @@ enum class LIGHT_TYPE
 struct LIGHT_INFO
 {
     LIGHT_TYPE mType = LIGHT_TYPE::DIRECT;
+    bool mWithShadow = false;
     DirectX::XMFLOAT3 mStrength = {};
     float mFalloffStart = 0.f;
     DirectX::XMFLOAT3 mDirection = {};

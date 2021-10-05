@@ -192,6 +192,7 @@ int WINAPI WinMain(
     name = "direct-light-1";
     LIGHT_INFO li = {};
     li.mType = LIGHT_TYPE::DIRECT;
+    li.mWithShadow = true;
     li.mPosition = { 0.f,30.f,-30.f };
     li.mDirection = { 0.f,-1.f,1.f };
     li.mStrength = { 1.f,1.f,1.f };

@@ -33,6 +33,8 @@ public:
 private:
     LIGHT_TYPE mLightType;
 
+    bool mWithShadow;
+
     DirectX::XMFLOAT3 mLightStrength;
     DirectX::XMFLOAT3 mLightDirection;
     DirectX::XMFLOAT3 mLightPosition;

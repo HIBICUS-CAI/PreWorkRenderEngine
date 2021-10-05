@@ -12,6 +12,7 @@
 
 RSLight::RSLight(LIGHT_INFO* _info) :
     mLightType(_info->mType),
+    mWithShadow(_info->mWithShadow),
     mLightStrength(_info->mStrength),
     mLightDirection(_info->mDirection),
     mLightPosition(_info->mPosition),

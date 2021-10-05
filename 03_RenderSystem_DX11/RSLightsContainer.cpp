@@ -13,7 +13,7 @@
 #include "RSLight.h"
 
 RSLightsContainer::RSLightsContainer() :
-    mRootPtr(nullptr), mLightMap({})
+    mRootPtr(nullptr), mLightMap({}), mShadowLights({})
 {
 
 }
@@ -50,6 +50,10 @@ RSLight* RSLightsContainer::CreateRSLight(
     {
         RSLight* light = new RSLight(_info);
         mLightMap.insert({ _name,light });
+        if (_info->mWithShadow)
+        {
+            mShadowLights.emplace_back(light);
+        }
     }
 
     return mLightMap[_name];

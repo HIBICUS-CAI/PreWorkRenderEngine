@@ -32,5 +32,7 @@ private:
     class RSRoot_DX11* mRootPtr;
 
     std::unordered_map<std::string, class RSLight*> mLightMap;
+
+    std::vector<class RSLight*> mShadowLights;
 };
 

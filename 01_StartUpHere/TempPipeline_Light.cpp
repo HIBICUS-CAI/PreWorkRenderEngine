@@ -461,14 +461,14 @@ bool RSPass_Light::CreateBuffers()
     bdc.Usage = D3D11_USAGE_DYNAMIC;
     bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    bdc.ByteWidth = 256 * sizeof(RS_LIGHT_INFO);
+    bdc.ByteWidth = MAX_LIGHT_SIZE * sizeof(RS_LIGHT_INFO);
     bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     bdc.StructureByteStride = sizeof(RS_LIGHT_INFO);
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mLightStructedBuffer);
     if (FAILED(hr)) { return false; }
 
-    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.ByteWidth = MAX_INSTANCE_SIZE * sizeof(RS_INSTANCE_DATA);
     bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mInstanceStructedBuffer);
@@ -520,7 +520,7 @@ bool RSPass_Light::CreateViews()
     ZeroMemory(&desSRV, sizeof(desSRV));
     desSRV.Format = DXGI_FORMAT_UNKNOWN;
     desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    desSRV.Buffer.ElementWidth = 256;
+    desSRV.Buffer.ElementWidth = MAX_INSTANCE_SIZE;
     hr = Device()->CreateShaderResourceView(
         mInstanceStructedBuffer,
         &desSRV, &mInstanceStructedBufferSrv);
@@ -804,7 +804,7 @@ bool RSPass_Shadow::CreateBuffers()
     bdc.Usage = D3D11_USAGE_DYNAMIC;
     bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.ByteWidth = MAX_INSTANCE_SIZE * sizeof(RS_INSTANCE_DATA);
     bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
     hr = Device()->CreateBuffer(
@@ -869,7 +869,7 @@ bool RSPass_Shadow::CreateViews()
     ZeroMemory(&desSRV, sizeof(desSRV));
     desSRV.Format = DXGI_FORMAT_UNKNOWN;
     desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    desSRV.Buffer.ElementWidth = 256;
+    desSRV.Buffer.ElementWidth = MAX_INSTANCE_SIZE;
     hr = Device()->CreateShaderResourceView(
         mInstanceStructedBuffer,
         &desSRV, &mInstanceStructedBufferSrv);
@@ -2006,7 +2006,7 @@ bool RSPass_Sprite::CreateBuffers()
     bdc.Usage = D3D11_USAGE_DYNAMIC;
     bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.ByteWidth = MAX_INSTANCE_SIZE * sizeof(RS_INSTANCE_DATA);
     bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
     hr = Device()->CreateBuffer(
@@ -2031,7 +2031,7 @@ bool RSPass_Sprite::CreateViews()
     ZeroMemory(&desSRV, sizeof(desSRV));
     desSRV.Format = DXGI_FORMAT_UNKNOWN;
     desSRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    desSRV.Buffer.ElementWidth = 256;
+    desSRV.Buffer.ElementWidth = MAX_INSTANCE_SIZE;
     hr = Device()->CreateShaderResourceView(
         mInstanceStructedBuffer,
         &desSRV, &mInstanceStructedBufferSrv);
@@ -2278,7 +2278,7 @@ bool RSPass_MRT::CreateBuffers()
     bdc.Usage = D3D11_USAGE_DYNAMIC;
     bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    bdc.ByteWidth = 256 * sizeof(RS_INSTANCE_DATA);
+    bdc.ByteWidth = MAX_INSTANCE_SIZE * sizeof(RS_INSTANCE_DATA);
     bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
     hr = Device()->CreateBuffer(
@@ -2306,7 +2306,7 @@ bool RSPass_MRT::CreateViews()
     ZeroMemory(&srvDesc, sizeof(srvDesc));
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    srvDesc.Buffer.ElementWidth = 256;
+    srvDesc.Buffer.ElementWidth = MAX_INSTANCE_SIZE;
     hr = Device()->CreateShaderResourceView(
         mInstanceStructedBuffer,
         &srvDesc, &mInstanceStructedBufferSrv);
