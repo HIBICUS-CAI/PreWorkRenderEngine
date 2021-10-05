@@ -30,6 +30,7 @@ public:
 
     std::vector<class RSLight*>* GetLights();
     std::vector<class RSLight*>* GetShadowLights();
+    std::vector<INT>* GetShadowLightIndeices();
 
 private:
     class RSRoot_DX11* mRootPtr;
@@ -38,5 +39,6 @@ private:
 
     std::vector<class RSLight*> mLights;
     std::vector<class RSLight*> mShadowLights;
+    std::vector<INT> mShadowLightIndeices;
 };
 

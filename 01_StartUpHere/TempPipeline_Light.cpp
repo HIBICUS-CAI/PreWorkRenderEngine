@@ -300,6 +300,20 @@ void RSPass_Light::ExecuatePass()
     li_data[0].mSpotLightNum = sNum;
     li_data[0].mShadowLightNum = (UINT)g_Root->LightsContainer()->
         GetShadowLights()->size();
+    li_data[0].mShadowLightIndex[0] = -1;
+    li_data[0].mShadowLightIndex[1] = -1;
+    li_data[0].mShadowLightIndex[2] = -1;
+    li_data[0].mShadowLightIndex[3] = -1;
+    auto shadowIndeices = g_Root->LightsContainer()->
+        GetShadowLightIndeices();
+    for (UINT i = 0; i < li_data[0].mShadowLightNum; i++)
+    {
+        li_data[0].mShadowLightIndex[i] = (*shadowIndeices)[i];
+        if (i >= 3)
+        {
+            break;
+        }
+    }
     STContext()->Unmap(mLightInfoStructedBuffer, 0);
 
     STContext()->Map(mLightStructedBuffer, 0,

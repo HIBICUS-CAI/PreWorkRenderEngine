@@ -195,7 +195,7 @@ int WINAPI WinMain(
     li.mWithShadow = true;
     li.mPosition = { 0.f,30.f,-30.f };
     li.mDirection = { 0.f,-1.f,1.f };
-    li.mStrength = { 0.5f,0.5f,0.5f };
+    li.mStrength = { 0.8f,0.8f,0.8f };
     li.mSpotPower = 2.f;
     li.mFalloffStart = 5.f;
     li.mFalloffEnd = 15.f;
@@ -217,7 +217,7 @@ int WINAPI WinMain(
     li.mWithShadow = true;
     li.mPosition = { -30.f,30.f,0.f };
     li.mDirection = { 1.f,-1.f,0.f };
-    li.mStrength = { 0.5f,0.5f,0.5f };
+    li.mStrength = { 0.8f,0.8f,0.8f };
     li.mSpotPower = 2.f;
     li.mFalloffStart = 5.f;
     li.mFalloffEnd = 15.f;
@@ -239,7 +239,7 @@ int WINAPI WinMain(
     li.mWithShadow = false;
     li.mPosition = { -17.5f,0.f,-17.5f };
     li.mDirection = { 1.f,-1.f,0.f };
-    li.mStrength = { 0.7f,0.f,0.7f };
+    li.mStrength = { 0.9f,0.f,0.9f };
     li.mSpotPower = 2.f;
     li.mFalloffStart = 3.f;
     li.mFalloffEnd = 8.f;

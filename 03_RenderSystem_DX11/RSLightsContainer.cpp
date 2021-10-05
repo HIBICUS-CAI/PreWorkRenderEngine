@@ -14,7 +14,8 @@
 #include <algorithm>
 
 RSLightsContainer::RSLightsContainer() :
-    mRootPtr(nullptr), mLightMap({}), mShadowLights({})
+    mRootPtr(nullptr), mLightMap({}), mShadowLights({}),
+    mShadowLightIndeices({})
 {
 
 }
@@ -62,6 +63,8 @@ RSLight* RSLightsContainer::CreateRSLight(
         if (_info->mWithShadow)
         {
             mShadowLights.emplace_back(light);
+            mShadowLightIndeices.emplace_back(
+                (UINT)(mShadowLights.size() - 1));
         }
     }
 
@@ -109,6 +112,7 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
                 break;
             }
         }
+        // TODO delete shadow and shadow index
         for (auto i = mShadowLights.begin();
             i != mShadowLights.end(); i++)
         {
@@ -152,4 +156,9 @@ std::vector<RSLight*>* RSLightsContainer::GetLights()
 std::vector<RSLight*>* RSLightsContainer::GetShadowLights()
 {
     return &mShadowLights;
+}
+
+std::vector<INT>* RSLightsContainer::GetShadowLightIndeices()
+{
+    return &mShadowLightIndeices;
 }

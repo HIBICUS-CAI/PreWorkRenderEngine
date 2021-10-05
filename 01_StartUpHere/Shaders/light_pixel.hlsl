@@ -25,6 +25,7 @@ struct LIGHT_INFO
     uint gSpotLightNum;
     uint gPointLightNum;
     uint gShadowLightNum;
+    int gShadowLightIndex[4];
 };
 
 SamplerState gSampler : register(s0);
@@ -104,30 +105,40 @@ float4 main(VS_OUTPUT _in) : SV_TARGET
     float4 ambientL = gAmbient[0].gAmbient * gMaterial[0].gDiffuseAlbedo * access;
     
     float4 directL = (float4)0.0f;
+    float4 tempL = (float4)0.0f;
     float shadow = 0.0f;
     uint i = 0;
+    uint j = 0;
+    int intjIndex = (int)j;
     uint dNum = gLightInfo[0].gDirectLightNum;
     uint pNum = gLightInfo[0].gPointLightNum;
     uint sNum = gLightInfo[0].gSpotLightNum;
     for (i = 0; i < dNum; ++i)
     {
-        directL += float4(ComputeDirectionalLight(gLights[i], gMaterial[0],
+        tempL = float4(ComputeDirectionalLight(gLights[i], gMaterial[0],
         _in.NormalW, toEyeW), 0.0f);
-        // TEMP-----------------
-        if (i == 0)
+        if (i == gLightInfo[0].gShadowLightIndex[0])
         {
-            shadow += CalcShadowFactor(_in.ShadowPosH[0], 0.0f);
-            // directL.xyz *= shadow;
+            shadow = CalcShadowFactor(_in.ShadowPosH[0], 0.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
         }
-        if (i == 1)
+        else if (i == gLightInfo[0].gShadowLightIndex[1])
         {
-            shadow += CalcShadowFactor(_in.ShadowPosH[1], 1.0f);
-            // directL.xyz *= shadow;
+            shadow = CalcShadowFactor(_in.ShadowPosH[1], 1.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
         }
-        // TEMP-----------------
+        else if (i == gLightInfo[0].gShadowLightIndex[2])
+        {
+            shadow = CalcShadowFactor(_in.ShadowPosH[2], 2.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
+        }
+        else if (i == gLightInfo[0].gShadowLightIndex[3])
+        {
+            shadow = CalcShadowFactor(_in.ShadowPosH[3], 3.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
+        }
+        directL += tempL;
     }
-    shadow /= gLightInfo[0].gShadowLightNum;
-    directL.xyz *= shadow;
     for (i = dNum; i < dNum + pNum; ++i)
     {
         directL += float4(ComputePointLight(gLights[i], gMaterial[0],
@@ -135,8 +146,29 @@ float4 main(VS_OUTPUT _in) : SV_TARGET
     }
     for (i = dNum + pNum; i < dNum + pNum + sNum; ++i)
     {
-        directL += float4(ComputeSpotLight(gLights[i], gMaterial[0],
+        tempL = float4(ComputeSpotLight(gLights[i], gMaterial[0],
         _in.PosW, _in.NormalW, toEyeW), 0.0f);
+        if (i == gLightInfo[0].gShadowLightIndex[0])
+        {
+            shadow = CalcShadowFactor(_in.ShadowPosH[0], 0.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
+        }
+        else if (i == gLightInfo[0].gShadowLightIndex[1])
+        {
+            shadow = CalcShadowFactor(_in.ShadowPosH[1], 1.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
+        }
+        else if (i == gLightInfo[0].gShadowLightIndex[2])
+        {
+            shadow = CalcShadowFactor(_in.ShadowPosH[2], 2.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
+        }
+        else if (i == gLightInfo[0].gShadowLightIndex[3])
+        {
+            shadow = CalcShadowFactor(_in.ShadowPosH[3], 3.0f);
+            tempL.xyz *= shadow / gLightInfo[0].gShadowLightNum;
+        }
+        directL += tempL;
     }
     
     float4 litColor = ambientL + directL;

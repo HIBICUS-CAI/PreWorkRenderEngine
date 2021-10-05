@@ -25,6 +25,7 @@ struct LightInfo
     UINT mSpotLightNum = 0;
     UINT mPointLightNum = 0;
     UINT mShadowLightNum = 0;
+    INT mShadowLightIndex[4] = { -1,-1,-1,-1 };
 };
 
 struct ShadowInfo
