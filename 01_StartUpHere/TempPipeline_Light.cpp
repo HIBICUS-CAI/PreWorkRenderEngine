@@ -1121,6 +1121,10 @@ void RSPass_Ssao::ExecuatePass()
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&ss_data[0].mProj, mat);
 
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&ss_data[0].mView, mat);
+
     mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvProjMat);
     mat = DirectX::XMMatrixTranspose(mat);
     DirectX::XMStoreFloat4x4(&ss_data[0].mInvProj, mat);
@@ -2287,8 +2291,6 @@ void RSPass_MRT::ExecuatePass()
 
     STContext()->VSSetShaderResources(
         0, 1, &mViewProjStructedBufferSrv);
-    STContext()->PSSetShaderResources(
-        0, 1, &mViewProjStructedBufferSrv);
 
     for (auto& call : mDrawCallPipe->mDatas)
     {
@@ -2324,11 +2326,11 @@ void RSPass_MRT::ExecuatePass()
         STContext()->VSSetShaderResources(
             1, 1, &mInstanceStructedBufferSrv);
         STContext()->PSSetShaderResources(
-            1, 1, &(call.mTextureDatas[0].mSrv));
+            0, 1, &(call.mTextureDatas[0].mSrv));
         if (call.mTextureDatas[1].mUse)
         {
             STContext()->PSSetShaderResources(
-                2, 1, &(call.mTextureDatas[1].mSrv));
+                1, 1, &(call.mTextureDatas[1].mSrv));
         }
 
         STContext()->DrawIndexedInstanced(
@@ -2693,7 +2695,8 @@ RSPass_Defered::RSPass_Defered(
     mSsaoSrv(nullptr),
     mVertexBuffer(nullptr), mIndexBuffer(nullptr),
     mWorldPosSrv(nullptr), mNormalSrv(nullptr), mDiffuseSrv(nullptr),
-    mDiffuseAlbedoSrv(nullptr), mFresenlShineseSrv(nullptr)
+    mDiffuseAlbedoSrv(nullptr), mFresenlShineseSrv(nullptr),
+    mRSCameraInfo(nullptr), mShadowDepthSrv(nullptr)
 {
 
 }
@@ -2721,7 +2724,9 @@ RSPass_Defered::RSPass_Defered(const RSPass_Defered& _source) :
     mNormalSrv(_source.mNormalSrv),
     mDiffuseSrv(_source.mDiffuseSrv),
     mDiffuseAlbedoSrv(_source.mDiffuseAlbedoSrv),
-    mFresenlShineseSrv(_source.mFresenlShineseSrv)
+    mFresenlShineseSrv(_source.mFresenlShineseSrv),
+    mRSCameraInfo(_source.mRSCameraInfo),
+    mShadowDepthSrv(_source.mShadowDepthSrv)
 {
 
 }
@@ -2742,6 +2747,10 @@ bool RSPass_Defered::InitPass()
     if (!CreateBuffers()) { return false; }
     if (!CreateViews()) { return false; }
     if (!CreateSamplers()) { return false; }
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
 
     return true;
 }
@@ -2773,8 +2782,123 @@ void RSPass_Defered::ExecuatePass()
         mRenderTargetView, DirectX::Colors::DarkGreen);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
+
+    DirectX::XMMATRIX mat = {};
+    DirectX::XMFLOAT4X4 flt44 = {};
     UINT stride = sizeof(VERTEX_INFO);
     UINT offset = 0;
+
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+    STContext()->Map(mAmbientStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    Ambient* amb_data = (Ambient*)msr.pData;
+    amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
+    STContext()->Unmap(mAmbientStructedBuffer, 0);
+
+    static auto lights = g_Root->LightsContainer()->GetLights();
+    STContext()->Map(mLightInfoStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    LightInfo* li_data = (LightInfo*)msr.pData;
+    li_data[0].mCameraPos = mRSCameraInfo->mEyePosition;
+    UINT dNum = 0;
+    UINT sNum = 0;
+    UINT pNum = 0;
+    for (auto& l : *lights)
+    {
+        auto type = l->GetRSLightType();
+        switch (type)
+        {
+        case LIGHT_TYPE::DIRECT:
+            ++dNum; break;
+        case LIGHT_TYPE::POINT:
+            ++pNum; break;
+        case LIGHT_TYPE::SPOT:
+            ++sNum; break;
+        default: break;
+        }
+    }
+    li_data[0].mDirectLightNum = dNum;
+    li_data[0].mPointLightNum = pNum;
+    li_data[0].mSpotLightNum = sNum;
+    li_data[0].mShadowLightNum = (UINT)g_Root->LightsContainer()->
+        GetShadowLights()->size();
+    li_data[0].mShadowLightIndex[0] = -1;
+    li_data[0].mShadowLightIndex[1] = -1;
+    li_data[0].mShadowLightIndex[2] = -1;
+    li_data[0].mShadowLightIndex[3] = -1;
+    auto shadowIndeices = g_Root->LightsContainer()->
+        GetShadowLightIndeices();
+    for (UINT i = 0; i < li_data[0].mShadowLightNum; i++)
+    {
+        li_data[0].mShadowLightIndex[i] = (*shadowIndeices)[i];
+        if (i >= 3)
+        {
+            break;
+        }
+    }
+    STContext()->Unmap(mLightInfoStructedBuffer, 0);
+
+    STContext()->Map(mLightStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    RS_LIGHT_INFO* l_data = (RS_LIGHT_INFO*)msr.pData;
+    UINT lightIndex = 0;
+    for (auto& l : *lights)
+    {
+        l_data[lightIndex++] = *(l->GetRSLightInfo());
+    }
+    STContext()->Unmap(mLightStructedBuffer, 0);
+
+    STContext()->Map(mShadowStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    ShadowInfo* s_data = (ShadowInfo*)msr.pData;
+    auto shadowLights = g_Root->LightsContainer()->
+        GetShadowLights();
+    UINT shadowSize = (UINT)shadowLights->size();
+    for (UINT i = 0; i < shadowSize; i++)
+    {
+        auto lcam = (*shadowLights)[i]->GetRSLightCamera();
+        mat = DirectX::XMLoadFloat4x4(
+            &(lcam->GetRSCameraInfo()->mViewMat));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&s_data[i].mShadowViewMat, mat);
+        mat = DirectX::XMLoadFloat4x4(
+            &(lcam->GetRSCameraInfo()->mProjMat));
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&s_data[i].mShadowProjMat, mat);
+    }
+
+    static DirectX::XMMATRIX T(
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f);
+    mat = DirectX::XMMatrixTranspose(
+        DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat) *
+        DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat) *
+        T);
+    DirectX::XMStoreFloat4x4(&s_data[0].mSSAOMat, mat);
+    STContext()->Unmap(mShadowStructedBuffer, 0);
+
+    static ID3D11ShaderResourceView* srvs[] =
+    {
+        mAmbientStructedBufferSrv,
+        mLightInfoStructedBufferSrv,
+        mLightStructedBufferSrv,
+        mShadowStructedBufferSrv,
+        mWorldPosSrv, mNormalSrv, mDiffuseSrv,
+        mDiffuseAlbedoSrv, mFresenlShineseSrv,
+        mSsaoSrv, mShadowDepthSrv
+    };
+    STContext()->PSSetShaderResources(0, 11, srvs);
+
+    static ID3D11SamplerState* samps[] =
+    {
+        mPointClampSampler,
+        mLinearWrapSampler,
+        mShadowTexSampler
+    };
+    STContext()->PSSetSamplers(0, 3, samps);
+
     STContext()->IASetPrimitiveTopology(
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     STContext()->IASetVertexBuffers(
@@ -2787,6 +2911,12 @@ void RSPass_Defered::ExecuatePass()
 
     ID3D11RenderTargetView* rtvnull = nullptr;
     STContext()->OMSetRenderTargets(1, &rtvnull, nullptr);
+    static ID3D11ShaderResourceView* nullsrvs[] =
+    {
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr
+    };
+    STContext()->PSSetShaderResources(0, 11, nullsrvs);
 }
 
 bool RSPass_Defered::CreateShaders()
@@ -2931,6 +3061,9 @@ bool RSPass_Defered::CreateViews()
         GetDataTexInfo(name)->mSrv;
     name = "ssao-tex-ssao";
     mSsaoSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "light-depth-light-other";
+    mShadowDepthSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
 
     HRESULT hr = S_OK;

@@ -8,6 +8,7 @@ struct VS_OUTPUT
 struct SSAO_INFO
 {
     matrix gProj;
+    matrix gView;
     matrix gInvProj;
     matrix gProjTex;
     float4 gOffsetVec[14];
@@ -49,6 +50,7 @@ float Occlusion(float _deltaZ)
 float4 main(VS_OUTPUT _input) : SV_TARGET
 {
     float3 n = normalize(gNormalMap.SampleLevel(gSamPointClamp, _input.TexCoordL, 0.0f).xyz);
+    n = normalize(mul(n, (float3x3)gSsaoInfo[0].gView));
     float pz = gDepthMap.SampleLevel(gSamDepthMap, _input.TexCoordL, 0.0f).r;
     pz = NdcDepthToViewDepth(pz);
 

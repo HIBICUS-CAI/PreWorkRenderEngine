@@ -136,8 +136,10 @@ private:
     ID3D11ShaderResourceView* mDiffuseAlbedoSrv;
     ID3D11ShaderResourceView* mFresenlShineseSrv;
     ID3D11ShaderResourceView* mSsaoSrv;
+    ID3D11ShaderResourceView* mShadowDepthSrv;
     ID3D11Buffer* mVertexBuffer;
     ID3D11Buffer* mIndexBuffer;
+    RS_CAM_INFO* mRSCameraInfo;
 };
 
 class RSPass_Shadow :public RSPass_Base
@@ -179,6 +181,7 @@ private:
 struct SsaoInfo
 {
     DirectX::XMFLOAT4X4 mProj;
+    DirectX::XMFLOAT4X4 mView;
     DirectX::XMFLOAT4X4 mInvProj;
     DirectX::XMFLOAT4X4 mTexProj;
     DirectX::XMFLOAT4 mOffsetVec[14];

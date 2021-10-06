@@ -19,15 +19,8 @@ struct PS_OUTPUT
     float4 FresShin : SV_TARGET4;
 };
 
-struct VIEWPROJ
-{
-    matrix gView;
-    matrix gProjection;
-};
-
-StructuredBuffer<VIEWPROJ> gViewProj : register(t0);
-Texture2D gDiffuse : register(t1);
-Texture2D gBumped : register(t2);
+Texture2D gDiffuse : register(t0);
+Texture2D gBumped : register(t1);
 
 SamplerState gLinearSampler : register(s0);
 
@@ -53,7 +46,6 @@ PS_OUTPUT main(VS_OUTPUT _input)
         _input.NormalW = ClacBumpedNormal(noramlSample, unitNormal, _input.TangentW);
     }
 
-    _input.NormalW = mul(_input.NormalW, (float3x3)gViewProj[0].gView);
     _input.NormalW = normalize(_input.NormalW);
 
     PS_OUTPUT _out = (PS_OUTPUT)0;

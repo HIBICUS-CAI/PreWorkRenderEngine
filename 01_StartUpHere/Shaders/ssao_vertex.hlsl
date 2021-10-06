@@ -8,6 +8,7 @@ struct VS_OUTPUT
 struct SSAO_INFO
 {
     matrix gProj;
+    matrix gView;
     matrix gInvProj;
     matrix gProjTex;
     float4 gOffsetVec[14];
