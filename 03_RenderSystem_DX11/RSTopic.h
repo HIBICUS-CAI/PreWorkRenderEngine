@@ -23,6 +23,7 @@ public:
     void FinishTopicAssembly();
     void SetExecuateOrder(UINT _order);
     UINT GetExecuateOrder() const;
+    void SetMTContext(ID3D11DeviceContext* _mtContext);
 
     void InsertPass(class RSPass_Base* _pass);
     void ErasePass(class RSPass_Base* _pass);
@@ -40,4 +41,5 @@ private:
     bool mAssemblyFinishFlag;
     UINT mExecuateOrderInPipeline;
     std::vector<class RSPass_Base*> mPassVector;
+    ID3D11DeviceContext* mMTContext;
 };

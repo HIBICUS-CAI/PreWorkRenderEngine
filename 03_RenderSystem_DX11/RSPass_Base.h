@@ -23,6 +23,7 @@ public:
     PASS_TYPE GetPassType() const;
     void SetExecuateOrder(UINT _order);
     UINT GetExecuateOrder() const;
+    void SetMTContext(ID3D11DeviceContext* _mtContext);
 
     ID3D11Device* Device() const;
     ID3D11DeviceContext* STContext() const;
@@ -43,4 +44,5 @@ private:
 
     ID3D11Device* mDevice;
     ID3D11DeviceContext* mSTContext;
+    ID3D11DeviceContext* mMTContext;
 };

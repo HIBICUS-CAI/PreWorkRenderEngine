@@ -27,7 +27,7 @@ public:
     void EraseTopic(class RSTopic* _topic);
     void EraseTopic(std::string& _topicName);
 
-    bool InitAllTopics();
+    bool InitAllTopics(class RSDevices* _devices);
 
     void ExecuatePipeline();
 
@@ -37,4 +37,6 @@ private:
     const std::string mName;
     bool mAssemblyFinishFlag;
     std::vector<class RSTopic*> mTopicVector;
+    std::vector<ID3D11DeviceContext*> mDeferredContexts;
+    std::vector<ID3D11CommandList*> mCommandLists;
 };

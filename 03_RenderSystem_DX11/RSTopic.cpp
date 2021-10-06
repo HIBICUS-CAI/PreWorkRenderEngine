@@ -13,7 +13,8 @@
 
 RSTopic::RSTopic(std::string& _name) :
     mName(_name), mAssemblyFinishFlag(true),
-    mExecuateOrderInPipeline(RS_INVALID_ORDER), mPassVector({})
+    mExecuateOrderInPipeline(RS_INVALID_ORDER), mPassVector({}),
+    mMTContext(nullptr)
 {
 
 }
@@ -22,7 +23,7 @@ RSTopic::RSTopic(const RSTopic& _source) :
     mName(_source.mName),
     mAssemblyFinishFlag(_source.mAssemblyFinishFlag),
     mExecuateOrderInPipeline(_source.mExecuateOrderInPipeline),
-    mPassVector({})
+    mPassVector({}), mMTContext(_source.mMTContext)
 {
     mPassVector.reserve(_source.mPassVector.size());
     for (auto& topic : _source.mPassVector)
@@ -60,6 +61,15 @@ void RSTopic::SetExecuateOrder(UINT _order)
 UINT RSTopic::GetExecuateOrder() const
 {
     return mExecuateOrderInPipeline;
+}
+
+void RSTopic::SetMTContext(ID3D11DeviceContext* _mtContext)
+{
+    mMTContext = _mtContext;
+    for (auto& pass : mPassVector)
+    {
+        pass->SetMTContext(_mtContext);
+    }
 }
 
 bool PassExecLessCompare(const RSPass_Base* a, const RSPass_Base* b)
@@ -132,10 +142,7 @@ bool RSTopic::InitAllPasses()
     {
         for (auto& pass : mPassVector)
         {
-            if (!pass->InitPass())
-            {
-                return false;
-            }
+            if (!pass->InitPass()) { return false; }
         }
         return true;
     }

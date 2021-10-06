@@ -71,7 +71,7 @@ bool CreateTempWireFramePipeline()
     g_TempPipeline->FinishPipelineAssembly();
 #endif // IN_ONE_TOPIC
 
-    if (!g_TempPipeline->InitAllTopics()) { return false; }
+    if (!g_TempPipeline->InitAllTopics(g_Root->Devices())) { return false; }
 
     name = g_TempPipeline->GetPipelineName();
     g_Root->PipelinesManager()->AddPipeline(

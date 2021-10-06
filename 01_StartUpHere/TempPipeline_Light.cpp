@@ -131,7 +131,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(mrt_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
-    if (!g_TempPipeline->InitAllTopics()) { return false; }
+    if (!g_TempPipeline->InitAllTopics(g_Root->Devices())) { return false; }
 
     name = g_TempPipeline->GetPipelineName();
     g_Root->PipelinesManager()->AddPipeline(

@@ -16,7 +16,8 @@ RSPass_Base::RSPass_Base(std::string& _name, PASS_TYPE _type,
     mName(_name), mPassType(_type),
     mExecuateOrderInTopic(RS_INVALID_ORDER),
     mDevice(_root->Devices()->GetDevice()),
-    mSTContext(_root->Devices()->GetSTContext())
+    mSTContext(_root->Devices()->GetSTContext()),
+    mMTContext(nullptr)
 {
 
 }
@@ -24,7 +25,8 @@ RSPass_Base::RSPass_Base(std::string& _name, PASS_TYPE _type,
 RSPass_Base::RSPass_Base(const RSPass_Base& _source) :
     mName(_source.mName), mPassType(_source.mPassType),
     mExecuateOrderInTopic(_source.mExecuateOrderInTopic),
-    mDevice(_source.mDevice), mSTContext(_source.mSTContext)
+    mDevice(_source.mDevice), mSTContext(_source.mSTContext),
+    mMTContext(_source.mMTContext)
 {
 
 }
@@ -62,4 +64,9 @@ ID3D11Device* RSPass_Base::Device() const
 ID3D11DeviceContext* RSPass_Base::STContext() const
 {
     return mSTContext;
+}
+
+void RSPass_Base::SetMTContext(ID3D11DeviceContext* _mtContext)
+{
+    mMTContext = _mtContext;
 }

@@ -9,10 +9,12 @@
 
 #include "RSPipeline.h"
 #include "RSTopic.h"
+#include "RSDevices.h"
 #include <algorithm>
 
 RSPipeline::RSPipeline(std::string& _name) :
-    mName(_name), mAssemblyFinishFlag(true), mTopicVector({})
+    mName(_name), mAssemblyFinishFlag(true), mTopicVector({}),
+    mDeferredContexts({}), mCommandLists({})
 {
 
 }
@@ -20,7 +22,7 @@ RSPipeline::RSPipeline(std::string& _name) :
 RSPipeline::RSPipeline(const RSPipeline& _source) :
     mName(_source.mName),
     mAssemblyFinishFlag(_source.mAssemblyFinishFlag),
-    mTopicVector({})
+    mTopicVector({}), mDeferredContexts({}), mCommandLists({})
 {
     mTopicVector.reserve(_source.mTopicVector.size());
     for (auto& topic : _source.mTopicVector)
@@ -114,17 +116,26 @@ void RSPipeline::EraseTopic(std::string& _topicName)
     }
 }
 
-bool RSPipeline::InitAllTopics()
+bool RSPipeline::InitAllTopics(RSDevices* _devices)
 {
+    if (!_devices) { return false; }
+
     if (mAssemblyFinishFlag)
     {
         for (auto& topic : mTopicVector)
         {
-            if (!topic->InitAllPasses())
+            if (!topic->InitAllPasses()) { return false; }
+            if (_devices->GetCommandListSupport())
             {
-                return false;
+                ID3D11DeviceContext* deferred = nullptr;
+                HRESULT hr = _devices->GetDevice()->
+                    CreateDeferredContext(0, &deferred);
+                FAIL_HR_RETURN(hr);
+                mDeferredContexts.emplace_back(deferred);
+                topic->SetMTContext(deferred);
             }
         }
+        mCommandLists.resize(mDeferredContexts.size());
         return true;
     }
     else
@@ -154,5 +165,13 @@ void RSPipeline::ReleasePipeline()
             delete topic;
         }
         mTopicVector.clear();
+        for (auto& deferred : mDeferredContexts)
+        {
+            SAFE_RELEASE(deferred);
+        }
+        for (auto& cmdList : mCommandLists)
+        {
+            SAFE_RELEASE(cmdList);
+        }
     }
 }

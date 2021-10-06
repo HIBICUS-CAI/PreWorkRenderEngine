@@ -24,6 +24,9 @@ public:
     ID3D11DeviceContext* GetSTContext() const;
     ID3D11RenderTargetView* GetSwapChainRtv() const;
 
+    bool GetConcurrentCreateSupport() const;
+    bool GetCommandListSupport() const;
+
     void PresentSwapChain();
 
 private:
@@ -45,4 +48,7 @@ private:
     IDXGISwapChain1* mDXGISwapChain1;
     ID3D11RenderTargetView* mSwapChainRtv;
     D3D11_VIEWPORT mFullWindowViewPort;
+
+    bool mConcurrentCreateSupport;
+    bool mCommandListSupport;
 };

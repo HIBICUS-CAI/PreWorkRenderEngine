@@ -17,7 +17,8 @@ RSDevices::RSDevices() :
     mDevice(nullptr), mImmediateContext(nullptr),
     mDevice1(nullptr), mImmediateContext1(nullptr),
     mDXGISwapChain(nullptr), mDXGISwapChain1(nullptr),
-    mSwapChainRtv(nullptr), mFullWindowViewPort({})
+    mSwapChainRtv(nullptr), mFullWindowViewPort({}),
+    mConcurrentCreateSupport(false), mCommandListSupport(false)
 {
 
 }
@@ -51,6 +52,21 @@ bool RSDevices::StartUp(RSRoot_DX11* _root, HWND _wnd)
     }
 
     ApplyViewPort();
+
+    D3D11_FEATURE_DATA_THREADING threadSupport = {};
+    HRESULT hr = mDevice->CheckFeatureSupport(
+        D3D11_FEATURE_THREADING,
+        &threadSupport, sizeof(threadSupport));
+    FAIL_HR_RETURN(hr);
+
+    if (threadSupport.DriverConcurrentCreates == TRUE)
+    {
+        mConcurrentCreateSupport = true;
+    }
+    if (threadSupport.DriverCommandLists == TRUE)
+    {
+        mCommandListSupport = true;
+    }
 
     return true;
 }
@@ -247,4 +263,14 @@ bool RSDevices::CreateDevices(HWND _wnd,
 void RSDevices::ApplyViewPort()
 {
     mImmediateContext->RSSetViewports(1, &mFullWindowViewPort);
+}
+
+bool RSDevices::GetConcurrentCreateSupport() const
+{
+    return mConcurrentCreateSupport;
+}
+
+bool RSDevices::GetCommandListSupport() const
+{
+    return mCommandListSupport;
 }
