@@ -92,6 +92,54 @@ private:
     RS_CAM_INFO* mRSCameraInfo;
 };
 
+class RSPass_Defered :public RSPass_Base
+{
+public:
+    RSPass_Defered(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_Defered(const RSPass_Defered& _source);
+    virtual ~RSPass_Defered();
+
+public:
+    virtual RSPass_Defered* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateBuffers();
+    bool CreateViews();
+    bool CreateSamplers();
+
+private:
+    ID3D11VertexShader* mVertexShader;
+    ID3D11PixelShader* mPixelShader;
+    ID3D11RenderTargetView* mRenderTargetView;
+    ID3D11SamplerState* mLinearWrapSampler;
+    ID3D11SamplerState* mPointClampSampler;
+    ID3D11SamplerState* mShadowTexSampler;
+    ID3D11Buffer* mLightInfoStructedBuffer;
+    ID3D11ShaderResourceView* mLightInfoStructedBufferSrv;
+    ID3D11Buffer* mLightStructedBuffer;
+    ID3D11ShaderResourceView* mLightStructedBufferSrv;
+    ID3D11Buffer* mAmbientStructedBuffer;
+    ID3D11ShaderResourceView* mAmbientStructedBufferSrv;
+    ID3D11Buffer* mShadowStructedBuffer;
+    ID3D11ShaderResourceView* mShadowStructedBufferSrv;
+    ID3D11ShaderResourceView* mWorldPosSrv;
+    ID3D11ShaderResourceView* mNormalSrv;
+    ID3D11ShaderResourceView* mDiffuseSrv;
+    ID3D11ShaderResourceView* mDiffuseAlbedoSrv;
+    ID3D11ShaderResourceView* mFresenlShineseSrv;
+    ID3D11ShaderResourceView* mSsaoSrv;
+    ID3D11Buffer* mVertexBuffer;
+    ID3D11Buffer* mIndexBuffer;
+};
+
 class RSPass_Shadow :public RSPass_Base
 {
 public:

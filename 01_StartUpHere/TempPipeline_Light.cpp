@@ -34,6 +34,11 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     light->SetExecuateOrder(1);
 
+    name = "defered-light";
+    RSPass_Defered* defered = new RSPass_Defered(
+        name, PASS_TYPE::RENDER, g_Root);
+    defered->SetExecuateOrder(1);
+
     name = "basic-shadowmap";
     RSPass_Shadow* shadow = new RSPass_Shadow(
         name, PASS_TYPE::RENDER, g_Root);
@@ -107,11 +112,19 @@ bool CreateTempLightPipeline()
     light_topic->SetExecuateOrder(4);
     light_topic->FinishTopicAssembly();
 
+    name = "defered-light-topic";
+    RSTopic* defered_topic = new RSTopic(name);
+    defered_topic->StartTopicAssembly();
+    defered_topic->InsertPass(defered);
+    defered_topic->SetExecuateOrder(4);
+    defered_topic->FinishTopicAssembly();
+
     name = "light-pipeline";
     g_TempPipeline = new RSPipeline(name);
     g_TempPipeline->StartPipelineAssembly();
     g_TempPipeline->InsertTopic(shadow_topic);
-    g_TempPipeline->InsertTopic(light_topic);
+    //g_TempPipeline->InsertTopic(light_topic);
+    g_TempPipeline->InsertTopic(defered_topic);
     g_TempPipeline->InsertTopic(ssao_topic);
     g_TempPipeline->InsertTopic(sky_topic);
     g_TempPipeline->InsertTopic(sprite_topic);
@@ -2658,6 +2671,337 @@ bool RSPass_MRT::CreateSamplers()
 
     hr = Device()->CreateSamplerState(
         &sampDesc, &mLinearSampler);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+RSPass_Defered::RSPass_Defered(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    mLinearWrapSampler(nullptr), mRenderTargetView(nullptr),
+    mShadowTexSampler(nullptr), mPointClampSampler(nullptr),
+    mLightStructedBuffer(nullptr),
+    mLightStructedBufferSrv(nullptr),
+    mLightInfoStructedBuffer(nullptr),
+    mLightInfoStructedBufferSrv(nullptr),
+    mAmbientStructedBuffer(nullptr),
+    mAmbientStructedBufferSrv(nullptr),
+    mShadowStructedBuffer(nullptr),
+    mShadowStructedBufferSrv(nullptr),
+    mSsaoSrv(nullptr),
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr),
+    mWorldPosSrv(nullptr), mNormalSrv(nullptr), mDiffuseSrv(nullptr),
+    mDiffuseAlbedoSrv(nullptr), mFresenlShineseSrv(nullptr)
+{
+
+}
+
+RSPass_Defered::RSPass_Defered(const RSPass_Defered& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mRenderTargetView(_source.mRenderTargetView),
+    mLinearWrapSampler(_source.mLinearWrapSampler),
+    mPointClampSampler(_source.mPointClampSampler),
+    mShadowTexSampler(_source.mShadowTexSampler),
+    mLightStructedBuffer(_source.mLightStructedBuffer),
+    mLightStructedBufferSrv(_source.mLightStructedBufferSrv),
+    mLightInfoStructedBuffer(_source.mLightInfoStructedBuffer),
+    mLightInfoStructedBufferSrv(_source.mLightInfoStructedBufferSrv),
+    mAmbientStructedBuffer(_source.mAmbientStructedBuffer),
+    mAmbientStructedBufferSrv(_source.mAmbientStructedBufferSrv),
+    mShadowStructedBuffer(_source.mShadowStructedBuffer),
+    mShadowStructedBufferSrv(_source.mShadowStructedBufferSrv),
+    mSsaoSrv(_source.mSsaoSrv),
+    mVertexBuffer(_source.mVertexBuffer),
+    mIndexBuffer(_source.mIndexBuffer),
+    mWorldPosSrv(_source.mWorldPosSrv),
+    mNormalSrv(_source.mNormalSrv),
+    mDiffuseSrv(_source.mDiffuseSrv),
+    mDiffuseAlbedoSrv(_source.mDiffuseAlbedoSrv),
+    mFresenlShineseSrv(_source.mFresenlShineseSrv)
+{
+
+}
+
+RSPass_Defered::~RSPass_Defered()
+{
+
+}
+
+RSPass_Defered* RSPass_Defered::ClonePass()
+{
+    return new RSPass_Defered(*this);
+}
+
+bool RSPass_Defered::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    return true;
+}
+
+void RSPass_Defered::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mLinearWrapSampler);
+    RS_RELEASE(mPointClampSampler);
+    RS_RELEASE(mShadowTexSampler);
+    RS_RELEASE(mLightInfoStructedBuffer);
+    RS_RELEASE(mLightInfoStructedBufferSrv);
+    RS_RELEASE(mLightStructedBuffer);
+    RS_RELEASE(mLightStructedBufferSrv);
+    RS_RELEASE(mAmbientStructedBuffer);
+    RS_RELEASE(mAmbientStructedBufferSrv);
+    RS_RELEASE(mShadowStructedBuffer);
+    RS_RELEASE(mShadowStructedBufferSrv);
+    RS_RELEASE(mVertexBuffer);
+    RS_RELEASE(mIndexBuffer);
+}
+
+void RSPass_Defered::ExecuatePass()
+{
+    STContext()->OMSetRenderTargets(1,
+        &mRenderTargetView, nullptr);
+    STContext()->ClearRenderTargetView(
+        mRenderTargetView, DirectX::Colors::DarkGreen);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+    STContext()->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    STContext()->IASetVertexBuffers(
+        0, 1, &mVertexBuffer,
+        &stride, &offset);
+    STContext()->IASetIndexBuffer(
+        mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+    ID3D11RenderTargetView* rtvnull = nullptr;
+    STContext()->OMSetRenderTargets(1, &rtvnull, nullptr);
+}
+
+bool RSPass_Defered::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\defered_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\defered_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Defered::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bufDesc = {};
+
+    VERTEX_INFO v[4] = {};
+    v[0].mPosition = DirectX::XMFLOAT3(-1.0f, -1.0f, 0.0f);
+    v[1].mPosition = DirectX::XMFLOAT3(-1.0f, +1.0f, 0.0f);
+    v[2].mPosition = DirectX::XMFLOAT3(+1.0f, +1.0f, 0.0f);
+    v[3].mPosition = DirectX::XMFLOAT3(+1.0f, -1.0f, 0.0f);
+    v[0].mNormal = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mNormal = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mNormal = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mNormal = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTangent = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mTangent = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mTangent = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mTangent = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTexCoord = DirectX::XMFLOAT2(0.0f, 1.0f);
+    v[1].mTexCoord = DirectX::XMFLOAT2(0.0f, 0.0f);
+    v[2].mTexCoord = DirectX::XMFLOAT2(1.0f, 0.0f);
+    v[3].mTexCoord = DirectX::XMFLOAT2(1.0f, 1.0f);
+    ZeroMemory(&bufDesc, sizeof(bufDesc));
+    bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufDesc.ByteWidth = sizeof(VERTEX_INFO) * 4;
+    bufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bufDesc.CPUAccessFlags = 0;
+    bufDesc.MiscFlags = 0;
+    bufDesc.StructureByteStride = 0;
+    D3D11_SUBRESOURCE_DATA vinitData = {};
+    ZeroMemory(&vinitData, sizeof(vinitData));
+    vinitData.pSysMem = v;
+    hr = Device()->CreateBuffer(
+        &bufDesc, &vinitData, &mVertexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    UINT indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    ZeroMemory(&bufDesc, sizeof(bufDesc));
+    bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufDesc.ByteWidth = sizeof(UINT) * 6;
+    bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bufDesc.CPUAccessFlags = 0;
+    bufDesc.StructureByteStride = 0;
+    bufDesc.MiscFlags = 0;
+    D3D11_SUBRESOURCE_DATA iinitData = {};
+    ZeroMemory(&iinitData, sizeof(iinitData));
+    iinitData.pSysMem = indices;
+    hr = Device()->CreateBuffer(
+        &bufDesc, &iinitData, &mIndexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&bufDesc, sizeof(bufDesc));
+    bufDesc.Usage = D3D11_USAGE_DYNAMIC;
+    bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bufDesc.ByteWidth = MAX_LIGHT_SIZE * sizeof(RS_LIGHT_INFO);
+    bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bufDesc.StructureByteStride = sizeof(RS_LIGHT_INFO);
+    hr = Device()->CreateBuffer(
+        &bufDesc, nullptr, &mLightStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bufDesc.ByteWidth = sizeof(Ambient);
+    bufDesc.StructureByteStride = sizeof(Ambient);
+    hr = Device()->CreateBuffer(
+        &bufDesc, nullptr, &mAmbientStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bufDesc.ByteWidth = sizeof(LightInfo);
+    bufDesc.StructureByteStride = sizeof(LightInfo);
+    hr = Device()->CreateBuffer(
+        &bufDesc, nullptr, &mLightInfoStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bufDesc.ByteWidth = MAX_SHADOW_SIZE * sizeof(ShadowInfo);
+    bufDesc.StructureByteStride = sizeof(ShadowInfo);
+    hr = Device()->CreateBuffer(
+        &bufDesc, nullptr, &mShadowStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Defered::CreateViews()
+{
+    mRenderTargetView = g_Root->Devices()->GetSwapChainRtv();
+
+    std::string name = "mrt-worldpos";
+    mWorldPosSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "mrt-normal";
+    mNormalSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "mrt-diffuse";
+    mDiffuseSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "mrt-diffuse-albedo";
+    mDiffuseAlbedoSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "mrt-fresnel-shinese";
+    mFresenlShineseSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "ssao-tex-ssao";
+    mSsaoSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+
+    HRESULT hr = S_OK;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    srvDesc.Buffer.ElementWidth = MAX_LIGHT_SIZE;
+    hr = Device()->CreateShaderResourceView(
+        mLightStructedBuffer,
+        &srvDesc, &mLightStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mLightInfoStructedBuffer,
+        &srvDesc, &mLightInfoStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateShaderResourceView(
+        mAmbientStructedBuffer,
+        &srvDesc, &mAmbientStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Buffer.ElementWidth = MAX_SHADOW_SIZE;
+    hr = Device()->CreateShaderResourceView(
+        mShadowStructedBuffer,
+        &srvDesc, &mShadowStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Defered::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mLinearWrapSampler);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mPointClampSampler);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mShadowTexSampler);
     if (FAILED(hr)) { return false; }
 
     return true;
