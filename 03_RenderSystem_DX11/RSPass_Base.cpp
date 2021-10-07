@@ -63,6 +63,7 @@ ID3D11Device* RSPass_Base::Device() const
 
 ID3D11DeviceContext* RSPass_Base::STContext() const
 {
+    if (mMTContext) { return mMTContext; }
     return mSTContext;
 }
 

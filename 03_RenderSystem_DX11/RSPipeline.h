@@ -11,6 +11,23 @@
 
 #include "RSCommon.h"
 
+struct TopicThread
+{
+    ID3D11DeviceContext* mDeferredContext = nullptr;
+    ID3D11CommandList* mCommandList = nullptr;
+    HANDLE mThreadHandle = nullptr;
+    bool mExitFlag = false;
+    bool mFinishFlag = false;
+    struct ArgumentList
+    {
+        class RSTopic* mTopicPtr = nullptr;
+        bool* mFinishFlagPtr = nullptr;
+        bool* mExitFlagPtr = nullptr;
+        ID3D11DeviceContext* mDeferredContext = nullptr;
+        ID3D11CommandList** mCommandListPtr = nullptr;
+    } mArgumentList = {};
+};
+
 class RSPipeline
 {
 public:
@@ -37,6 +54,8 @@ private:
     const std::string mName;
     bool mAssemblyFinishFlag;
     std::vector<class RSTopic*> mTopicVector;
-    std::vector<ID3D11DeviceContext*> mDeferredContexts;
-    std::vector<ID3D11CommandList*> mCommandLists;
+    std::vector<TopicThread> mTopicThreads;
+
+    ID3D11DeviceContext* mImmediateContext;
+    bool mMutipleThreadMode;
 };

@@ -21,6 +21,7 @@
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
 static RSPipeline* g_TempPipeline = nullptr;
+static D3D11_VIEWPORT g_ViewPort = {};
 
 void PassRootToTempLightPipeline(RSRoot_DX11* _root)
 {
@@ -139,6 +140,13 @@ bool CreateTempLightPipeline()
     g_Root->PipelinesManager()->SetPipeline(name);
     g_Root->PipelinesManager()->ProcessNextPipeline();
 
+    g_ViewPort.Width = 1280.f;
+    g_ViewPort.Height = 720.f;
+    g_ViewPort.MinDepth = 0.f;
+    g_ViewPort.MaxDepth = 1.f;
+    g_ViewPort.TopLeftX = 0.f;
+    g_ViewPort.TopLeftY = 0.f;
+
     return true;
 }
 
@@ -254,6 +262,7 @@ void RSPass_Light::ExecuatePass()
 {
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, mDepthStencilView);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->ClearRenderTargetView(
         mRenderTargetView, DirectX::Colors::DarkGreen);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
@@ -749,6 +758,7 @@ void RSPass_Shadow::ExecuatePass()
     {
         STContext()->OMSetRenderTargets(1,
             &null, mDepthStencilView[i]);
+        STContext()->RSSetViewports(1, &g_ViewPort);
         STContext()->ClearDepthStencilView(
             mDepthStencilView[i], D3D11_CLEAR_DEPTH, 1.f, 0);
 
@@ -1102,6 +1112,7 @@ void RSPass_Ssao::ExecuatePass()
     ID3D11ShaderResourceView* srvnull = nullptr;
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, nullptr);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->RSSetState(nullptr);
@@ -1702,6 +1713,7 @@ void RSPass_SkyShpere::ExecuatePass()
     ID3D11RenderTargetView* null = nullptr;
     STContext()->OMSetRenderTargets(1,
         &mRenderTargerView, mDepthStencilView);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);
     STContext()->PSSetShader(mPixelShader, nullptr, 0);
     STContext()->RSSetState(mRasterizerState);
@@ -1956,6 +1968,7 @@ void RSPass_Sprite::ExecuatePass()
     ID3D11RenderTargetView* rtvnull = nullptr;
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, nullptr);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->OMSetDepthStencilState(mDepthStencilState, 0);
     static float factor[4] = { 0.f,0.f,0.f,0.f };
     STContext()->OMSetBlendState(mBlendState, factor, 0xFFFFFFFF);
@@ -2256,6 +2269,7 @@ void RSPass_MRT::ExecuatePass()
         mNormalRtv,mWorldPosRtv,mDiffAlbeRtv,mFresShinRtv };
     STContext()->OMSetRenderTargets(5,
         mrt, mDepthDsv);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->ClearRenderTargetView(
         mDiffuseRtv, DirectX::Colors::DarkGreen);
     STContext()->ClearRenderTargetView(
@@ -2778,6 +2792,7 @@ void RSPass_Defered::ExecuatePass()
 {
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, nullptr);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->ClearRenderTargetView(
         mRenderTargetView, DirectX::Colors::DarkGreen);
     STContext()->VSSetShader(mVertexShader, nullptr, 0);

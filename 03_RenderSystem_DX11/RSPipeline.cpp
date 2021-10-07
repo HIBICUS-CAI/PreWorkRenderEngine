@@ -11,10 +11,14 @@
 #include "RSTopic.h"
 #include "RSDevices.h"
 #include <algorithm>
+#include <thread>
+
+unsigned __stdcall TopicThreadFunc(PVOID _argu);
 
 RSPipeline::RSPipeline(std::string& _name) :
     mName(_name), mAssemblyFinishFlag(true), mTopicVector({}),
-    mDeferredContexts({}), mCommandLists({})
+    mTopicThreads({}), mImmediateContext(nullptr),
+    mMutipleThreadMode(false)
 {
 
 }
@@ -22,7 +26,9 @@ RSPipeline::RSPipeline(std::string& _name) :
 RSPipeline::RSPipeline(const RSPipeline& _source) :
     mName(_source.mName),
     mAssemblyFinishFlag(_source.mAssemblyFinishFlag),
-    mTopicVector({}), mDeferredContexts({}), mCommandLists({})
+    mImmediateContext(_source.mImmediateContext),
+    mTopicVector({}), mTopicThreads({}),
+    mMutipleThreadMode(_source.mMutipleThreadMode)
 {
     mTopicVector.reserve(_source.mTopicVector.size());
     for (auto& topic : _source.mTopicVector)
@@ -119,23 +125,52 @@ void RSPipeline::EraseTopic(std::string& _topicName)
 bool RSPipeline::InitAllTopics(RSDevices* _devices)
 {
     if (!_devices) { return false; }
+    mImmediateContext = _devices->GetSTContext();
+    mMutipleThreadMode = _devices->GetCommandListSupport();
 
     if (mAssemblyFinishFlag)
     {
         for (auto& topic : mTopicVector)
         {
             if (!topic->InitAllPasses()) { return false; }
-            if (_devices->GetCommandListSupport())
+            if (mMutipleThreadMode)
             {
                 ID3D11DeviceContext* deferred = nullptr;
                 HRESULT hr = _devices->GetDevice()->
                     CreateDeferredContext(0, &deferred);
                 FAIL_HR_RETURN(hr);
-                mDeferredContexts.emplace_back(deferred);
                 topic->SetMTContext(deferred);
+
+                TopicThread tt = {};
+                tt.mDeferredContext = deferred;
+                tt.mCommandList = nullptr;
+                tt.mThreadHandle = NULL;
+                tt.mExitFlag = false;
+                tt.mFinishFlag = false;
+                tt.mArgumentList.mTopicPtr = topic;
+                tt.mArgumentList.mDeferredContext = deferred;
+                mTopicThreads.emplace_back(tt);
             }
         }
-        mCommandLists.resize(mDeferredContexts.size());
+
+        UINT coreCount = std::thread::hardware_concurrency();
+        DWORD_PTR affinity = 0;
+        DWORD_PTR mask = 0;
+        for (auto& t : mTopicThreads)
+        {
+            t.mArgumentList.mExitFlagPtr = &t.mExitFlag;
+            t.mArgumentList.mFinishFlagPtr = &t.mFinishFlag;
+            t.mArgumentList.mCommandListPtr = &t.mCommandList;
+
+            t.mThreadHandle = (HANDLE)_beginthreadex(
+                nullptr, 0, TopicThreadFunc, &(t.mArgumentList),
+                CREATE_SUSPENDED, nullptr);
+            if (!t.mThreadHandle) { return false; }
+            mask = SetThreadAffinityMask(t.mThreadHandle,
+                static_cast<DWORD_PTR>(1) << affinity);
+            affinity = (++affinity) % coreCount;
+        }
+
         return true;
     }
     else
@@ -148,9 +183,37 @@ void RSPipeline::ExecuatePipeline()
 {
     if (mAssemblyFinishFlag)
     {
-        for (auto& topic : mTopicVector)
+        if (mMutipleThreadMode)
         {
-            topic->ExecuateTopic();
+            for (auto& t : mTopicThreads)
+            {
+                t.mFinishFlag = false;
+                ResumeThread(t.mThreadHandle);
+            }
+
+            while (true)
+            {
+                bool allFinish = true;
+                for (auto& t : mTopicThreads)
+                {
+                    allFinish = allFinish && t.mFinishFlag;
+                }
+                if (allFinish) { break; }
+            }
+
+            for (auto& t : mTopicThreads)
+            {
+                mImmediateContext->ExecuteCommandList(
+                    t.mCommandList, TRUE);
+                SAFE_RELEASE(t.mCommandList);
+            }
+        }
+        else
+        {
+            for (auto& topic : mTopicVector)
+            {
+                topic->ExecuateTopic();
+            }
         }
     }
 }
@@ -165,13 +228,50 @@ void RSPipeline::ReleasePipeline()
             delete topic;
         }
         mTopicVector.clear();
-        for (auto& deferred : mDeferredContexts)
+        if (mMutipleThreadMode)
         {
-            SAFE_RELEASE(deferred);
+            std::vector<HANDLE> handleVec = {};
+            for (auto& thread : mTopicThreads)
+            {
+                handleVec.emplace_back(thread.mThreadHandle);
+                thread.mExitFlag = true;
+                ResumeThread(thread.mThreadHandle);
+            }
+            WaitForMultipleObjects((DWORD)handleVec.size(),
+                &handleVec[0], TRUE, INFINITE);
         }
-        for (auto& cmdList : mCommandLists)
+        for (auto& thread : mTopicThreads)
         {
-            SAFE_RELEASE(cmdList);
+            SAFE_RELEASE(thread.mDeferredContext);
+            SAFE_RELEASE(thread.mCommandList);
         }
     }
+}
+
+unsigned __stdcall TopicThreadFunc(PVOID _argu)
+{
+    TopicThread::ArgumentList* argument = nullptr;
+    argument = (TopicThread::ArgumentList*)_argu;
+    if (!argument) { return -1; }
+
+    auto topic = argument->mTopicPtr;
+    auto deferred = argument->mDeferredContext;
+    auto listptr = argument->mCommandListPtr;
+    auto finish = argument->mFinishFlagPtr;
+    auto exit = argument->mExitFlagPtr;
+
+    HRESULT hr = S_OK;
+    while (true)
+    {
+        if (*exit) { break; }
+        topic->ExecuateTopic();
+        hr = deferred->FinishCommandList(FALSE, listptr);
+#ifdef _DEBUG
+        if (FAILED(hr)) { return -2; }
+#endif // _DEBUG
+        (*finish) = true;
+        SuspendThread(GetCurrentThread());
+    }
+
+    return 0;
 }
