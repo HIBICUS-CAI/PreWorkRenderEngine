@@ -203,6 +203,7 @@ void RSPipeline::ExecuatePipeline()
 
             for (auto& t : mTopicThreads)
             {
+                if (!t.mCommandList) { assert(false); return; }
                 mImmediateContext->ExecuteCommandList(
                     t.mCommandList, TRUE);
                 SAFE_RELEASE(t.mCommandList);
