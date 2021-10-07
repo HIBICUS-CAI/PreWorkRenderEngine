@@ -177,7 +177,6 @@ bool RSPipeline::InitAllTopics(RSDevices* _devices)
             mask = SetThreadAffinityMask(t.mThreadHandle,
                 static_cast<DWORD_PTR>(1) << affinity);
             affinity = (++affinity) % coreCount;
-            //ResumeThread(t.mThreadHandle);
         }
 
         return true;
@@ -206,7 +205,7 @@ void RSPipeline::ExecuatePipeline()
             {
                 if (!t.mCommandList) { assert(false); return; }
                 mImmediateContext->ExecuteCommandList(
-                    t.mCommandList, TRUE);
+                    t.mCommandList, FALSE);
                 SAFE_RELEASE(t.mCommandList);
             }
         }
@@ -266,17 +265,13 @@ unsigned __stdcall TopicThreadFunc(PVOID _argu)
     while (true)
     {
         WaitForSingleObject(begin, INFINITE);
-        if (*exit)
-        {
-            break;
-        }
+        if (*exit) { break; }
         topic->ExecuateTopic();
         hr = deferred->FinishCommandList(FALSE, listptr);
 #ifdef _DEBUG
         if (FAILED(hr)) { return -2; }
 #endif // _DEBUG
         SetEvent(finish);
-        //SuspendThread(GetCurrentThread());
     }
 
     return 0;
