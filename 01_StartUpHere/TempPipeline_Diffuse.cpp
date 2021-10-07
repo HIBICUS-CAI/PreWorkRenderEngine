@@ -15,6 +15,7 @@
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
 static RSPipeline* g_TempPipeline = nullptr;
+static D3D11_VIEWPORT g_ViewPort = {};
 
 void PassRootToTempWireFramePipeline(RSRoot_DX11* _root)
 {
@@ -78,6 +79,13 @@ bool CreateTempWireFramePipeline()
         name, g_TempPipeline);
     g_Root->PipelinesManager()->SetPipeline(name);
     g_Root->PipelinesManager()->ProcessNextPipeline();
+
+    g_ViewPort.Width = 1280.f;
+    g_ViewPort.Height = 720.f;
+    g_ViewPort.MinDepth = 0.f;
+    g_ViewPort.MaxDepth = 1.f;
+    g_ViewPort.TopLeftX = 0.f;
+    g_ViewPort.TopLeftY = 0.f;
 
     return true;
 }
@@ -166,6 +174,7 @@ void RSPass_Diffuse::ExecuatePass()
 {
     STContext()->OMSetRenderTargets(1,
         &mRenderTargetView, mDepthStencilView);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->ClearRenderTargetView(
         mRenderTargetView, DirectX::Colors::DarkGreen);
     STContext()->ClearDepthStencilView(
@@ -492,6 +501,7 @@ void RSPass_FromTex::ReleasePass()
 void RSPass_FromTex::ExecuatePass()
 {
     STContext()->OMSetRenderTargets(1, &mSwapChainRtv, nullptr);
+    STContext()->RSSetViewports(1, &g_ViewPort);
     STContext()->ClearRenderTargetView(
         mSwapChainRtv, DirectX::Colors::DarkGreen);
     STContext()->IASetIndexBuffer(mIndexBuffer,

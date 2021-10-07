@@ -162,9 +162,9 @@ bool RSPipeline::InitAllTopics(RSDevices* _devices)
             t.mArgumentList.mCommandListPtr = &t.mCommandList;
 
             t.mBeginEvent = CreateEvent(nullptr, FALSE,
-                TRUE, nullptr);
+                FALSE, nullptr);
             t.mFinishEvent = CreateEvent(nullptr, FALSE,
-                TRUE, nullptr);
+                FALSE, nullptr);
             mFinishEvents.emplace_back(t.mFinishEvent);
 
             t.mArgumentList.mBeginEventPtr = t.mBeginEvent;
@@ -204,7 +204,7 @@ void RSPipeline::ExecuatePipeline()
 
             for (auto& t : mTopicThreads)
             {
-                if (!t.mCommandList) { /*assert(false);*/ return; }
+                if (!t.mCommandList) { assert(false); return; }
                 mImmediateContext->ExecuteCommandList(
                     t.mCommandList, TRUE);
                 SAFE_RELEASE(t.mCommandList);
