@@ -16,12 +16,14 @@ struct TopicThread
     ID3D11DeviceContext* mDeferredContext = nullptr;
     ID3D11CommandList* mCommandList = nullptr;
     HANDLE mThreadHandle = nullptr;
+    HANDLE mBeginEvent = nullptr;
+    HANDLE mFinishEvent = nullptr;
     bool mExitFlag = false;
-    bool mFinishFlag = false;
     struct ArgumentList
     {
         class RSTopic* mTopicPtr = nullptr;
-        bool* mFinishFlagPtr = nullptr;
+        HANDLE mBeginEventPtr = nullptr;
+        HANDLE mFinishEventPtr = nullptr;
         bool* mExitFlagPtr = nullptr;
         ID3D11DeviceContext* mDeferredContext = nullptr;
         ID3D11CommandList** mCommandListPtr = nullptr;
@@ -50,11 +52,15 @@ public:
 
     void ReleasePipeline();
 
+    void SuspendAllThread();
+    void ResumeAllThread();
+
 private:
     const std::string mName;
     bool mAssemblyFinishFlag;
     std::vector<class RSTopic*> mTopicVector;
     std::vector<TopicThread> mTopicThreads;
+    std::vector<HANDLE> mFinishEvents;
 
     ID3D11DeviceContext* mImmediateContext;
     bool mMutipleThreadMode;

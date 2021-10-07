@@ -96,7 +96,12 @@ void RSPipelinesManager::ProcessNextPipeline()
 {
     if (mNextPipeline)
     {
+        if (mCurrentPipeline)
+        {
+            mCurrentPipeline->SuspendAllThread();
+        }
         mCurrentPipeline = mNextPipeline;
+        mCurrentPipeline->ResumeAllThread();
         mNextPipeline = nullptr;
     }
 }
