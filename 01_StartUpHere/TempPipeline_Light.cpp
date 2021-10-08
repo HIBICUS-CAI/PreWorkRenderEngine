@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <ctime>
 #include "TempMesh.h"
+#include "TempRenderConfig.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
@@ -132,7 +133,11 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(mrt_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
-    if (!g_TempPipeline->InitAllTopics(g_Root->Devices())) { return false; }
+    if (!g_TempPipeline->InitAllTopics(g_Root->Devices(),
+        GetRenderConfig().mForceSingleThreadEnable))
+    {
+        return false;
+    }
 
     name = g_TempPipeline->GetPipelineName();
     g_Root->PipelinesManager()->AddPipeline(
@@ -1562,7 +1567,9 @@ void RSPass_KBBlur::ExecuatePass()
         nullptr, nullptr
     };
 
-    for (int i = 0; i < 4; i++)
+    static UINT loopCount = GetRenderConfig().mBlurLoopCount;
+
+    for (int i = 0; i < loopCount; i++)
     {
         STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,

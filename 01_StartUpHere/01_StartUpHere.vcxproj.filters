@@ -30,6 +30,9 @@
     <ClCompile Include="TempPipeline_Light.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
+    <ClCompile Include="TempRenderConfig.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TempMesh.h">
@@ -39,6 +42,9 @@
       <Filter>Temp</Filter>
     </ClInclude>
     <ClInclude Include="TempPipeline_Light.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="TempRenderConfig.h">
       <Filter>Temp</Filter>
     </ClInclude>
   </ItemGroup>

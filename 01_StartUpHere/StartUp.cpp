@@ -2,6 +2,7 @@
 #include "WM_Interface.h"
 #include "ID_Interface.h"
 #include "TempMesh.h"
+#include "TempRenderConfig.h"
 #include "RSRoot_DX11.h"
 #include "TempPipeline_Diffuse.h"
 #include "TempPipeline_Light.h"
@@ -216,7 +217,7 @@ int WINAPI WinMain(
     name = "direct-light-2";
     li = {};
     li.mType = LIGHT_TYPE::DIRECT;
-    li.mWithShadow = true;
+    li.mWithShadow = GetRenderConfig().mSecongShadowEnable;
     li.mPosition = { -30.f,30.f,0.f };
     li.mDirection = { 1.f,-1.f,0.f };
     li.mStrength = { 0.8f,0.8f,0.8f };
@@ -308,7 +309,7 @@ int WINAPI WinMain(
                     for (int i = 0; i < 64; i++)
                     {
                         name = "point-light-" + std::to_string(i + 2);
-                        root->LightsContainer()-> DeleteRSLight(name);
+                        root->LightsContainer()->DeleteRSLight(name);
                     }
                 }
                 else

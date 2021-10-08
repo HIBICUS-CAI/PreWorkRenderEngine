@@ -123,11 +123,13 @@ void RSPipeline::EraseTopic(std::string& _topicName)
     }
 }
 
-bool RSPipeline::InitAllTopics(RSDevices* _devices)
+bool RSPipeline::InitAllTopics(RSDevices* _devices,
+    bool _forceSingleThread)
 {
     if (!_devices) { return false; }
     mImmediateContext = _devices->GetSTContext();
     mMutipleThreadMode = _devices->GetCommandListSupport();
+    mMutipleThreadMode = mMutipleThreadMode && (!_forceSingleThread);
 
     if (mAssemblyFinishFlag)
     {

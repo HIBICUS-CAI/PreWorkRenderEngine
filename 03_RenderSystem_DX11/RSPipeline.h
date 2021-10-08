@@ -46,7 +46,8 @@ public:
     void EraseTopic(class RSTopic* _topic);
     void EraseTopic(std::string& _topicName);
 
-    bool InitAllTopics(class RSDevices* _devices);
+    bool InitAllTopics(class RSDevices* _devices,
+        bool _forceSingleThread = false);
 
     void ExecuatePipeline();
 

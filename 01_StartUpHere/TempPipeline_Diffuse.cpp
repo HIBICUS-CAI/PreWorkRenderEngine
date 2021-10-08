@@ -9,6 +9,7 @@
 #include "RSPipelinesManager.h"
 #include <DirectXColors.h>
 #include "TempMesh.h"
+#include "TempRenderConfig.h"
 
 #define IN_ONE_TOPIC
 
@@ -72,7 +73,11 @@ bool CreateTempWireFramePipeline()
     g_TempPipeline->FinishPipelineAssembly();
 #endif // IN_ONE_TOPIC
 
-    if (!g_TempPipeline->InitAllTopics(g_Root->Devices())) { return false; }
+    if (!g_TempPipeline->InitAllTopics(g_Root->Devices(),
+        GetRenderConfig().mForceSingleThreadEnable))
+    {
+        return false;
+    }
 
     name = g_TempPipeline->GetPipelineName();
     g_Root->PipelinesManager()->AddPipeline(
