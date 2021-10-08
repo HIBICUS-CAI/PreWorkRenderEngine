@@ -23,6 +23,7 @@
 static RSRoot_DX11* g_Root = nullptr;
 static RSPipeline* g_TempPipeline = nullptr;
 static D3D11_VIEWPORT g_ViewPort = {};
+static bool g_RenderInDeferred = true;
 
 void PassRootToTempLightPipeline(RSRoot_DX11* _root)
 {
@@ -125,8 +126,16 @@ bool CreateTempLightPipeline()
     g_TempPipeline = new RSPipeline(name);
     g_TempPipeline->StartPipelineAssembly();
     g_TempPipeline->InsertTopic(shadow_topic);
-    //g_TempPipeline->InsertTopic(light_topic);
-    g_TempPipeline->InsertTopic(defered_topic);
+    if (GetRenderConfig().mDeferredRenderingEnable)
+    {
+        g_TempPipeline->InsertTopic(defered_topic);
+        g_RenderInDeferred = true;
+    }
+    else
+    {
+        g_TempPipeline->InsertTopic(light_topic);
+        g_RenderInDeferred = false;
+    }
     g_TempPipeline->InsertTopic(ssao_topic);
     g_TempPipeline->InsertTopic(sky_topic);
     g_TempPipeline->InsertTopic(sprite_topic);
@@ -1569,7 +1578,7 @@ void RSPass_KBBlur::ExecuatePass()
 
     static UINT loopCount = GetRenderConfig().mBlurLoopCount;
 
-    for (int i = 0; i < loopCount; i++)
+    for (UINT i = 0; i < loopCount; i++)
     {
         STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,
@@ -2183,6 +2192,7 @@ RSPass_MRT::RSPass_MRT(std::string& _name, PASS_TYPE _type,
     RSPass_Base(_name, _type, _root),
     mDrawCallType(DRAWCALL_TYPE::OPACITY), mDrawCallPipe(nullptr),
     mVertexShader(nullptr), mPixelShader(nullptr),
+    mNDPixelShader(nullptr),
     mViewProjStructedBuffer(nullptr),
     mViewProjStructedBufferSrv(nullptr),
     mInstanceStructedBuffer(nullptr),
@@ -2201,6 +2211,7 @@ RSPass_MRT::RSPass_MRT(const RSPass_MRT& _source) :
     mDrawCallPipe(_source.mDrawCallPipe),
     mVertexShader(_source.mVertexShader),
     mPixelShader(_source.mPixelShader),
+    mNDPixelShader(_source.mNDPixelShader),
     mViewProjStructedBuffer(_source.mViewProjStructedBuffer),
     mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
     mViewProjStructedBufferSrv(_source.mViewProjStructedBufferSrv),
@@ -2274,23 +2285,40 @@ void RSPass_MRT::ExecuatePass()
     ID3D11RenderTargetView* rtvnull = nullptr;
     static ID3D11RenderTargetView* mrt[] = { mDiffuseRtv,
         mNormalRtv,mWorldPosRtv,mDiffAlbeRtv,mFresShinRtv };
-    STContext()->OMSetRenderTargets(5,
-        mrt, mDepthDsv);
-    STContext()->RSSetViewports(1, &g_ViewPort);
-    STContext()->ClearRenderTargetView(
-        mDiffuseRtv, DirectX::Colors::DarkGreen);
-    STContext()->ClearRenderTargetView(
-        mNormalRtv, DirectX::Colors::Transparent);
-    STContext()->ClearRenderTargetView(
-        mWorldPosRtv, DirectX::Colors::Transparent);
-    STContext()->ClearRenderTargetView(
-        mDiffAlbeRtv, DirectX::Colors::Transparent);
-    STContext()->ClearRenderTargetView(
-        mFresShinRtv, DirectX::Colors::Transparent);
-    STContext()->ClearDepthStencilView(
-        mDepthDsv, D3D11_CLEAR_DEPTH, 1.f, 0);
-    STContext()->VSSetShader(mVertexShader, nullptr, 0);
-    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    static ID3D11RenderTargetView* nd_mrt[] = { mNormalRtv };
+    if (g_RenderInDeferred)
+    {
+        STContext()->OMSetRenderTargets(5,
+            mrt, mDepthDsv);
+        STContext()->RSSetViewports(1, &g_ViewPort);
+        STContext()->ClearRenderTargetView(
+            mDiffuseRtv, DirectX::Colors::DarkGreen);
+        STContext()->ClearRenderTargetView(
+            mNormalRtv, DirectX::Colors::Transparent);
+        STContext()->ClearRenderTargetView(
+            mWorldPosRtv, DirectX::Colors::Transparent);
+        STContext()->ClearRenderTargetView(
+            mDiffAlbeRtv, DirectX::Colors::Transparent);
+        STContext()->ClearRenderTargetView(
+            mFresShinRtv, DirectX::Colors::Transparent);
+        STContext()->ClearDepthStencilView(
+            mDepthDsv, D3D11_CLEAR_DEPTH, 1.f, 0);
+        STContext()->VSSetShader(mVertexShader, nullptr, 0);
+        STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    }
+    else
+    {
+        STContext()->OMSetRenderTargets(1,
+            nd_mrt, mDepthDsv);
+        STContext()->RSSetViewports(1, &g_ViewPort);
+        STContext()->ClearRenderTargetView(
+            mNormalRtv, DirectX::Colors::Transparent);
+        STContext()->ClearDepthStencilView(
+            mDepthDsv, D3D11_CLEAR_DEPTH, 1.f, 0);
+        STContext()->VSSetShader(mVertexShader, nullptr, 0);
+        STContext()->PSSetShader(mNDPixelShader, nullptr, 0);
+    }
+
     STContext()->PSSetSamplers(0, 1, &mLinearSampler);
 
     DirectX::XMMATRIX mat = {};
@@ -2389,6 +2417,19 @@ bool RSPass_MRT::CreateShaders()
         shaderBlob->GetBufferPointer(),
         shaderBlob->GetBufferSize(),
         nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\mrt_nd_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mNDPixelShader);
     shaderBlob->Release();
     shaderBlob = nullptr;
     if (FAILED(hr)) { return false; }

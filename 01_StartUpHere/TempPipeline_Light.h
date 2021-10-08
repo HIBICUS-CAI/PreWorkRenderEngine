@@ -382,6 +382,7 @@ private:
 private:
     ID3D11VertexShader* mVertexShader;
     ID3D11PixelShader* mPixelShader;
+    ID3D11PixelShader* mNDPixelShader;
     DRAWCALL_TYPE mDrawCallType;
     RSDrawCallsPipe* mDrawCallPipe;
     ID3D11Buffer* mViewProjStructedBuffer;
