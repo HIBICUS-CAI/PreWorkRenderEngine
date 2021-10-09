@@ -10,8 +10,6 @@ struct TEMP_WVPBuffer
     DirectX::XMFLOAT4X4 mProjection = {};
 };
 
-void PassRootToTempWireFramePipeline(class RSRoot_DX11* _root);
-
 bool CreateTempWireFramePipeline();
 
 class RSPass_Diffuse :public RSPass_Base

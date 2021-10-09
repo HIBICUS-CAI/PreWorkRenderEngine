@@ -11,6 +11,8 @@
 
 #include "RSCommon.h"
 
+class RSRoot_DX11* GetRSRoot_DX11_Singleton();
+
 class RSRoot_DX11
 {
 public:

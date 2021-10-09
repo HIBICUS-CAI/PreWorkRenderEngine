@@ -20,6 +20,19 @@
 #include "RSLightsContainer.h"
 #include "RSCamerasContainer.h"
 #include "RSMeshHelper.h"
+#include <assert.h>
+
+static RSRoot_DX11* g_RSRoot_DX11_Singleton = nullptr;
+
+RSRoot_DX11* GetRSRoot_DX11_Singleton()
+{
+    if (!g_RSRoot_DX11_Singleton)
+    {
+        bool rs_root_dx11_hasnt_been_built = false;
+        assert(rs_root_dx11_hasnt_been_built);
+    }
+    return g_RSRoot_DX11_Singleton;
+}
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
@@ -84,6 +97,14 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
     {
         return false;
     }
+
+    if (g_RSRoot_DX11_Singleton)
+    {
+        bool rs_root_dx11_should_be_singleton = false;
+        assert(rs_root_dx11_should_be_singleton);
+        return false;
+    }
+    g_RSRoot_DX11_Singleton = this;
 
     return true;
 }

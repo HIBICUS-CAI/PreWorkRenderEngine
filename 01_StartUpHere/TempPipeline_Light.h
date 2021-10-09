@@ -35,8 +35,6 @@ struct ShadowInfo
     DirectX::XMFLOAT4X4 mSSAOMat = {};
 };
 
-void PassRootToTempLightPipeline(class RSRoot_DX11* _root);
-
 bool CreateTempLightPipeline();
 
 class RSPass_Light :public RSPass_Base

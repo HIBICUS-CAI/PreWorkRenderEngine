@@ -249,8 +249,6 @@ int WINAPI WinMain(
     auto light3 = root->LightsContainer()->CreateRSLight(
         name, &li);
 
-    PassRootToTempWireFramePipeline(root);
-    PassRootToTempLightPipeline(root);
     if (!CreateTempWireFramePipeline())
     {
         return -3;

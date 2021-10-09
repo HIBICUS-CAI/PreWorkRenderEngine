@@ -18,13 +18,10 @@ static RSRoot_DX11* g_Root = nullptr;
 static RSPipeline* g_TempPipeline = nullptr;
 static D3D11_VIEWPORT g_ViewPort = {};
 
-void PassRootToTempWireFramePipeline(RSRoot_DX11* _root)
-{
-    g_Root = _root;
-}
-
 bool CreateTempWireFramePipeline()
 {
+    g_Root = GetRSRoot_DX11_Singleton();
+
     std::string name = "test-diffuse";
     RSPass_Diffuse* pass = new RSPass_Diffuse(
         name, PASS_TYPE::RENDER, g_Root);

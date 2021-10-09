@@ -25,13 +25,10 @@ static RSPipeline* g_TempPipeline = nullptr;
 static D3D11_VIEWPORT g_ViewPort = {};
 static bool g_RenderInDeferred = true;
 
-void PassRootToTempLightPipeline(RSRoot_DX11* _root)
-{
-    g_Root = _root;
-}
-
 bool CreateTempLightPipeline()
 {
+    g_Root = GetRSRoot_DX11_Singleton();
+
     std::string name = "basic-light";
     RSPass_Light* light = new RSPass_Light(
         name, PASS_TYPE::RENDER, g_Root);
