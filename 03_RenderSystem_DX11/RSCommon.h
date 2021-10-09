@@ -41,6 +41,7 @@ enum class DRAWCALL_TYPE
 {
     OPACITY,
     TRANSPARENCY,
+    LIGHT,
     COLOR_GEO,
     MIRROR_SELF,
     MIRRO_INSIDE,
