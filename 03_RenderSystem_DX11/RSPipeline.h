@@ -64,5 +64,5 @@ private:
     std::vector<HANDLE> mFinishEvents;
 
     ID3D11DeviceContext* mImmediateContext;
-    bool mMutipleThreadMode;
+    bool mMultipleThreadMode;
 };

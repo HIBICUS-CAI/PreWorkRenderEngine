@@ -18,7 +18,7 @@ unsigned __stdcall TopicThreadFunc(PVOID _argu);
 RSPipeline::RSPipeline(std::string& _name) :
     mName(_name), mAssemblyFinishFlag(true), mTopicVector({}),
     mTopicThreads({}), mImmediateContext(nullptr),
-    mMutipleThreadMode(false), mFinishEvents({})
+    mMultipleThreadMode(false), mFinishEvents({})
 {
 
 }
@@ -28,7 +28,7 @@ RSPipeline::RSPipeline(const RSPipeline& _source) :
     mAssemblyFinishFlag(_source.mAssemblyFinishFlag),
     mImmediateContext(_source.mImmediateContext),
     mTopicVector({}), mTopicThreads({}),
-    mMutipleThreadMode(_source.mMutipleThreadMode),
+    mMultipleThreadMode(_source.mMultipleThreadMode),
     mFinishEvents({})
 {
     mTopicVector.reserve(_source.mTopicVector.size());
@@ -128,15 +128,16 @@ bool RSPipeline::InitAllTopics(RSDevices* _devices,
 {
     if (!_devices) { return false; }
     mImmediateContext = _devices->GetSTContext();
-    mMutipleThreadMode = _devices->GetCommandListSupport();
-    mMutipleThreadMode = mMutipleThreadMode && (!_forceSingleThread);
+    mMultipleThreadMode = _devices->GetCommandListSupport();
+    mMultipleThreadMode = mMultipleThreadMode &&
+        (!_forceSingleThread);
 
     if (mAssemblyFinishFlag)
     {
         for (auto& topic : mTopicVector)
         {
             if (!topic->InitAllPasses()) { return false; }
-            if (mMutipleThreadMode)
+            if (mMultipleThreadMode)
             {
                 ID3D11DeviceContext* deferred = nullptr;
                 HRESULT hr = _devices->GetDevice()->
@@ -193,7 +194,7 @@ void RSPipeline::ExecuatePipeline()
 {
     if (mAssemblyFinishFlag)
     {
-        if (mMutipleThreadMode)
+        if (mMultipleThreadMode)
         {
             for (auto& t : mTopicThreads)
             {
@@ -231,7 +232,7 @@ void RSPipeline::ReleasePipeline()
             delete topic;
         }
         mTopicVector.clear();
-        if (mMutipleThreadMode)
+        if (mMultipleThreadMode)
         {
             std::vector<HANDLE> handleVec = {};
             for (auto& thread : mTopicThreads)
