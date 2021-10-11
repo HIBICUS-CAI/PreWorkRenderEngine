@@ -281,6 +281,13 @@ public:
         mScales.emplace_back(_size);
     }
 
+    void UpdateInstanceData(DirectX::XMFLOAT3 _pos,
+        DirectX::XMFLOAT3 _angle, size_t _index)
+    {
+        mPostions[_index] = _pos;
+        mRotations[_index] = _angle;
+    }
+
     bool CreateBumpedTex(std::string&& _texPath,
         class RSDevices* _devices,
         class RSTexturesManager* _texManager);
