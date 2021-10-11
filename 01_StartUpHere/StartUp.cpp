@@ -172,8 +172,8 @@ int WINAPI WinMain(
     std::string name = "temp-cam";
     CAM_INFO ci = {};
     ci.mType = LENS_TYPE::PERSPECTIVE;
-    ci.mPosition = { 0.f,0.f,0.f };
-    ci.mLookAt = { 0.f,0.f,1.f };
+    ci.mPosition = { 20.f,20.f,-20.f };
+    ci.mLookAt = { -1.f,-1.f,1.f };
     ci.mUpVec = { 0.f,1.f,0.f };
     ci.mNearFarZ = { 1.f,100.f };
     ci.mPFovyAndRatio = { DirectX::XM_PIDIV4,16.f / 9.f };
