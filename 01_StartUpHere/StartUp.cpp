@@ -639,8 +639,8 @@ int WINAPI WinMain(
         {
             btTransform sphereTransform = {};
             sphereTransform.setIdentity();
-            sphereTransform.setOrigin(btVector3(12.f, 10.f, -12.f));
-            btScalar mass = 15.f;
+            sphereTransform.setOrigin(btVector3(12.f, 20.f, -12.f));
+            btScalar mass = 20.f;
             bool isDynamic = true;
             btVector3 localInertia(0.f, 0.f, 0.f);
             if (isDynamic)
@@ -697,7 +697,7 @@ int WINAPI WinMain(
             btTransform sphereTransform = {};
             sphereTransform.setIdentity();
             sphereTransform.setOrigin(btVector3(-12.f, 10.f, 15.f));
-            btScalar mass = 15.f;
+            btScalar mass = 55.f;
             bool isDynamic = true;
             btVector3 localInertia(0.f, 0.f, 0.f);
             if (isDynamic)
