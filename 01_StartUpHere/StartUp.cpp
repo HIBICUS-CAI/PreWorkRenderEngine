@@ -81,19 +81,19 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "sand.jpg"));
     box->AddInstanceData(
-        { 15.f,-3.f,15.f },
+        { 15.f,3.f,15.f },
         { 0.f,0.f,0.f },
         { 1.f,1.f,1.f });
     box->AddInstanceData(
-        { -15.f,-3.f,15.f },
+        { -15.f,3.f,15.f },
         { 0.f,0.f,0.f },
         { 1.f,1.f,1.f });
     box->AddInstanceData(
-        { 15.f,-3.f,-15.f },
+        { 15.f,3.f,-15.f },
         { 0.f,0.f,0.f },
         { 1.f,1.f,1.f });
     box->AddInstanceData(
-        { -15.f,-3.f,-15.f },
+        { -15.f,3.f,-15.f },
         { 0.f,0.f,0.f },
         { 1.f,1.f,1.f });
 
@@ -127,7 +127,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
     sphere1->AddInstanceData(
-        { 15.f,1.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+        { 15.f,10.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     TempGeoMesh* sphere2 = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateSphere(
@@ -135,7 +135,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
     sphere2->AddInstanceData(
-        { 15.f,1.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+        { 15.f,10.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     TempGeoMesh* geosph1 = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateGeometrySphere(
@@ -143,7 +143,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
     geosph1->AddInstanceData(
-        { -15.f,1.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+        { -15.f,10.f,15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     TempGeoMesh* geosph2 = new TempGeoMesh(root->MeshHelper()->
         GeoGenerate()->CreateGeometrySphere(
@@ -151,7 +151,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "white.jpg"));
     geosph2->AddInstanceData(
-        { -15.f,1.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
+        { -15.f,10.f,-15.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
     TempSpriteMesh* sp1 = new TempSpriteMesh(root->MeshHelper()->
         GeoGenerate()->CreateSpriteRect(
