@@ -549,29 +549,169 @@ int WINAPI WinMain(
         }
     }
 
-    btRigidBody* testBox = nullptr;
+    btRigidBody* boxRigid[4] = { nullptr };
     {
         btCollisionShape* boxShape =
             new btBoxShape(btVector3(
                 btScalar(2.f), btScalar(2.f), btScalar(2.f)));
         collisionShapes.push_back(boxShape);
 
-        btTransform boxTransform = {};
-        boxTransform.setIdentity();
-        boxTransform.setOrigin(btVector3(15.f, 3.f, -15.f));
-        btScalar mass = 15.f;
-        bool isDynamic = true;
-        btVector3 localInertia(0.f, 0.f, 0.f);
-        if (isDynamic)
-            boxShape->calculateLocalInertia(mass, localInertia);
-        btDefaultMotionState* myMotionState =
-            new btDefaultMotionState(boxTransform);
-        btRigidBody::btRigidBodyConstructionInfo
-            rbInfo(mass, myMotionState,
-                boxShape, localInertia);
-        btRigidBody* body = new btRigidBody(rbInfo);
-        dynamicsWorld->addRigidBody(body);
-        testBox = body;
+        {
+            btTransform boxTransform = {};
+            boxTransform.setIdentity();
+            boxTransform.setOrigin(btVector3(15.f, 3.f, -15.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                boxShape->calculateLocalInertia(mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(boxTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    boxShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            boxRigid[0] = body;
+        }
+        {
+            btTransform boxTransform = {};
+            boxTransform.setIdentity();
+            boxTransform.setOrigin(btVector3(-15.f, 3.f, -15.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                boxShape->calculateLocalInertia(mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(boxTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    boxShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            boxRigid[1] = body;
+        }
+        {
+            btTransform boxTransform = {};
+            boxTransform.setIdentity();
+            boxTransform.setOrigin(btVector3(15.f, 3.f, 15.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                boxShape->calculateLocalInertia(mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(boxTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    boxShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            boxRigid[2] = body;
+        }
+        {
+            btTransform boxTransform = {};
+            boxTransform.setIdentity();
+            boxTransform.setOrigin(btVector3(-15.f, 3.f, 15.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                boxShape->calculateLocalInertia(mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(boxTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    boxShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            boxRigid[3] = body;
+        }
+    }
+
+    btRigidBody* sphereRigid[4] = { nullptr };
+    {
+        btCollisionShape* sphereShape =
+            new btSphereShape(btScalar(2.f));
+        collisionShapes.push_back(sphereShape);
+
+        {
+            btTransform sphereTransform = {};
+            sphereTransform.setIdentity();
+            sphereTransform.setOrigin(btVector3(12.f, 10.f, -12.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                sphereShape->calculateLocalInertia(
+                    mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(sphereTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    sphereShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            sphereRigid[0] = body;
+        }
+        {
+            btTransform sphereTransform = {};
+            sphereTransform.setIdentity();
+            sphereTransform.setOrigin(btVector3(12.f, 10.f, 12.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                sphereShape->calculateLocalInertia(
+                    mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(sphereTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    sphereShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            sphereRigid[1] = body;
+        }
+        {
+            btTransform sphereTransform = {};
+            sphereTransform.setIdentity();
+            sphereTransform.setOrigin(btVector3(-12.f, 10.f, -15.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                sphereShape->calculateLocalInertia(
+                    mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(sphereTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    sphereShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            sphereRigid[2] = body;
+        }
+        {
+            btTransform sphereTransform = {};
+            sphereTransform.setIdentity();
+            sphereTransform.setOrigin(btVector3(-12.f, 10.f, 15.f));
+            btScalar mass = 15.f;
+            bool isDynamic = true;
+            btVector3 localInertia(0.f, 0.f, 0.f);
+            if (isDynamic)
+                sphereShape->calculateLocalInertia(
+                    mass, localInertia);
+            btDefaultMotionState* myMotionState =
+                new btDefaultMotionState(sphereTransform);
+            btRigidBody::btRigidBodyConstructionInfo
+                rbInfo(mass, myMotionState,
+                    sphereShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+            dynamicsWorld->addRigidBody(body);
+            sphereRigid[3] = body;
+        }
     }
 
     MSG msg = { 0 };
@@ -668,26 +808,47 @@ int WINAPI WinMain(
             cam->RotateRSCamera({ horiR,vertR,0.f });
 
             dynamicsWorld->stepSimulation(1.f / 60.f, 3);
-            for (int i = dynamicsWorld->
-                getNumCollisionObjects() - 1; i >= 0; i--)
+            btTransform trans = {};
+            DirectX::XMFLOAT3 position = {};
+            DirectX::XMFLOAT3 rotation = {};
+            for (int i = 0; i < 4; i++)
             {
-                btCollisionObject* obj = dynamicsWorld->
-                    getCollisionObjectArray()[i];
-                btRigidBody* body = btRigidBody::upcast(obj);
-                if (body == testBox)
+                boxRigid[i]->getMotionState()->
+                    getWorldTransform(trans);
+                position.x = trans.getOrigin().getX();
+                position.y = trans.getOrigin().getY();
+                position.z = -trans.getOrigin().getZ();
+                rotation.x = trans.getRotation().getX();
+                rotation.y = trans.getRotation().getY();
+                rotation.z = -trans.getRotation().getZ();
+                box->UpdateInstanceData(
+                    position, rotation, (size_t)i);
+                sphereRigid[i]->getMotionState()->
+                    getWorldTransform(trans);
+                position.x = trans.getOrigin().getX();
+                position.y = trans.getOrigin().getY();
+                position.z = -trans.getOrigin().getZ();
+                rotation.x = trans.getRotation().getX();
+                rotation.y = trans.getRotation().getY();
+                rotation.z = -trans.getRotation().getZ();
+                if (i == 0)
                 {
-                    btTransform trans = {};
-                    body->getMotionState()->
-                        getWorldTransform(trans);
-                    DirectX::XMFLOAT3 position = {};
-                    DirectX::XMFLOAT3 rotation = {};
-                    position.x = trans.getOrigin().getX();
-                    position.y = trans.getOrigin().getY();
-                    position.z = -trans.getOrigin().getZ();
-                    rotation.x = trans.getRotation().getX();
-                    rotation.y = trans.getRotation().getY();
-                    rotation.z = -trans.getRotation().getZ();
-                    box->UpdateInstanceData(
+                    sphere1->UpdateInstanceData(
+                        position, rotation, 0);
+                }
+                else if (i == 1)
+                {
+                    sphere2->UpdateInstanceData(
+                        position, rotation, 0);
+                }
+                else if (i == 2)
+                {
+                    geosph1->UpdateInstanceData(
+                        position, rotation, 0);
+                }
+                else if (i == 3)
+                {
+                    geosph2->UpdateInstanceData(
                         position, rotation, 0);
                 }
             }
