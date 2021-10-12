@@ -15,7 +15,8 @@
 
 RSLightsContainer::RSLightsContainer() :
     mRootPtr(nullptr), mLightMap({}), mShadowLights({}),
-    mShadowLightIndeices({})
+    mShadowLightIndeices({}),
+    mAmbientLights({}), mCurrentAmbient({ 0.f,0.f,0.f,0.f })
 {
 
 }
@@ -41,6 +42,10 @@ void RSLightsContainer::CleanAndStop()
         delete light.second;
     }
     mLightMap.clear();
+    mLights.clear();
+    mShadowLights.clear();
+    mShadowLightIndeices.clear();
+    mAmbientLights.clear();
 }
 
 bool LightLessCompare(RSLight* a, RSLight* b)
@@ -162,4 +167,47 @@ std::vector<RSLight*>* RSLightsContainer::GetShadowLights()
 std::vector<INT>* RSLightsContainer::GetShadowLightIndeices()
 {
     return &mShadowLightIndeices;
+}
+
+void RSLightsContainer::InsertAmbientLight(std::string&& _name,
+    DirectX::XMFLOAT4&& _light)
+{
+    auto found = mAmbientLights.find(_name);
+    if (found == mAmbientLights.end())
+    {
+        mAmbientLights.insert({ _name,_light });
+    }
+}
+
+void RSLightsContainer::EraseAmbientLight(std::string&& _name)
+{
+    auto found = mAmbientLights.find(_name);
+    if (found != mAmbientLights.end())
+    {
+        mAmbientLights.erase(_name);
+    }
+}
+
+DirectX::XMFLOAT4& RSLightsContainer::GetAmbientLight(
+    std::string& _name)
+{
+    auto found = mAmbientLights.find(_name);
+    static DirectX::XMFLOAT4 ambient = {};
+    ambient = { 0.f,0.f,0.f,0.f };
+    if (found != mAmbientLights.end())
+    {
+        ambient = mAmbientLights[_name];
+    }
+
+    return ambient;
+}
+
+void RSLightsContainer::SetCurrentAmbientLight(std::string&& _name)
+{
+    mCurrentAmbient = GetAmbientLight(_name);
+}
+
+DirectX::XMFLOAT4& RSLightsContainer::GetCurrentAmbientLight()
+{
+    return mCurrentAmbient;
 }

@@ -2852,7 +2852,10 @@ void RSPass_Defered::ExecuatePass()
     STContext()->Map(mAmbientStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     Ambient* amb_data = (Ambient*)msr.pData;
-    amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
+    static DirectX::XMFLOAT4 ambientL =
+        GetRSRoot_DX11_Singleton()->LightsContainer()->
+        GetCurrentAmbientLight();
+    amb_data[0].mAmbient = ambientL;
     STContext()->Unmap(mAmbientStructedBuffer, 0);
 
     static auto lights = g_Root->LightsContainer()->GetLights();

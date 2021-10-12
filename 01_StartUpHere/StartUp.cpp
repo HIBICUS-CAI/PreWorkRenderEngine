@@ -250,6 +250,10 @@ int WINAPI WinMain(
     auto light3 = root->LightsContainer()->CreateRSLight(
         name, &li);
 
+    root->LightsContainer()->InsertAmbientLight("temp-ambient",
+        { 0.3f,0.3f,0.3f,1.f });
+    root->LightsContainer()->SetCurrentAmbientLight("temp-ambient");
+
     if (!CreateTempWireFramePipeline())
     {
         return -3;

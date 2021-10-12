@@ -28,14 +28,26 @@ public:
 
     bool CreateLightCameraFor(std::string& _name, CAM_INFO* _info);
 
+    void InsertAmbientLight(std::string&& _name,
+        DirectX::XMFLOAT4&& _light);
+    void EraseAmbientLight(std::string&& _name);
+    void SetCurrentAmbientLight(std::string&& _name);
+    DirectX::XMFLOAT4& GetCurrentAmbientLight();
+
     std::vector<class RSLight*>* GetLights();
     std::vector<class RSLight*>* GetShadowLights();
     std::vector<INT>* GetShadowLightIndeices();
 
 private:
+    DirectX::XMFLOAT4& GetAmbientLight(std::string& _name);
+
+private:
     class RSRoot_DX11* mRootPtr;
 
     std::unordered_map<std::string, class RSLight*> mLightMap;
+    std::unordered_map<std::string, DirectX::XMFLOAT4> mAmbientLights;
+
+    DirectX::XMFLOAT4 mCurrentAmbient;
 
     std::vector<class RSLight*> mLights;
     std::vector<class RSLight*> mShadowLights;
