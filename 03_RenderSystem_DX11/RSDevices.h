@@ -27,6 +27,9 @@ public:
     bool GetConcurrentCreateSupport() const;
     bool GetCommandListSupport() const;
 
+    UINT GetCurrWndWidth() const;
+    UINT GetCurrWndHeight() const;
+
     void PresentSwapChain();
 
 private:
@@ -51,4 +54,7 @@ private:
 
     bool mConcurrentCreateSupport;
     bool mCommandListSupport;
+
+    UINT mWndWidth;
+    UINT mWndHeight;
 };

@@ -18,7 +18,8 @@ RSDevices::RSDevices() :
     mDevice1(nullptr), mImmediateContext1(nullptr),
     mDXGISwapChain(nullptr), mDXGISwapChain1(nullptr),
     mSwapChainRtv(nullptr), mFullWindowViewPort({}),
-    mConcurrentCreateSupport(false), mCommandListSupport(false)
+    mConcurrentCreateSupport(false), mCommandListSupport(false),
+    mWndWidth(0), mWndHeight(0)
 {
 
 }
@@ -38,6 +39,9 @@ bool RSDevices::StartUp(RSRoot_DX11* _root, HWND _wnd)
     GetClientRect(_wnd, &wndRect);
     UINT wndWidth = wndRect.right - wndRect.left;
     UINT wndHeight = wndRect.bottom - wndRect.top;
+
+    mWndWidth = wndWidth;
+    mWndHeight = wndHeight;
 
     mFullWindowViewPort.Width = (FLOAT)wndWidth;
     mFullWindowViewPort.Height = (FLOAT)wndHeight;
@@ -273,4 +277,14 @@ bool RSDevices::GetConcurrentCreateSupport() const
 bool RSDevices::GetCommandListSupport() const
 {
     return mCommandListSupport;
+}
+
+UINT RSDevices::GetCurrWndWidth() const
+{
+    return mWndWidth;
+}
+
+UINT RSDevices::GetCurrWndHeight() const
+{
+    return mWndHeight;
 }

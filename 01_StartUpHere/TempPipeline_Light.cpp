@@ -303,7 +303,10 @@ void RSPass_Light::ExecuatePass()
     STContext()->Map(mAmbientStructedBuffer, 0,
         D3D11_MAP_WRITE_DISCARD, 0, &msr);
     Ambient* amb_data = (Ambient*)msr.pData;
-    amb_data[0].mAmbient = { 0.3f,0.3f,0.3f,1.f };
+    static DirectX::XMFLOAT4 ambientL =
+        GetRSRoot_DX11_Singleton()->LightsContainer()->
+        GetCurrentAmbientLight();
+    amb_data[0].mAmbient = ambientL;
     STContext()->Unmap(mAmbientStructedBuffer, 0);
 
     static auto lights = g_Root->LightsContainer()->GetLights();
@@ -913,8 +916,10 @@ bool RSPass_Shadow::CreateViews()
     HRESULT hr = S_OK;
     ID3D11Texture2D* depthTex = nullptr;
     D3D11_TEXTURE2D_DESC texDepSte = {};
-    texDepSte.Width = 1280;
-    texDepSte.Height = 720;
+    texDepSte.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDepSte.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDepSte.MipLevels = 1;
     texDepSte.ArraySize = MAX_SHADOW_SIZE;
     texDepSte.Format = DXGI_FORMAT_R24G8_TYPELESS;
@@ -1384,8 +1389,10 @@ bool RSPass_Ssao::CreateTextures()
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
@@ -2491,8 +2498,10 @@ bool RSPass_MRT::CreateViews()
     std::string name = "";
 
     ID3D11Texture2D* texture = nullptr;
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
@@ -2529,8 +2538,10 @@ bool RSPass_MRT::CreateViews()
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
@@ -2566,8 +2577,10 @@ bool RSPass_MRT::CreateViews()
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
@@ -2603,8 +2616,10 @@ bool RSPass_MRT::CreateViews()
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
@@ -2640,8 +2655,10 @@ bool RSPass_MRT::CreateViews()
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
@@ -2677,8 +2694,10 @@ bool RSPass_MRT::CreateViews()
     dti.mSrv = srv;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
 
-    texDesc.Width = 1280;
-    texDesc.Height = 720;
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
     texDesc.SampleDesc.Count = 1;
