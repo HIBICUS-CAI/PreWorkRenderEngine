@@ -21,6 +21,7 @@ public:
     void ResetRSCamera(CAM_INFO* _info);
 
     void TranslateRSCamera(DirectX::XMFLOAT3 _delta);
+    void RotateRSCamera(float _vertical, float _horizontal);
     void RotateRSCamera(DirectX::XMFLOAT3 _deltaAngle);
     void ChangeRSCameraFovY(float _angle);
     void ChangeRSCameraNearFarZ(float _near, float _far);

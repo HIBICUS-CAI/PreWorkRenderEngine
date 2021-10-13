@@ -809,7 +809,7 @@ int WINAPI WinMain(
             float vertR = (float)sticksR.x / 1000000.f * speedFactor;
             float horiR = (float)-sticksR.y / 1000000.f * speedFactor;
             cam->TranslateRSCamera({ vertL,0.f,horiL });
-            cam->RotateRSCamera({ horiR,vertR,0.f });
+            cam->RotateRSCamera(horiR, vertR);
 
             dynamicsWorld->stepSimulation(1.f / 60.f, 3);
             btTransform trans = {};
