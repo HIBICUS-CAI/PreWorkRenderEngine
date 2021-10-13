@@ -72,9 +72,9 @@ public:
         time += 0.0001f;
         instance.clear();
         {
-            RS_INSTANCE_DATA ins_data = {};
-            DirectX::XMMATRIX mat = {};
-            DirectX::XMFLOAT4X4 flt44 = {};
+            static RS_INSTANCE_DATA ins_data = {};
+            static DirectX::XMMATRIX mat = {};
+            static DirectX::XMFLOAT4X4 flt44 = {};
             mat = DirectX::XMMatrixMultiply(
                 DirectX::XMMatrixScaling(0.15f, 0.15f, 0.15f),
                 DirectX::XMMatrixRotationY(time * 3.f)
@@ -121,7 +121,7 @@ public:
             instance.emplace_back(ins_data);
         }
 
-        RS_DRAWCALL_DATA data = {};
+        static RS_DRAWCALL_DATA data = {};
         data.mMeshData.mLayout = mData.mLayout;
         data.mMeshData.mTopologyType = mData.mTopologyType;
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
@@ -131,7 +131,7 @@ public:
         data.mTextureDatas[0].mUse = true;
         data.mTextureDatas[0].mSrv = _root->TexturesManager()->
             GetMeshSrv(mData.mTextures[0]);
-        std::string name = "copper";
+        static std::string name = "copper";
         data.mMaterialData = *(_root->StaticResources()->
             GetStaticMaterial(name));
 
@@ -206,9 +206,9 @@ public:
 
         for (size_t i = 0; i < mPostions.size(); i++)
         {
-            RS_INSTANCE_DATA ins_data = {};
-            DirectX::XMMATRIX mat = {};
-            DirectX::XMFLOAT4X4 flt44 = {};
+            static RS_INSTANCE_DATA ins_data = {};
+            static DirectX::XMMATRIX mat = {};
+            static DirectX::XMFLOAT4X4 flt44 = {};
             mat = DirectX::XMMatrixMultiply(
                 DirectX::XMMatrixScaling(
                     mScales[i].x,
@@ -227,7 +227,7 @@ public:
                     mPostions[i].z));
             DirectX::XMStoreFloat4x4(&flt44, mat);
             ins_data.mWorldMat = flt44;
-            std::string name = "copper";
+            static std::string name = "copper";
             ins_data.mMaterialData = *(_root->StaticResources()->
                 GetStaticMaterial(name));
             if (mData.mTextures.size() > 1)
@@ -241,8 +241,8 @@ public:
             mInstance.emplace_back(ins_data);
         }
 
-        std::string name = "temp-cam";
-        RS_DRAWCALL_DATA data = {};
+        static std::string name = "temp-cam";
+        static RS_DRAWCALL_DATA data = {};
         data.mMeshData.mLayout = mData.mLayout;
         data.mMeshData.mTopologyType = mData.mTopologyType;
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;
@@ -315,9 +315,9 @@ public:
 
         for (size_t i = 0; i < mPostions.size(); i++)
         {
-            RS_INSTANCE_DATA ins_data = {};
-            DirectX::XMMATRIX mat = {};
-            DirectX::XMFLOAT4X4 flt44 = {};
+            static RS_INSTANCE_DATA ins_data = {};
+            static DirectX::XMMATRIX mat = {};
+            static DirectX::XMFLOAT4X4 flt44 = {};
             mat = DirectX::XMMatrixMultiply(
                 DirectX::XMMatrixScaling(
                     mScales[i].x, mScales[i].y, 1.f),
@@ -333,8 +333,8 @@ public:
             mInstance.emplace_back(ins_data);
         }
 
-        std::string name = "temp-ui-cam";
-        RS_DRAWCALL_DATA data = {};
+        static std::string name = "temp-ui-cam";
+        static RS_DRAWCALL_DATA data = {};
         data.mMeshData.mLayout = mData.mLayout;
         data.mMeshData.mTopologyType = mData.mTopologyType;
         data.mMeshData.mIndexBuffer = mData.mIndexBuffer;

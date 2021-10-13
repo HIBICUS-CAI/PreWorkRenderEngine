@@ -857,17 +857,21 @@ int WINAPI WinMain(
                 }
             }
 
-            mesh->UploadDrawCall(root->DrawCallsPool(), root);
-            floor->UploadDrawCall(root->DrawCallsPool(), root);
-            walls->UploadDrawCall(root->DrawCallsPool(), root);
-            pillars->UploadDrawCall(root->DrawCallsPool(), root);
-            box->UploadDrawCall(root->DrawCallsPool(), root);
-            sphere1->UploadDrawCall(root->DrawCallsPool(), root);
-            sphere2->UploadDrawCall(root->DrawCallsPool(), root);
-            geosph1->UploadDrawCall(root->DrawCallsPool(), root);
-            geosph2->UploadDrawCall(root->DrawCallsPool(), root);
-            sp1->UploadDrawCall(root->DrawCallsPool(), root);
-            sp2->UploadDrawCall(root->DrawCallsPool(), root);
+            for (size_t i = 0; i < 1; i++)
+            {
+                mesh->UploadDrawCall(root->DrawCallsPool(), root);
+                floor->UploadDrawCall(root->DrawCallsPool(), root);
+                walls->UploadDrawCall(root->DrawCallsPool(), root);
+                pillars->UploadDrawCall(root->DrawCallsPool(), root);
+                box->UploadDrawCall(root->DrawCallsPool(), root);
+                sphere1->UploadDrawCall(root->DrawCallsPool(), root);
+                sphere2->UploadDrawCall(root->DrawCallsPool(), root);
+                geosph1->UploadDrawCall(root->DrawCallsPool(), root);
+                geosph2->UploadDrawCall(root->DrawCallsPool(), root);
+                sp1->UploadDrawCall(root->DrawCallsPool(), root);
+                sp2->UploadDrawCall(root->DrawCallsPool(), root);
+            }
+
             root->PipelinesManager()->ExecuateCurrentPipeline();
 
             root->Devices()->PresentSwapChain();
