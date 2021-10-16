@@ -74,11 +74,16 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     bloomdraw->SetExecuateOrder(1);
 
+    name = "bloomblend-pass";
+    RSPass_BloomOn* bloomblend = new RSPass_BloomOn(
+        name, PASS_TYPE::RENDER, g_Root);
+    bloomblend->SetExecuateOrder(2);
+
     name = "bloom-topic";
     RSTopic* bloom_topic = new RSTopic(name);
     bloom_topic->StartTopicAssembly();
     bloom_topic->InsertPass(bloomdraw);
-    bloom_topic->SetExecuateOrder(5);
+    bloom_topic->SetExecuateOrder(4);
     bloom_topic->FinishTopicAssembly();
 
     name = "mrt-topic";
@@ -121,14 +126,16 @@ bool CreateTempLightPipeline()
     RSTopic* light_topic = new RSTopic(name);
     light_topic->StartTopicAssembly();
     light_topic->InsertPass(light);
-    light_topic->SetExecuateOrder(4);
+    light_topic->InsertPass(bloomblend);
+    light_topic->SetExecuateOrder(5);
     light_topic->FinishTopicAssembly();
 
     name = "defered-light-topic";
     RSTopic* defered_topic = new RSTopic(name);
     defered_topic->StartTopicAssembly();
     defered_topic->InsertPass(defered);
-    defered_topic->SetExecuateOrder(4);
+    defered_topic->InsertPass(bloomblend);
+    defered_topic->SetExecuateOrder(5);
     defered_topic->FinishTopicAssembly();
 
     name = "light-pipeline";
@@ -3520,6 +3527,246 @@ bool RSPass_Bloom::CreateViews()
     dti.mSrv = srv;
     dti.mUav = uav;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    return true;
+}
+
+RSPass_BloomOn::RSPass_BloomOn(std::string& _name, PASS_TYPE _type,
+    RSRoot_DX11* _root) :RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    mRtv(nullptr), mBloomTexSrv(nullptr), mDepthState(nullptr),
+    mBlendState(nullptr), mSampler(nullptr),
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr)
+{
+
+}
+
+RSPass_BloomOn::RSPass_BloomOn(const RSPass_BloomOn& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mRtv(_source.mRtv),
+    mBloomTexSrv(_source.mBloomTexSrv),
+    mBlendState(_source.mBlendState),
+    mDepthState(_source.mDepthState),
+    mSampler(_source.mSampler),
+    mVertexBuffer(_source.mVertexBuffer),
+    mIndexBuffer(_source.mIndexBuffer)
+{
+
+}
+
+RSPass_BloomOn::~RSPass_BloomOn()
+{
+
+}
+
+RSPass_BloomOn* RSPass_BloomOn::ClonePass()
+{
+    return new RSPass_BloomOn(*this);
+}
+
+bool RSPass_BloomOn::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+    if (!CreateStates()) { return false; }
+    if (!CreateSamplers()) { return false; }
+
+    return true;
+}
+
+void RSPass_BloomOn::ReleasePass()
+{
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mBlendState);
+    RS_RELEASE(mDepthState);
+    RS_RELEASE(mSampler);
+    RS_RELEASE(mVertexBuffer);
+    RS_RELEASE(mIndexBuffer);
+}
+
+void RSPass_BloomOn::ExecuatePass()
+{
+    ID3D11RenderTargetView* rtvnull = nullptr;
+    STContext()->OMSetRenderTargets(1, &mRtv, nullptr);
+    STContext()->RSSetViewports(1, &g_ViewPort);
+    STContext()->OMSetDepthStencilState(mDepthState, 0);
+    static float factor[4] = { 0.f,0.f,0.f,0.f };
+    STContext()->OMSetBlendState(mBlendState, factor, 0xFFFFFFFF);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
+    STContext()->PSSetSamplers(0, 1, &mSampler);
+    STContext()->PSSetShaderResources(0, 1, &mBloomTexSrv);
+
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+    STContext()->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    STContext()->IASetVertexBuffers(
+        0, 1, &mVertexBuffer,
+        &stride, &offset);
+    STContext()->IASetIndexBuffer(
+        mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+    STContext()->OMSetRenderTargets(1, &rtvnull, nullptr);
+    STContext()->OMSetDepthStencilState(nullptr, 0);
+    STContext()->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+bool RSPass_BloomOn::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\bloomon_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\bloomon_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_BloomOn::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bufDesc = {};
+
+    VERTEX_INFO v[4] = {};
+    v[0].mPosition = DirectX::XMFLOAT3(-1.0f, -1.0f, 0.0f);
+    v[1].mPosition = DirectX::XMFLOAT3(-1.0f, +1.0f, 0.0f);
+    v[2].mPosition = DirectX::XMFLOAT3(+1.0f, +1.0f, 0.0f);
+    v[3].mPosition = DirectX::XMFLOAT3(+1.0f, -1.0f, 0.0f);
+    v[0].mNormal = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mNormal = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mNormal = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mNormal = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTangent = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mTangent = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mTangent = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mTangent = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTexCoord = DirectX::XMFLOAT2(0.0f, 1.0f);
+    v[1].mTexCoord = DirectX::XMFLOAT2(0.0f, 0.0f);
+    v[2].mTexCoord = DirectX::XMFLOAT2(1.0f, 0.0f);
+    v[3].mTexCoord = DirectX::XMFLOAT2(1.0f, 1.0f);
+    ZeroMemory(&bufDesc, sizeof(bufDesc));
+    bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufDesc.ByteWidth = sizeof(VERTEX_INFO) * 4;
+    bufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bufDesc.CPUAccessFlags = 0;
+    bufDesc.MiscFlags = 0;
+    bufDesc.StructureByteStride = 0;
+    D3D11_SUBRESOURCE_DATA vinitData = {};
+    ZeroMemory(&vinitData, sizeof(vinitData));
+    vinitData.pSysMem = v;
+    hr = Device()->CreateBuffer(
+        &bufDesc, &vinitData, &mVertexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    UINT indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    ZeroMemory(&bufDesc, sizeof(bufDesc));
+    bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufDesc.ByteWidth = sizeof(UINT) * 6;
+    bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bufDesc.CPUAccessFlags = 0;
+    bufDesc.StructureByteStride = 0;
+    bufDesc.MiscFlags = 0;
+    D3D11_SUBRESOURCE_DATA iinitData = {};
+    ZeroMemory(&iinitData, sizeof(iinitData));
+    iinitData.pSysMem = indices;
+    hr = Device()->CreateBuffer(
+        &bufDesc, &iinitData, &mIndexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_BloomOn::CreateStates()
+{
+    HRESULT hr = S_OK;
+
+    D3D11_DEPTH_STENCIL_DESC depDesc = {};
+    depDesc.DepthEnable = FALSE;
+    depDesc.StencilEnable = FALSE;
+    hr = Device()->CreateDepthStencilState(
+        &depDesc, &mDepthState);
+    if (FAILED(hr)) { return false; }
+
+    D3D11_BLEND_DESC bldDesc = {};
+    bldDesc.AlphaToCoverageEnable = FALSE;
+    bldDesc.IndependentBlendEnable = FALSE;
+    bldDesc.RenderTarget[0].BlendEnable = TRUE;
+    bldDesc.RenderTarget[0].RenderTargetWriteMask =
+        D3D11_COLOR_WRITE_ENABLE_ALL;
+    bldDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    bldDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    bldDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    bldDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    bldDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    bldDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    hr = Device()->CreateBlendState(&bldDesc, &mBlendState);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_BloomOn::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = Device()->CreateSamplerState(
+        &sampDesc, &mSampler);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_BloomOn::CreateViews()
+{
+    mRtv = g_Root->Devices()->GetSwapChainRtv();
+
+    std::string name = "bloom-light";
+    mBloomTexSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    if (!mBloomTexSrv) { return false; }
 
     return true;
 }
