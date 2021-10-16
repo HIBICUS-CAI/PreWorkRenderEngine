@@ -216,7 +216,11 @@ private:
 private:
     ID3D11VertexShader* mVertexShader;
     ID3D11PixelShader* mPixelShader;
+    ID3D11VertexShader* mCompressVertexShader;
+    ID3D11PixelShader* mCompressPixelShader;
     ID3D11RenderTargetView* mRenderTargetView;
+    ID3D11ShaderResourceView* mNotCompressSrv;
+    ID3D11RenderTargetView* mCompressRtv;
     ID3D11SamplerState* mSamplePointClamp;
     ID3D11SamplerState* mSampleLinearClamp;
     ID3D11SamplerState* mSampleDepthMap;
@@ -418,10 +422,13 @@ private:
     bool CreateShaders();
     bool CreateBuffers();
     bool CreateViews();
+    bool CreateSamplers();
 
 private:
     ID3D11VertexShader* mVertexShader;
     ID3D11PixelShader* mPixelShader;
+    ID3D11VertexShader* mCompressVertexShader;
+    ID3D11PixelShader* mCompressPixelShader;
     DRAWCALL_TYPE mDrawCallType;
     RSDrawCallsPipe* mDrawCallPipe;
     ID3D11Buffer* mViewProjStructedBuffer;
@@ -429,8 +436,13 @@ private:
     ID3D11Buffer* mInstanceStructedBuffer;
     ID3D11ShaderResourceView* mInstanceStructedBufferSrv;
     ID3D11RenderTargetView* mRtv;
+    ID3D11ShaderResourceView* mNotCompressSrv;
+    ID3D11RenderTargetView* mCompressRtv;
     ID3D11DepthStencilView* mDepthDsv;
     RS_CAM_INFO* mRSCameraInfo;
+    ID3D11Buffer* mVertexBuffer;
+    ID3D11Buffer* mIndexBuffer;
+    ID3D11SamplerState* mSampler;
 };
 
 class RSPass_BloomOn :public RSPass_Base

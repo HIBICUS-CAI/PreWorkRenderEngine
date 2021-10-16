@@ -19,19 +19,19 @@ void HMain(int3 groupThreadId : SV_GroupThreadID,
     {
         int x = max(dispatchThreadId.x - 2, 0);
         gSsaoCache[groupThreadId.x] = SsaoTex[int2(x, dispatchThreadId.y)];
-        gNormalCache[groupThreadId.x] = NormalMap[int2(x, dispatchThreadId.y)];
-        gDepthCache[groupThreadId.x] = DepthMap[int2(x, dispatchThreadId.y)].r;
+        gNormalCache[groupThreadId.x] = NormalMap[int2(x * 2, dispatchThreadId.y * 2)];
+        gDepthCache[groupThreadId.x] = DepthMap[int2(x * 2, dispatchThreadId.y * 2)].r;
     }
     if (groupThreadId.x >= 256 - 2)
     {
-        int x = min(dispatchThreadId.x + 2, 1280 - 1);
+        int x = min(dispatchThreadId.x + 2, 640 - 1);
         gSsaoCache[groupThreadId.x + 2 * 2] = SsaoTex[int2(x, dispatchThreadId.y)];
-        gNormalCache[groupThreadId.x + 2 * 2] = NormalMap[int2(x, dispatchThreadId.y)];
-        gDepthCache[groupThreadId.x + 2 * 2] = DepthMap[int2(x, dispatchThreadId.y)].r;
+        gNormalCache[groupThreadId.x + 2 * 2] = NormalMap[int2(x * 2, dispatchThreadId.y * 2)];
+        gDepthCache[groupThreadId.x + 2 * 2] = DepthMap[int2(x * 2, dispatchThreadId.y * 2)].r;
     }
-    gSsaoCache[groupThreadId.x + 2] = SsaoTex[min(dispatchThreadId.xy, int2(1280, 720) - 1)];
-    gNormalCache[groupThreadId.x + 2] = NormalMap[min(dispatchThreadId.xy, int2(1280, 720) - 1)];
-    gDepthCache[groupThreadId.x + 2] = DepthMap[min(dispatchThreadId.xy, int2(1280, 720) - 1)].r;
+    gSsaoCache[groupThreadId.x + 2] = SsaoTex[min(dispatchThreadId.xy, int2(640, 360) - 1)];
+    gNormalCache[groupThreadId.x + 2] = NormalMap[min(dispatchThreadId.xy * 2, int2(1280, 720) - 1)];
+    gDepthCache[groupThreadId.x + 2] = DepthMap[min(dispatchThreadId.xy * 2, int2(1280, 720) - 1)].r;
 
     GroupMemoryBarrierWithGroupSync();
 
@@ -67,19 +67,19 @@ void VMain(int3 groupThreadId : SV_GroupThreadID,
     {
         int y = max(dispatchThreadId.y - 2, 0);
         gSsaoCache[groupThreadId.y] = SsaoTex[int2(dispatchThreadId.x, y)];
-        gNormalCache[groupThreadId.y] = NormalMap[int2(dispatchThreadId.x, y)];
-        gDepthCache[groupThreadId.y] = DepthMap[int2(dispatchThreadId.x, y)].r;
+        gNormalCache[groupThreadId.y] = NormalMap[int2(dispatchThreadId.x * 2, y * 2)];
+        gDepthCache[groupThreadId.y] = DepthMap[int2(dispatchThreadId.x * 2, y * 2)].r;
     }
     if (groupThreadId.y >= 256 - 2)
     {
-        int y = min(dispatchThreadId.y + 2, 720 - 1);
+        int y = min(dispatchThreadId.y + 2, 360 - 1);
         gSsaoCache[groupThreadId.y + 2 * 2] = SsaoTex[int2(dispatchThreadId.x, y)];
-        gNormalCache[groupThreadId.y + 2 * 2] = NormalMap[int2(dispatchThreadId.x, y)];
-        gDepthCache[groupThreadId.y + 2 * 2] = DepthMap[int2(dispatchThreadId.x, y)].r;
+        gNormalCache[groupThreadId.y + 2 * 2] = NormalMap[int2(dispatchThreadId.x * 2, y * 2)];
+        gDepthCache[groupThreadId.y + 2 * 2] = DepthMap[int2(dispatchThreadId.x * 2, y * 2)].r;
     }
-    gSsaoCache[groupThreadId.y + 2] = SsaoTex[min(dispatchThreadId.xy, int2(1280, 720) - 1)];
-    gNormalCache[groupThreadId.y + 2] = NormalMap[min(dispatchThreadId.xy, int2(1280, 720) - 1)];
-    gDepthCache[groupThreadId.y + 2] = DepthMap[min(dispatchThreadId.xy, int2(1280, 720) - 1)].r;
+    gSsaoCache[groupThreadId.y + 2] = SsaoTex[min(dispatchThreadId.xy, int2(640, 360) - 1)];
+    gNormalCache[groupThreadId.y + 2] = NormalMap[min(dispatchThreadId.xy * 2, int2(1280, 720) - 1)];
+    gDepthCache[groupThreadId.y + 2] = DepthMap[min(dispatchThreadId.xy * 2, int2(1280, 720) - 1)].r;
 
     GroupMemoryBarrierWithGroupSync();
 

@@ -113,11 +113,11 @@ void RSLight::SetLightBloom(RS_SUBMESH_DATA& _meshData)
     mLightMeshData = _meshData;
     mLightInstanceData.resize(1);
     mLightInstanceData[0].mCustomizedData1.x =
-        mLightStrength.x * 1.5f;
+        mLightStrength.x * 1.6f;
     mLightInstanceData[0].mCustomizedData1.y =
-        mLightStrength.y * 1.5f;
+        mLightStrength.y * 1.6f;
     mLightInstanceData[0].mCustomizedData1.z =
-        mLightStrength.z * 1.5f;
+        mLightStrength.z * 1.6f;
     mLightInstanceData[0].mCustomizedData1.w = 1.f;
     static DirectX::XMMATRIX mat = {};
     mat = DirectX::XMMatrixTranslation(

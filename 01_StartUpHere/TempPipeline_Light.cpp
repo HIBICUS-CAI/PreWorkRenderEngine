@@ -660,7 +660,7 @@ bool RSPass_Light::CreateViews()
         &desSRV, &mShadowStructedBufferSrv);
     if (FAILED(hr)) { return false; }
 
-    name = "ssao-tex-ssao";
+    name = "ssao-tex-compress-ssao";
     mSsaoSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
 
@@ -1041,7 +1041,9 @@ RSPass_Ssao::RSPass_Ssao(
     mSamplePointClamp(nullptr), mSampleLinearClamp(nullptr),
     mSampleDepthMap(nullptr), mSampleLinearWrap(nullptr),
     mVertexBuffer(nullptr), mIndexBuffer(nullptr),
-    mRSCameraInfo(nullptr)
+    mRSCameraInfo(nullptr), mCompressVertexShader(nullptr),
+    mCompressPixelShader(nullptr), mNotCompressSrv(nullptr),
+    mCompressRtv(nullptr)
 {
     for (UINT i = 0; i < 14; i++)
     {
@@ -1064,7 +1066,11 @@ RSPass_Ssao::RSPass_Ssao(const RSPass_Ssao& _source) :
     mDepthMapSrv(_source.mDepthMapSrv),
     mRandomMapSrv(_source.mRandomMapSrv),
     mVertexBuffer(nullptr), mIndexBuffer(nullptr),
-    mRSCameraInfo(_source.mRSCameraInfo)
+    mRSCameraInfo(_source.mRSCameraInfo),
+    mCompressVertexShader(_source.mCompressVertexShader),
+    mCompressPixelShader(_source.mCompressPixelShader),
+    mNotCompressSrv(_source.mNotCompressSrv),
+    mCompressRtv(_source.mCompressRtv)
 {
     for (UINT i = 0; i < 14; i++)
     {
@@ -1132,6 +1138,8 @@ void RSPass_Ssao::ReleasePass()
 {
     RS_RELEASE(mVertexShader);
     RS_RELEASE(mPixelShader);
+    RS_RELEASE(mCompressVertexShader);
+    RS_RELEASE(mCompressPixelShader);
     RS_RELEASE(mSamplePointClamp);
     RS_RELEASE(mSampleLinearClamp);
     RS_RELEASE(mSampleDepthMap);
@@ -1144,6 +1152,8 @@ void RSPass_Ssao::ReleasePass()
     std::string name = "random-tex-ssao";
     g_Root->TexturesManager()->DeleteDataTex(name);
     name = "ssao-tex-ssao";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "ssao-tex-compress-ssao";
     g_Root->TexturesManager()->DeleteDataTex(name);
 }
 
@@ -1227,6 +1237,23 @@ void RSPass_Ssao::ExecuatePass()
 
     STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
+    STContext()->OMSetRenderTargets(1, &mCompressRtv, nullptr);
+    STContext()->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    STContext()->IASetVertexBuffers(
+        0, 1, &mVertexBuffer,
+        &stride, &offset);
+    STContext()->IASetIndexBuffer(
+        mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    STContext()->RSSetViewports(1, &g_ViewPort);
+    STContext()->VSSetShader(mCompressVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mCompressPixelShader, nullptr, 0);
+    STContext()->PSSetSamplers(0, 1, &mSampleLinearWrap);
+    STContext()->PSSetShaderResources(
+        0, 1, &mNotCompressSrv);
+
+    STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
     STContext()->OMSetRenderTargets(1, &null, nullptr);
     STContext()->RSSetState(nullptr);
     STContext()->PSSetShaderResources(
@@ -1264,6 +1291,32 @@ bool RSPass_Ssao::CreateShaders()
         shaderBlob->GetBufferPointer(),
         shaderBlob->GetBufferSize(),
         nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\compress_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mCompressVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\compress_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mCompressPixelShader);
     shaderBlob->Release();
     shaderBlob = nullptr;
     if (FAILED(hr)) { return false; }
@@ -1426,6 +1479,45 @@ bool RSPass_Ssao::CreateTextures()
     texDesc.MiscFlags = 0;
     texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &rtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(
+        texture, &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "ssao-tex-ssao";
+    dti.mTexture = texture;
+    dti.mRtv = rtv;
+    dti.mSrv = srv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth() / 2;
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight() / 2;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags =
         D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE |
         D3D11_BIND_UNORDERED_ACCESS;
     hr = Device()->CreateTexture2D(
@@ -1455,7 +1547,7 @@ bool RSPass_Ssao::CreateTextures()
     if (FAILED(hr)) { return false; }
 
     dti = {};
-    name = "ssao-tex-ssao";
+    name = "ssao-tex-compress-ssao";
     dti.mTexture = texture;
     dti.mRtv = rtv;
     dti.mSrv = srv;
@@ -1478,6 +1570,11 @@ bool RSPass_Ssao::CreateViews()
         GetDataTexInfo(name)->mSrv;
     name = "ssao-tex-ssao";
     mRenderTargetView = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mRtv;
+    mNotCompressSrv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mSrv;
+    name = "ssao-tex-compress-ssao";
+    mCompressRtv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mRtv;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
@@ -1613,7 +1710,7 @@ void RSPass_KBBlur::ExecuatePass()
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mSsaoTexUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, srv);
-        STContext()->Dispatch(5, 720, 1);
+        STContext()->Dispatch(3, 360, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, nullSrv);
@@ -1622,7 +1719,7 @@ void RSPass_KBBlur::ExecuatePass()
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mSsaoTexUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, srv);
-        STContext()->Dispatch(1280, 3, 1);
+        STContext()->Dispatch(640, 2, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, nullSrv);
@@ -1671,7 +1768,7 @@ bool RSPass_KBBlur::CreateViews()
     name = "mrt-depth";
     mDepthMapSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
-    name = "ssao-tex-ssao";
+    name = "ssao-tex-compress-ssao";
     mSsaoTexUav = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mUav;
 
@@ -3166,7 +3263,7 @@ bool RSPass_Defered::CreateViews()
     name = "mrt-fresnel-shinese";
     mFresenlShineseSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
-    name = "ssao-tex-ssao";
+    name = "ssao-tex-compress-ssao";
     mSsaoSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
     name = "light-depth-light-other";
@@ -3255,7 +3352,11 @@ RSPass_Bloom::RSPass_Bloom(std::string& _name, PASS_TYPE _type,
     mViewProjStructedBufferSrv(nullptr),
     mInstanceStructedBuffer(nullptr),
     mInstanceStructedBufferSrv(nullptr),
-    mRtv(nullptr), mDepthDsv(nullptr), mRSCameraInfo(nullptr)
+    mRtv(nullptr), mDepthDsv(nullptr), mRSCameraInfo(nullptr),
+    mCompressVertexShader(nullptr), mCompressPixelShader(nullptr),
+    mNotCompressSrv(nullptr), mCompressRtv(nullptr),
+    mVertexBuffer(nullptr), mIndexBuffer(nullptr),
+    mSampler(nullptr)
 {
 
 }
@@ -3271,7 +3372,14 @@ RSPass_Bloom::RSPass_Bloom(const RSPass_Bloom& _source) :
     mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
     mInstanceStructedBufferSrv(_source.mInstanceStructedBufferSrv),
     mRtv(_source.mRtv), mDepthDsv(_source.mDepthDsv),
-    mRSCameraInfo(_source.mRSCameraInfo)
+    mRSCameraInfo(_source.mRSCameraInfo),
+    mCompressVertexShader(_source.mCompressVertexShader),
+    mCompressPixelShader(_source.mCompressPixelShader),
+    mNotCompressSrv(_source.mNotCompressSrv),
+    mCompressRtv(_source.mCompressRtv),
+    mVertexBuffer(_source.mVertexBuffer),
+    mIndexBuffer(_source.mIndexBuffer),
+    mSampler(_source.mSampler)
 {
 
 }
@@ -3291,6 +3399,7 @@ bool RSPass_Bloom::InitPass()
     if (!CreateShaders()) { return false; }
     if (!CreateBuffers()) { return false; }
     if (!CreateViews()) { return false; }
+    if (!CreateSamplers()) { return false; }
 
     mDrawCallPipe = g_Root->DrawCallsPool()->
         GetDrawCallsPipe(mDrawCallType);
@@ -3307,13 +3416,19 @@ void RSPass_Bloom::ReleasePass()
 {
     std::string name = "bloom-light";
     g_Root->TexturesManager()->DeleteDataTex(name);
+    name = "bloom-compress-light";
+    g_Root->TexturesManager()->DeleteDataTex(name);
 
     RS_RELEASE(mVertexShader);
     RS_RELEASE(mPixelShader);
     RS_RELEASE(mViewProjStructedBufferSrv);
     RS_RELEASE(mInstanceStructedBufferSrv);
     RS_RELEASE(mViewProjStructedBuffer);
-    RS_RELEASE(mInstanceStructedBuffer);
+    RS_RELEASE(mVertexBuffer);
+    RS_RELEASE(mIndexBuffer);
+    RS_RELEASE(mSampler);
+    RS_RELEASE(mCompressVertexShader);
+    RS_RELEASE(mCompressPixelShader);
 }
 
 void RSPass_Bloom::ExecuatePass()
@@ -3384,6 +3499,24 @@ void RSPass_Bloom::ExecuatePass()
             (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
     }
 
+    stride = sizeof(VertexType::TangentVertex);
+    STContext()->OMSetRenderTargets(1, &mCompressRtv, nullptr);
+    STContext()->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    STContext()->IASetVertexBuffers(
+        0, 1, &mVertexBuffer,
+        &stride, &offset);
+    STContext()->IASetIndexBuffer(
+        mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    STContext()->RSSetViewports(1, &g_ViewPort);
+    STContext()->VSSetShader(mCompressVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mCompressPixelShader, nullptr, 0);
+    STContext()->PSSetSamplers(0, 1, &mSampler);
+    STContext()->PSSetShaderResources(
+        0, 1, &mNotCompressSrv);
+
+    STContext()->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
     static ID3D11RenderTargetView* nullrtv[] = { nullptr };
     STContext()->OMSetRenderTargets(1, nullrtv, nullptr);
 }
@@ -3419,6 +3552,52 @@ bool RSPass_Bloom::CreateShaders()
     shaderBlob = nullptr;
     if (FAILED(hr)) { return false; }
 
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\compress_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mCompressVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\compress_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mCompressPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Bloom::CreateSamplers()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC samDesc = {};
+    ZeroMemory(&samDesc, sizeof(samDesc));
+
+    samDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samDesc.MinLOD = 0;
+    samDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Device()->CreateSamplerState(
+        &samDesc, &mSampler);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -3442,6 +3621,56 @@ bool RSPass_Bloom::CreateBuffers()
     bdc.StructureByteStride = sizeof(ViewProj);
     hr = Device()->CreateBuffer(
         &bdc, nullptr, &mViewProjStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    VERTEX_INFO v[4] = {};
+    v[0].mPosition = DirectX::XMFLOAT3(-1.0f, -1.0f, 0.0f);
+    v[1].mPosition = DirectX::XMFLOAT3(-1.0f, +1.0f, 0.0f);
+    v[2].mPosition = DirectX::XMFLOAT3(+1.0f, +1.0f, 0.0f);
+    v[3].mPosition = DirectX::XMFLOAT3(+1.0f, -1.0f, 0.0f);
+    v[0].mNormal = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mNormal = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mNormal = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mNormal = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTangent = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    v[1].mTangent = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+    v[2].mTangent = DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f);
+    v[3].mTangent = DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f);
+    v[0].mTexCoord = DirectX::XMFLOAT2(0.0f, 1.0f);
+    v[1].mTexCoord = DirectX::XMFLOAT2(0.0f, 0.0f);
+    v[2].mTexCoord = DirectX::XMFLOAT2(1.0f, 0.0f);
+    v[3].mTexCoord = DirectX::XMFLOAT2(1.0f, 1.0f);
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_IMMUTABLE;
+    bdc.ByteWidth = sizeof(VERTEX_INFO) * 4;
+    bdc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    bdc.MiscFlags = 0;
+    bdc.StructureByteStride = 0;
+    D3D11_SUBRESOURCE_DATA vinitData = {};
+    ZeroMemory(&vinitData, sizeof(vinitData));
+    vinitData.pSysMem = v;
+    hr = Device()->CreateBuffer(
+        &bdc, &vinitData, &mVertexBuffer);
+    if (FAILED(hr)) { return false; }
+
+    UINT indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_IMMUTABLE;
+    bdc.ByteWidth = sizeof(UINT) * 6;
+    bdc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    bdc.CPUAccessFlags = 0;
+    bdc.StructureByteStride = 0;
+    bdc.MiscFlags = 0;
+    D3D11_SUBRESOURCE_DATA iinitData = {};
+    ZeroMemory(&iinitData, sizeof(iinitData));
+    iinitData.pSysMem = indices;
+    hr = Device()->CreateBuffer(
+        &bdc, &iinitData, &mIndexBuffer);
     if (FAILED(hr)) { return false; }
 
     return true;
@@ -3497,6 +3726,45 @@ bool RSPass_Bloom::CreateViews()
     texDesc.MiscFlags = 0;
     texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &mRtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &mNotCompressSrv);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "bloom-light";
+    dti.mTexture = texture;
+    dti.mRtv = mRtv;
+    dti.mSrv = mNotCompressSrv;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
+
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth() / 2;
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight() / 2;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags =
         D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS |
         D3D11_BIND_SHADER_RESOURCE;
     hr = Device()->CreateTexture2D(
@@ -3507,7 +3775,7 @@ bool RSPass_Bloom::CreateViews()
     rtvDesc.Texture2D.MipSlice = 0;
     rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     hr = Device()->CreateRenderTargetView(
-        texture, &rtvDesc, &mRtv);
+        texture, &rtvDesc, &mCompressRtv);
     if (FAILED(hr)) { return false; }
 
     srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -3526,9 +3794,9 @@ bool RSPass_Bloom::CreateViews()
     if (FAILED(hr)) { return false; }
 
     dti = {};
-    name = "bloom-light";
+    name = "bloom-compress-light";
     dti.mTexture = texture;
-    dti.mRtv = mRtv;
+    dti.mRtv = mCompressRtv;
     dti.mSrv = srv;
     dti.mUav = uav;
     g_Root->TexturesManager()->AddDataTexture(name, dti);
@@ -3768,7 +4036,7 @@ bool RSPass_BloomOn::CreateViews()
 {
     mRtv = g_Root->Devices()->GetSwapChainRtv();
 
-    std::string name = "bloom-light";
+    std::string name = "bloom-compress-light";
     mBloomTexSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
     if (!mBloomTexSrv) { return false; }
@@ -3822,7 +4090,7 @@ void RSPass_Blur::ExecuatePass()
 {
     static ID3D11UnorderedAccessView* nullUav = nullptr;
 
-    static UINT loopCount = GetRenderConfig().mBlurLoopCount;
+    static UINT loopCount = GetRenderConfig().mBlurLoopCount / 2;
 
     for (UINT i = 0; i < loopCount; i++)
     {
@@ -3878,7 +4146,7 @@ bool RSPass_Blur::CreateShaders()
 
 bool RSPass_Blur::CreateViews()
 {
-    std::string name = "bloom-light";
+    std::string name = "bloom-compress-light";
     mLightTexUav = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mUav;
     if (!mLightTexUav) { return false; }
