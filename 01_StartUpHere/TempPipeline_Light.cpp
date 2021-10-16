@@ -82,14 +82,15 @@ bool CreateTempLightPipeline()
     name = "bloomblend-pass";
     RSPass_BloomOn* bloomblend = new RSPass_BloomOn(
         name, PASS_TYPE::RENDER, g_Root);
-    bloomblend->SetExecuateOrder(2);
+    bloomblend->SetExecuateOrder(3);
 
     name = "bloom-topic";
     RSTopic* bloom_topic = new RSTopic(name);
     bloom_topic->StartTopicAssembly();
     bloom_topic->InsertPass(bloomdraw);
     bloom_topic->InsertPass(bloomblur);
-    bloom_topic->SetExecuateOrder(4);
+    bloom_topic->InsertPass(bloomblend);
+    bloom_topic->SetExecuateOrder(6);
     bloom_topic->FinishTopicAssembly();
 
     name = "mrt-topic";
@@ -110,7 +111,7 @@ bool CreateTempLightPipeline()
     RSTopic* sky_topic = new RSTopic(name);
     sky_topic->StartTopicAssembly();
     sky_topic->InsertPass(skysphere);
-    sky_topic->SetExecuateOrder(6);
+    sky_topic->SetExecuateOrder(5);
     sky_topic->FinishTopicAssembly();
 
     name = "ssao-topic";
@@ -132,16 +133,14 @@ bool CreateTempLightPipeline()
     RSTopic* light_topic = new RSTopic(name);
     light_topic->StartTopicAssembly();
     light_topic->InsertPass(light);
-    light_topic->InsertPass(bloomblend);
-    light_topic->SetExecuateOrder(5);
+    light_topic->SetExecuateOrder(4);
     light_topic->FinishTopicAssembly();
 
     name = "defered-light-topic";
     RSTopic* defered_topic = new RSTopic(name);
     defered_topic->StartTopicAssembly();
     defered_topic->InsertPass(defered);
-    defered_topic->InsertPass(bloomblend);
-    defered_topic->SetExecuateOrder(5);
+    defered_topic->SetExecuateOrder(4);
     defered_topic->FinishTopicAssembly();
 
     name = "light-pipeline";
