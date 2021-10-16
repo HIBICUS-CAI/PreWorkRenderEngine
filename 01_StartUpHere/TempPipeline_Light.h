@@ -468,3 +468,30 @@ private:
     ID3D11Buffer* mVertexBuffer;
     ID3D11Buffer* mIndexBuffer;
 };
+
+class RSPass_Blur :public RSPass_Base
+{
+public:
+    RSPass_Blur(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_Blur(const RSPass_Blur& _source);
+    virtual ~RSPass_Blur();
+
+public:
+    virtual RSPass_Blur* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateViews();
+
+private:
+    ID3D11ComputeShader* mHoriBlurShader;
+    ID3D11ComputeShader* mVertBlurShader;
+    ID3D11UnorderedAccessView* mLightTexUav;
+};

@@ -74,6 +74,11 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     bloomdraw->SetExecuateOrder(1);
 
+    name = "bloomblur-pass";
+    RSPass_Blur* bloomblur = new RSPass_Blur(
+        name, PASS_TYPE::COMPUTE, g_Root);
+    bloomblur->SetExecuateOrder(2);
+
     name = "bloomblend-pass";
     RSPass_BloomOn* bloomblend = new RSPass_BloomOn(
         name, PASS_TYPE::RENDER, g_Root);
@@ -83,6 +88,7 @@ bool CreateTempLightPipeline()
     RSTopic* bloom_topic = new RSTopic(name);
     bloom_topic->StartTopicAssembly();
     bloom_topic->InsertPass(bloomdraw);
+    bloom_topic->InsertPass(bloomblur);
     bloom_topic->SetExecuateOrder(4);
     bloom_topic->FinishTopicAssembly();
 
@@ -3767,6 +3773,116 @@ bool RSPass_BloomOn::CreateViews()
     mBloomTexSrv = g_Root->TexturesManager()->
         GetDataTexInfo(name)->mSrv;
     if (!mBloomTexSrv) { return false; }
+
+    return true;
+}
+
+RSPass_Blur::RSPass_Blur(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root),
+    mHoriBlurShader(nullptr), mVertBlurShader(nullptr),
+    mLightTexUav(nullptr)
+{
+
+}
+
+RSPass_Blur::RSPass_Blur(const RSPass_Blur& _source) :
+    RSPass_Base(_source),
+    mHoriBlurShader(_source.mHoriBlurShader),
+    mVertBlurShader(_source.mVertBlurShader),
+    mLightTexUav(_source.mLightTexUav)
+{
+
+}
+
+RSPass_Blur::~RSPass_Blur()
+{
+
+}
+
+RSPass_Blur* RSPass_Blur::ClonePass()
+{
+    return new RSPass_Blur(*this);
+}
+
+bool RSPass_Blur::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateViews()) { return false; }
+
+    return true;
+}
+
+void RSPass_Blur::ReleasePass()
+{
+    RS_RELEASE(mHoriBlurShader);
+    RS_RELEASE(mVertBlurShader);
+}
+
+void RSPass_Blur::ExecuatePass()
+{
+    static ID3D11UnorderedAccessView* nullUav = nullptr;
+
+    static UINT loopCount = GetRenderConfig().mBlurLoopCount;
+
+    for (UINT i = 0; i < loopCount; i++)
+    {
+        STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &mLightTexUav, nullptr);
+        STContext()->Dispatch(5, 720, 1);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &nullUav, nullptr);
+
+        STContext()->CSSetShader(mVertBlurShader, nullptr, 0);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &mLightTexUav, nullptr);
+        STContext()->Dispatch(1280, 3, 1);
+        STContext()->CSSetUnorderedAccessViews(0, 1,
+            &nullUav, nullptr);
+    }
+}
+
+bool RSPass_Blur::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\bloom_compute.hlsl",
+        "HMain", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mHoriBlurShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\bloom_compute.hlsl",
+        "VMain", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertBlurShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Blur::CreateViews()
+{
+    std::string name = "bloom-light";
+    mLightTexUav = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mUav;
+    if (!mLightTexUav) { return false; }
 
     return true;
 }
