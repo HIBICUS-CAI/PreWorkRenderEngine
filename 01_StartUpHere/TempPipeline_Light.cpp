@@ -69,6 +69,18 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     mrt->SetExecuateOrder(1);
 
+    name = "bloomdraw-pass";
+    RSPass_Bloom* bloomdraw = new RSPass_Bloom(
+        name, PASS_TYPE::RENDER, g_Root);
+    bloomdraw->SetExecuateOrder(1);
+
+    name = "bloom-topic";
+    RSTopic* bloom_topic = new RSTopic(name);
+    bloom_topic->StartTopicAssembly();
+    bloom_topic->InsertPass(bloomdraw);
+    bloom_topic->SetExecuateOrder(5);
+    bloom_topic->FinishTopicAssembly();
+
     name = "mrt-topic";
     RSTopic* mrt_topic = new RSTopic(name);
     mrt_topic->StartTopicAssembly();
@@ -80,14 +92,14 @@ bool CreateTempLightPipeline()
     RSTopic* sprite_topic = new RSTopic(name);
     sprite_topic->StartTopicAssembly();
     sprite_topic->InsertPass(sprite);
-    sprite_topic->SetExecuateOrder(6);
+    sprite_topic->SetExecuateOrder(7);
     sprite_topic->FinishTopicAssembly();
 
     name = "skysphere-topic";
     RSTopic* sky_topic = new RSTopic(name);
     sky_topic->StartTopicAssembly();
     sky_topic->InsertPass(skysphere);
-    sky_topic->SetExecuateOrder(5);
+    sky_topic->SetExecuateOrder(6);
     sky_topic->FinishTopicAssembly();
 
     name = "ssao-topic";
@@ -137,6 +149,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(sky_topic);
     g_TempPipeline->InsertTopic(sprite_topic);
     g_TempPipeline->InsertTopic(mrt_topic);
+    g_TempPipeline->InsertTopic(bloom_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics(g_Root->Devices(),
@@ -3218,6 +3231,228 @@ bool RSPass_Defered::CreateSamplers()
     hr = Device()->CreateSamplerState(
         &sampDesc, &mShadowTexSampler);
     if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+RSPass_Bloom::RSPass_Bloom(std::string& _name, PASS_TYPE _type,
+    RSRoot_DX11* _root) :RSPass_Base(_name, _type, _root),
+    mVertexShader(nullptr), mPixelShader(nullptr),
+    mDrawCallType(DRAWCALL_TYPE::LIGHT), mDrawCallPipe(nullptr),
+    mViewProjStructedBuffer(nullptr),
+    mViewProjStructedBufferSrv(nullptr),
+    mInstanceStructedBuffer(nullptr),
+    mInstanceStructedBufferSrv(nullptr),
+    mRtv(nullptr), mDepthDsv(nullptr), mRSCameraInfo(nullptr)
+{
+
+}
+
+RSPass_Bloom::RSPass_Bloom(const RSPass_Bloom& _source) :
+    RSPass_Base(_source),
+    mVertexShader(_source.mVertexShader),
+    mPixelShader(_source.mPixelShader),
+    mDrawCallType(_source.mDrawCallType),
+    mDrawCallPipe(_source.mDrawCallPipe),
+    mViewProjStructedBuffer(_source.mViewProjStructedBuffer),
+    mViewProjStructedBufferSrv(_source.mViewProjStructedBufferSrv),
+    mInstanceStructedBuffer(_source.mInstanceStructedBuffer),
+    mInstanceStructedBufferSrv(_source.mInstanceStructedBufferSrv),
+    mRtv(_source.mRtv), mDepthDsv(_source.mDepthDsv),
+    mRSCameraInfo(_source.mRSCameraInfo)
+{
+
+}
+
+RSPass_Bloom::~RSPass_Bloom()
+{
+
+}
+
+RSPass_Bloom* RSPass_Bloom::ClonePass()
+{
+    return new RSPass_Bloom(*this);
+}
+
+bool RSPass_Bloom::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+
+    mDrawCallPipe = g_Root->DrawCallsPool()->
+        GetDrawCallsPipe(mDrawCallType);
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = g_Root->CamerasContainer()->
+        GetRSCameraInfo(name);
+    if (!mRSCameraInfo) { return false; }
+
+    return true;
+}
+
+void RSPass_Bloom::ReleasePass()
+{
+    std::string name = "bloom-light";
+    g_Root->TexturesManager()->DeleteDataTex(name);
+
+    RS_RELEASE(mVertexShader);
+    RS_RELEASE(mPixelShader);
+    RS_RELEASE(mViewProjStructedBufferSrv);
+    RS_RELEASE(mInstanceStructedBufferSrv);
+    RS_RELEASE(mViewProjStructedBuffer);
+    RS_RELEASE(mInstanceStructedBuffer);
+}
+
+void RSPass_Bloom::ExecuatePass()
+{
+
+}
+
+bool RSPass_Bloom::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\bloom_vertex.hlsl",
+        "main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mVertexShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(
+        L".\\Shaders\\bloom_pixel.hlsl",
+        "main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(
+        shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(),
+        nullptr, &mPixelShader);
+    shaderBlob->Release();
+    shaderBlob = nullptr;
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Bloom::CreateBuffers()
+{
+    HRESULT hr = S_OK;
+    D3D11_BUFFER_DESC bdc = {};
+
+    ZeroMemory(&bdc, sizeof(bdc));
+    bdc.Usage = D3D11_USAGE_DYNAMIC;
+    bdc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bdc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bdc.ByteWidth = MAX_INSTANCE_SIZE * sizeof(RS_INSTANCE_DATA);
+    bdc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bdc.StructureByteStride = sizeof(RS_INSTANCE_DATA);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mInstanceStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bdc.ByteWidth = sizeof(ViewProj);
+    bdc.StructureByteStride = sizeof(ViewProj);
+    hr = Device()->CreateBuffer(
+        &bdc, nullptr, &mViewProjStructedBuffer);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_Bloom::CreateViews()
+{
+    HRESULT hr = S_OK;
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+    ID3D11Texture2D* texture = nullptr;
+    ID3D11ShaderResourceView* srv = nullptr;
+    ID3D11UnorderedAccessView* uav = nullptr;
+    std::string name = "";
+
+    name = "mrt-depth";
+    mDepthDsv = g_Root->TexturesManager()->
+        GetDataTexInfo(name)->mDsv;
+    if (!mDepthDsv) { return false; }
+
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    srvDesc.Buffer.ElementWidth = MAX_INSTANCE_SIZE;
+    hr = Device()->CreateShaderResourceView(
+        mInstanceStructedBuffer,
+        &srvDesc, &mInstanceStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Buffer.ElementWidth = 1;
+    hr = Device()->CreateShaderResourceView(
+        mViewProjStructedBuffer,
+        &srvDesc, &mViewProjStructedBufferSrv);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&texDesc, sizeof(texDesc));
+    ZeroMemory(&rtvDesc, sizeof(rtvDesc));
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    ZeroMemory(&uavDesc, sizeof(uavDesc));
+    DATA_TEXTURE_INFO dti = {};
+
+    texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth();
+    texDesc.Height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight();
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.MiscFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.BindFlags =
+        D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS |
+        D3D11_BIND_SHADER_RESOURCE;
+    hr = Device()->CreateTexture2D(
+        &texDesc, nullptr, &texture);
+    if (FAILED(hr)) { return false; }
+
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2D.MipSlice = 0;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    hr = Device()->CreateRenderTargetView(
+        texture, &rtvDesc, &mRtv);
+    if (FAILED(hr)) { return false; }
+
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    hr = Device()->CreateShaderResourceView(texture,
+        &srvDesc, &srv);
+    if (FAILED(hr)) { return false; }
+
+    uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+    hr = Device()->CreateUnorderedAccessView(
+        texture, &uavDesc, &uav);
+    if (FAILED(hr)) { return false; }
+
+    dti = {};
+    name = "bloom-light";
+    dti.mTexture = texture;
+    dti.mRtv = mRtv;
+    dti.mSrv = srv;
+    dti.mUav = uav;
+    g_Root->TexturesManager()->AddDataTexture(name, dti);
 
     return true;
 }

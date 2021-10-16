@@ -396,3 +396,39 @@ private:
     ID3D11DepthStencilView* mDepthDsv;
     RS_CAM_INFO* mRSCameraInfo;
 };
+
+class RSPass_Bloom :public RSPass_Base
+{
+public:
+    RSPass_Bloom(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_Bloom(const RSPass_Bloom& _source);
+    virtual ~RSPass_Bloom();
+
+public:
+    virtual RSPass_Bloom* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateBuffers();
+    bool CreateViews();
+
+private:
+    ID3D11VertexShader* mVertexShader;
+    ID3D11PixelShader* mPixelShader;
+    DRAWCALL_TYPE mDrawCallType;
+    RSDrawCallsPipe* mDrawCallPipe;
+    ID3D11Buffer* mViewProjStructedBuffer;
+    ID3D11ShaderResourceView* mViewProjStructedBufferSrv;
+    ID3D11Buffer* mInstanceStructedBuffer;
+    ID3D11ShaderResourceView* mInstanceStructedBufferSrv;
+    ID3D11RenderTargetView* mRtv;
+    ID3D11DepthStencilView* mDepthDsv;
+    RS_CAM_INFO* mRSCameraInfo;
+};
