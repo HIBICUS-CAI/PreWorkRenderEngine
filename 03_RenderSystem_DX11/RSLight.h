@@ -31,6 +31,11 @@ public:
     void SetRSLightFallOff(float _start, float _end);
     void SetRSLightSpotPower(float _power);
 
+    void SetLightBloom(RS_SUBMESH_DATA& _meshData,
+        bool _useSolidColor);
+    void UploadLightDrawCall();
+    void ReleaseLightBloom();
+
 private:
     LIGHT_TYPE mLightType;
 
@@ -45,5 +50,11 @@ private:
 
     RS_LIGHT_INFO mRSLightInfo;
     class RSCamera* mRSLightCamera;
+
+    bool mBloomLightFlg;
+    bool mUseSolidColor;
+    RS_SUBMESH_DATA mLightMeshData;
+    std::vector<RS_INSTANCE_DATA> mLightInstanceData;
+    RS_DRAWCALL_DATA mLightDrawCallData;
 };
 

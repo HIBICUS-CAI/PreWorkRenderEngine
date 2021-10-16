@@ -38,6 +38,12 @@ public:
     std::vector<class RSLight*>* GetShadowLights();
     std::vector<INT>* GetShadowLightIndeices();
 
+    void CreateLightBloom(std::string&& _name,
+        RS_SUBMESH_DATA&& _meshData, bool _useSolidColor);
+    void CreateLightBloom(std::string& _name,
+        RS_SUBMESH_DATA&& _meshData, bool _useSolidColor);
+    void UploadLightBloomDrawCall();
+
 private:
     DirectX::XMFLOAT4& GetAmbientLight(std::string& _name);
 

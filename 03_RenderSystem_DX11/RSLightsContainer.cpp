@@ -125,9 +125,9 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
                 mShadowLights.erase(i);
             }
         }
+        found->second->ReleaseLightBloom();
         delete found->second;
         mLightMap.erase(found);
-
     }
 }
 
@@ -210,4 +210,24 @@ void RSLightsContainer::SetCurrentAmbientLight(std::string&& _name)
 DirectX::XMFLOAT4& RSLightsContainer::GetCurrentAmbientLight()
 {
     return mCurrentAmbient;
+}
+
+void RSLightsContainer::UploadLightBloomDrawCall()
+{
+    for (auto& light : mLights)
+    {
+        light->UploadLightDrawCall();
+    }
+}
+
+void RSLightsContainer::CreateLightBloom(std::string&& _name,
+    RS_SUBMESH_DATA&& _meshData, bool _useSolidColor)
+{
+    GetRSLight(_name)->SetLightBloom(_meshData, _useSolidColor);
+}
+
+void RSLightsContainer::CreateLightBloom(std::string& _name,
+    RS_SUBMESH_DATA&& _meshData, bool _useSolidColor)
+{
+    GetRSLight(_name)->SetLightBloom(_meshData, _useSolidColor);
 }

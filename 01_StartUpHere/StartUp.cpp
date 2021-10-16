@@ -797,6 +797,12 @@ int WINAPI WinMain(
                         li.mFalloffStart = 3.f;
                         li.mFalloffEnd = 8.f;
                         root->LightsContainer()->CreateRSLight(name, &li);
+                        root->LightsContainer()->
+                            CreateLightBloom(name,
+                                root->MeshHelper()->GeoGenerate()->
+                                CreateGeometrySphere(1.f, 2,
+                                    LAYOUT_TYPE::NORMAL_COLOR),
+                                true);
                     }
                 }
                 pointLightBoom = !pointLightBoom;

@@ -9,6 +9,10 @@
 
 #include "RSLight.h"
 #include "RSCamerasContainer.h"
+#include "RSRoot_DX11.h"
+#include "RSTexturesManager.h"
+#include "RSDrawCallsPool.h"
+#include "RSMeshHelper.h"
 
 RSLight::RSLight(LIGHT_INFO* _info) :
     mLightType(_info->mType),
@@ -23,7 +27,9 @@ RSLight::RSLight(LIGHT_INFO* _info) :
         mLightStrength, mLightFallOffStart, mLightDirection,
         mLightFallOffEnd, mLightPosition, mLightSpotPower
         }),
-    mRSLightCamera(nullptr)
+    mRSLightCamera(nullptr), mBloomLightFlg(false),
+    mUseSolidColor(false), mLightMeshData({}),
+    mLightInstanceData({}), mLightDrawCallData({})
 {
 
 }
@@ -99,4 +105,64 @@ RSCamera* RSLight::CreateLightCamera(std::string& _lightName,
 RSCamera* RSLight::GetRSLightCamera()
 {
     return mRSLightCamera;
+}
+
+void RSLight::SetLightBloom(RS_SUBMESH_DATA& _meshData,
+    bool _useSolidColor)
+{
+    mBloomLightFlg = true;
+    mUseSolidColor = _useSolidColor;
+    mLightMeshData = _meshData;
+    mLightInstanceData.resize(1);
+
+    static DirectX::XMMATRIX mat = {};
+    mat = DirectX::XMMatrixTranslation(
+        mLightPosition.x, mLightPosition.y, mLightPosition.z);
+    DirectX::XMStoreFloat4x4(&(mLightInstanceData[0].mWorldMat),
+        mat);
+
+    mLightDrawCallData.mInstanceData.mDataPtr = &mLightInstanceData;
+    mLightDrawCallData.mMeshData.mIndexBuffer =
+        mLightMeshData.mIndexBuffer;
+    mLightDrawCallData.mMeshData.mVertexBuffer =
+        mLightMeshData.mVertexBuffer;
+    mLightDrawCallData.mMeshData.mIndexCount =
+        mLightMeshData.mIndexCount;
+    mLightDrawCallData.mMeshData.mLayout =
+        mLightMeshData.mLayout;
+    mLightDrawCallData.mMeshData.mTopologyType =
+        mLightMeshData.mTopologyType;
+    if (!_useSolidColor)
+    {
+        mLightDrawCallData.mTextureDatas[0].mUse = true;
+        mLightDrawCallData.mTextureDatas[0].mSrv =
+            GetRSRoot_DX11_Singleton()->TexturesManager()->
+            GetMeshSrv(mLightMeshData.mTextures[0]);
+        mLightInstanceData[0].mCustomizedData1.x = 0.f;
+    }
+    else
+    {
+        mLightDrawCallData.mTextureDatas[0].mUse = false;
+        mLightInstanceData[0].mCustomizedData1.x = 1.f;
+        mLightInstanceData[0].mCustomizedData2.x = mLightStrength.x;
+        mLightInstanceData[0].mCustomizedData2.y = mLightStrength.y;
+        mLightInstanceData[0].mCustomizedData2.z = mLightStrength.z;
+    }
+}
+
+void RSLight::UploadLightDrawCall()
+{
+    static auto pool = GetRSRoot_DX11_Singleton()->
+        DrawCallsPool();
+    pool->AddDrawCallToPipe(DRAWCALL_TYPE::LIGHT,
+        mLightDrawCallData);
+}
+
+void RSLight::ReleaseLightBloom()
+{
+    if (mBloomLightFlg)
+    {
+        GetRSRoot_DX11_Singleton()->MeshHelper()->ReleaseSubMesh(
+            mLightMeshData);
+    }
 }
