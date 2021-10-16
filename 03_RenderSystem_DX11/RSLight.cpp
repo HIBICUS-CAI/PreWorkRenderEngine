@@ -137,8 +137,11 @@ void RSLight::UploadLightDrawCall()
 {
     static auto pool = GetRSRoot_DX11_Singleton()->
         DrawCallsPool();
-    pool->AddDrawCallToPipe(DRAWCALL_TYPE::LIGHT,
-        mLightDrawCallData);
+    if (mBloomLightFlg)
+    {
+        pool->AddDrawCallToPipe(DRAWCALL_TYPE::LIGHT,
+            mLightDrawCallData);
+    }
 }
 
 void RSLight::ReleaseLightBloom()
