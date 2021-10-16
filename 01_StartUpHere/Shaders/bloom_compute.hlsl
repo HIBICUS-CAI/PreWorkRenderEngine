@@ -18,10 +18,10 @@ void HMain(int3 groupThreadId : SV_GroupThreadID,
     }
     if (groupThreadId.x >= 256 - 2)
     {
-        int x = min(dispatchThreadId.x + 2, 1280 - 1);
+        int x = min(dispatchThreadId.x + 2, 640 - 1);
         gBloomCache[groupThreadId.x + 2 * 2] = BloomTex[int2(x, dispatchThreadId.y)];
     }
-    gBloomCache[groupThreadId.x + 2] = BloomTex[min(dispatchThreadId.xy, int2(1280, 720) - 1)];
+    gBloomCache[groupThreadId.x + 2] = BloomTex[min(dispatchThreadId.xy, int2(640, 360) - 1)];
 
     GroupMemoryBarrierWithGroupSync();
 
@@ -51,10 +51,10 @@ void VMain(int3 groupThreadId : SV_GroupThreadID,
     }
     if (groupThreadId.y >= 256 - 2)
     {
-        int y = min(dispatchThreadId.y + 2, 720 - 1);
+        int y = min(dispatchThreadId.y + 2, 360 - 1);
         gBloomCache[groupThreadId.y + 2 * 2] = BloomTex[int2(dispatchThreadId.x, y)];
     }
-    gBloomCache[groupThreadId.y + 2] = BloomTex[min(dispatchThreadId.xy, int2(1280, 720) - 1)];
+    gBloomCache[groupThreadId.y + 2] = BloomTex[min(dispatchThreadId.xy, int2(640, 360) - 1)];
 
     GroupMemoryBarrierWithGroupSync();
 

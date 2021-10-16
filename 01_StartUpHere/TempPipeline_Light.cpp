@@ -4092,19 +4092,19 @@ void RSPass_Blur::ExecuatePass()
 
     static UINT loopCount = GetRenderConfig().mBlurLoopCount / 2;
 
-    for (UINT i = 0; i < loopCount; i++)
+    for (UINT i = 0; i < 1; i++)
     {
         STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mLightTexUav, nullptr);
-        STContext()->Dispatch(5, 720, 1);
+        STContext()->Dispatch(3, 360, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
 
         STContext()->CSSetShader(mVertBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mLightTexUav, nullptr);
-        STContext()->Dispatch(1280, 3, 1);
+        STContext()->Dispatch(640, 2, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
     }
