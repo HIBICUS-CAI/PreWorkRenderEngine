@@ -3306,7 +3306,74 @@ void RSPass_Bloom::ReleasePass()
 
 void RSPass_Bloom::ExecuatePass()
 {
+    STContext()->OMSetRenderTargets(1, &mRtv, mDepthDsv);
+    STContext()->RSSetViewports(1, &g_ViewPort);
+    STContext()->ClearRenderTargetView(mRtv,
+        DirectX::Colors::Transparent);
+    STContext()->VSSetShader(mVertexShader, nullptr, 0);
+    STContext()->PSSetShader(mPixelShader, nullptr, 0);
 
+    DirectX::XMMATRIX mat = {};
+    DirectX::XMFLOAT4X4 flt44 = {};
+    UINT stride = sizeof(VERTEX_INFO);
+    UINT offset = 0;
+
+    D3D11_MAPPED_SUBRESOURCE msr = {};
+    STContext()->Map(mViewProjStructedBuffer, 0,
+        D3D11_MAP_WRITE_DISCARD, 0, &msr);
+    ViewProj* vp_data = (ViewProj*)msr.pData;
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mViewMat, mat);
+    mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+    mat = DirectX::XMMatrixTranspose(mat);
+    DirectX::XMStoreFloat4x4(&vp_data[0].mProjMat, mat);
+    STContext()->Unmap(mViewProjStructedBuffer, 0);
+
+    STContext()->VSSetShaderResources(
+        0, 1, &mViewProjStructedBufferSrv);
+
+    for (auto& call : mDrawCallPipe->mDatas)
+    {
+        auto vecPtr = call.mInstanceData.mDataPtr;
+        auto size = vecPtr->size();
+        STContext()->Map(mInstanceStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_INSTANCE_DATA* ins_data = (RS_INSTANCE_DATA*)msr.pData;
+        for (size_t i = 0; i < size; i++)
+        {
+            mat = DirectX::XMLoadFloat4x4(
+                &(*vecPtr)[i].mWorldMat);
+            mat = DirectX::XMMatrixTranspose(mat);
+            DirectX::XMStoreFloat4x4(&ins_data[i].mWorldMat, mat);
+            ins_data[i].mMaterialData =
+                (*vecPtr)[i].mMaterialData;
+            ins_data[i].mCustomizedData1 =
+                (*vecPtr)[i].mCustomizedData1;
+            ins_data[i].mCustomizedData2 =
+                (*vecPtr)[i].mCustomizedData2;
+        }
+        STContext()->Unmap(mInstanceStructedBuffer, 0);
+
+        STContext()->IASetInputLayout(
+            call.mMeshData.mLayout);
+        STContext()->IASetPrimitiveTopology(
+            call.mMeshData.mTopologyType);
+        STContext()->IASetVertexBuffers(
+            0, 1, &call.mMeshData.mVertexBuffer,
+            &stride, &offset);
+        STContext()->IASetIndexBuffer(
+            call.mMeshData.mIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        STContext()->VSSetShaderResources(
+            1, 1, &mInstanceStructedBufferSrv);
+
+        STContext()->DrawIndexedInstanced(
+            call.mMeshData.mIndexCount,
+            (UINT)call.mInstanceData.mDataPtr->size(), 0, 0, 0);
+    }
+
+    static ID3D11RenderTargetView* nullrtv[] = { nullptr };
+    STContext()->OMSetRenderTargets(1, nullrtv, nullptr);
 }
 
 bool RSPass_Bloom::CreateShaders()

@@ -800,7 +800,7 @@ int WINAPI WinMain(
                         root->LightsContainer()->
                             CreateLightBloom(name,
                                 root->MeshHelper()->GeoGenerate()->
-                                CreateGeometrySphere(1.f, 2,
+                                CreateBox(1.f, 1.f, 1.f, 0,
                                     LAYOUT_TYPE::NORMAL_COLOR));
                     }
                 }
