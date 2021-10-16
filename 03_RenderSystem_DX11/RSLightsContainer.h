@@ -39,9 +39,9 @@ public:
     std::vector<INT>* GetShadowLightIndeices();
 
     void CreateLightBloom(std::string&& _name,
-        RS_SUBMESH_DATA&& _meshData, bool _useSolidColor);
+        RS_SUBMESH_DATA&& _meshData);
     void CreateLightBloom(std::string& _name,
-        RS_SUBMESH_DATA&& _meshData, bool _useSolidColor);
+        RS_SUBMESH_DATA&& _meshData);
     void UploadLightBloomDrawCall();
 
 private:

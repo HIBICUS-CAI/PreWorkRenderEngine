@@ -801,8 +801,7 @@ int WINAPI WinMain(
                             CreateLightBloom(name,
                                 root->MeshHelper()->GeoGenerate()->
                                 CreateGeometrySphere(1.f, 2,
-                                    LAYOUT_TYPE::NORMAL_COLOR),
-                                true);
+                                    LAYOUT_TYPE::NORMAL_COLOR));
                     }
                 }
                 pointLightBoom = !pointLightBoom;
@@ -876,6 +875,7 @@ int WINAPI WinMain(
                 geosph2->UploadDrawCall(root->DrawCallsPool(), root);
                 sp1->UploadDrawCall(root->DrawCallsPool(), root);
                 sp2->UploadDrawCall(root->DrawCallsPool(), root);
+                root->LightsContainer()->UploadLightBloomDrawCall();
             }
 
             root->PipelinesManager()->ExecuateCurrentPipeline();

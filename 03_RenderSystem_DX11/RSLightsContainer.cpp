@@ -221,13 +221,13 @@ void RSLightsContainer::UploadLightBloomDrawCall()
 }
 
 void RSLightsContainer::CreateLightBloom(std::string&& _name,
-    RS_SUBMESH_DATA&& _meshData, bool _useSolidColor)
+    RS_SUBMESH_DATA&& _meshData)
 {
-    GetRSLight(_name)->SetLightBloom(_meshData, _useSolidColor);
+    GetRSLight(_name)->SetLightBloom(_meshData);
 }
 
 void RSLightsContainer::CreateLightBloom(std::string& _name,
-    RS_SUBMESH_DATA&& _meshData, bool _useSolidColor)
+    RS_SUBMESH_DATA&& _meshData)
 {
-    GetRSLight(_name)->SetLightBloom(_meshData, _useSolidColor);
+    GetRSLight(_name)->SetLightBloom(_meshData);
 }
