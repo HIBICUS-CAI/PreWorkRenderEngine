@@ -3315,7 +3315,7 @@ void RSPass_Bloom::ExecuatePass()
 
     DirectX::XMMATRIX mat = {};
     DirectX::XMFLOAT4X4 flt44 = {};
-    UINT stride = sizeof(VERTEX_INFO);
+    UINT stride = sizeof(VertexType::ColorVertex);
     UINT offset = 0;
 
     D3D11_MAPPED_SUBRESOURCE msr = {};
