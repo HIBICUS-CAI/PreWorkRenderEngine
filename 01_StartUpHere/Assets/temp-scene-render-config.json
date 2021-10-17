@@ -2,5 +2,6 @@
     "deferred-rendering-enable": true,
     "force-singlethread-enable": false,
     "second-shadow-enable": true,
-    "blur-loop-count": 4
+    "ssao-blur-loop-count": 4,
+    "bloom-blur-loop-count": 1
 }

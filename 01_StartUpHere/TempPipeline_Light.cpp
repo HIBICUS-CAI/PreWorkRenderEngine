@@ -1702,7 +1702,7 @@ void RSPass_KBBlur::ExecuatePass()
         nullptr, nullptr
     };
 
-    static UINT loopCount = GetRenderConfig().mBlurLoopCount;
+    static UINT loopCount = GetRenderConfig().mSsaoBlurLoopCount;
 
     for (UINT i = 0; i < loopCount; i++)
     {
@@ -4090,9 +4090,9 @@ void RSPass_Blur::ExecuatePass()
 {
     static ID3D11UnorderedAccessView* nullUav = nullptr;
 
-    static UINT loopCount = GetRenderConfig().mBlurLoopCount / 2;
+    static UINT loopCount = GetRenderConfig().mBloomBlurLoopCount;
 
-    for (UINT i = 0; i < 1; i++)
+    for (UINT i = 0; i < loopCount; i++)
     {
         STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,

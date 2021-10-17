@@ -28,8 +28,10 @@ RENDER_CONFIG GetRenderConfig()
         doc["force-singlethread-enable"].GetBool();
     rc.mSecongShadowEnable =
         doc["second-shadow-enable"].GetBool();
-    rc.mBlurLoopCount =
-        doc["blur-loop-count"].GetUint();
+    rc.mSsaoBlurLoopCount =
+        doc["ssao-blur-loop-count"].GetUint();
+    rc.mBloomBlurLoopCount =
+        doc["bloom-blur-loop-count"].GetUint();
 
     return rc;
 }
