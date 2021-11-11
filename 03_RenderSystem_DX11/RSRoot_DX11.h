@@ -29,6 +29,7 @@ public:
     class RSStaticResources* StaticResources() const;
     class RSCamerasContainer* CamerasContainer() const;
     class RSLightsContainer* LightsContainer() const;
+    class RSParticalsContainer* ParticalsContainer() const;
     class RSMeshHelper* MeshHelper() const;
 
 private:
@@ -39,5 +40,6 @@ private:
     class RSStaticResources* mStaticResourcesPtr;
     class RSCamerasContainer* mCamerasContainerPtr;
     class RSLightsContainer* mLightsContainerPtr;
+    class RSParticalsContainer* mParticalsContainerPtr;
     class RSMeshHelper* mMeshHelperPtr;
 };
