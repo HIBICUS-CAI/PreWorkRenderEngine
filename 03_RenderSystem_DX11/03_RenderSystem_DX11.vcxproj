@@ -28,6 +28,8 @@
     <ClInclude Include="RSLight.h" />
     <ClInclude Include="RSLightsContainer.h" />
     <ClInclude Include="RSMeshHelper.h" />
+    <ClInclude Include="RSParticalEmitter.h" />
+    <ClInclude Include="RSParticalsContainer.h" />
     <ClInclude Include="RSPass_Base.h" />
     <ClInclude Include="RSPipeline.h" />
     <ClInclude Include="RSPipelinesManager.h" />
@@ -46,6 +48,8 @@
     <ClCompile Include="RSLight.cpp" />
     <ClCompile Include="RSLightsContainer.cpp" />
     <ClCompile Include="RSMeshHelper.cpp" />
+    <ClCompile Include="RSParticalEmitter.cpp" />
+    <ClCompile Include="RSParticalsContainer.cpp" />
     <ClCompile Include="RSPass_Base.cpp" />
     <ClCompile Include="RSPipeline.cpp" />
     <ClCompile Include="RSPipelinesManager.cpp" />

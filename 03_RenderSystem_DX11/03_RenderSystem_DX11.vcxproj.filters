@@ -76,6 +76,12 @@
     <ClInclude Include="RSShaderCompile.h">
       <Filter>Tool</Filter>
     </ClInclude>
+    <ClInclude Include="RSParticalsContainer.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="RSParticalEmitter.h">
+      <Filter>SubSystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSCamera.cpp">
@@ -122,6 +128,12 @@
     </ClCompile>
     <ClCompile Include="RSShaderCompile.cpp">
       <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="RSParticalsContainer.cpp">
+      <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSParticalEmitter.cpp">
+      <Filter>SubSystem</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

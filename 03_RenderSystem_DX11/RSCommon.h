@@ -106,6 +106,16 @@ struct RS_LIGHT_INFO
     float mSpotPower = 0.f;
 };
 
+struct PARTICAL_EMITTER_INFO
+{
+
+};
+
+struct RS_PARTICAL_EMITTER_INFO
+{
+
+};
+
 struct MATERIAL_INFO
 {
     DirectX::XMFLOAT4 mDiffuseAlbedo = {};
