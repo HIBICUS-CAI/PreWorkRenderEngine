@@ -19,6 +19,11 @@ public:
 
     void ResetParticalEmitterInfo(PARTICAL_EMITTER_INFO* _info);
 
+    RS_PARTICAL_EMITTER_INFO& GetRSParticalEmitterInfo();
+
+    void StartParticalEmitter();
+    void PauseParticalEmitter();
+
 private:
     RS_PARTICAL_EMITTER_INFO mRSParticalEmitterInfo;
     bool mActiveFlg;

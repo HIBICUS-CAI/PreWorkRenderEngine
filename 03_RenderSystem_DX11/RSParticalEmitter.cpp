@@ -26,3 +26,18 @@ void RSParticalEmitter::ResetParticalEmitterInfo(
 {
 
 }
+
+RS_PARTICAL_EMITTER_INFO& RSParticalEmitter::GetRSParticalEmitterInfo()
+{
+    return mRSParticalEmitterInfo;
+}
+
+void RSParticalEmitter::StartParticalEmitter()
+{
+    mActiveFlg = true;
+}
+
+void RSParticalEmitter::PauseParticalEmitter()
+{
+    mActiveFlg = false;
+}
