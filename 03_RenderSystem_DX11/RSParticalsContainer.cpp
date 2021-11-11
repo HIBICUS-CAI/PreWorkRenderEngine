@@ -45,27 +45,50 @@ RSParticalEmitter* RSParticalsContainer::CreateRSParticalEmitter(
 void RSParticalsContainer::DeleteRSParticalEmitter(
     std::string& _name)
 {
-
+    auto found = mParticalEmitterMap.find(_name);
+    if (found != mParticalEmitterMap.end())
+    {
+        RSParticalEmitter* ptr = found->second;
+        for (auto i = mParticalEmitterVec.begin();
+            i != mParticalEmitterVec.end(); i++)
+        {
+            if ((&(*i)) == ptr)
+            {
+                mParticalEmitterVec.erase(i);
+                mParticalEmitterMap.erase(found);
+            }
+        }
+    }
 }
 
 RSParticalEmitter* RSParticalsContainer::GetRSParticalEmitter(
     std::string& _name)
 {
-    return nullptr;
+    auto found = mParticalEmitterMap.find(_name);
+    if (found != mParticalEmitterMap.end())
+    {
+        return found->second;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
-std::vector<RSParticalEmitter>* 
+std::vector<RSParticalEmitter>*
 RSParticalsContainer::GetAllParticalEmitters()
 {
-    return nullptr;
+    return &mParticalEmitterVec;
 }
 
-void RSParticalsContainer::StartRSParticalEmitter(std::string& _name)
+void RSParticalsContainer::StartRSParticalEmitter(
+    std::string& _name)
 {
 
 }
 
-void RSParticalsContainer::PauseRSParticalEmitter(std::string& _name)
+void RSParticalsContainer::PauseRSParticalEmitter(
+    std::string& _name)
 {
 
 }
