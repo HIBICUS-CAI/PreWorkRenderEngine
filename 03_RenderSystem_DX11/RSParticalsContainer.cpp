@@ -40,8 +40,7 @@ RSParticalEmitter* RSParticalsContainer::CreateRSParticalEmitter(
     std::string& _name, PARTICAL_EMITTER_INFO* _info)
 {
     auto size = mParticalEmitterVec.size();
-    mParticalEmitterVec.resize(size + 1);
-    mParticalEmitterVec[size] = RSParticalEmitter(_info);
+    mParticalEmitterVec.push_back(RSParticalEmitter(_info));
     mParticalEmitterMap.insert(
         { _name,&mParticalEmitterVec[size] });
 
