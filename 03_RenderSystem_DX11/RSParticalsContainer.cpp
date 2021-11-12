@@ -39,7 +39,13 @@ void RSParticalsContainer::CleanAndStop()
 RSParticalEmitter* RSParticalsContainer::CreateRSParticalEmitter(
     std::string& _name, PARTICAL_EMITTER_INFO* _info)
 {
-    return nullptr;
+    auto size = mParticalEmitterVec.size();
+    mParticalEmitterVec.resize(size + 1);
+    mParticalEmitterVec[size] = RSParticalEmitter(_info);
+    mParticalEmitterMap.insert(
+        { _name,&mParticalEmitterVec[size] });
+
+    return &mParticalEmitterVec[size];
 }
 
 void RSParticalsContainer::DeleteRSParticalEmitter(
@@ -84,11 +90,19 @@ RSParticalsContainer::GetAllParticalEmitters()
 void RSParticalsContainer::StartRSParticalEmitter(
     std::string& _name)
 {
-
+    auto found = mParticalEmitterMap.find(_name);
+    if (found != mParticalEmitterMap.end())
+    {
+        found->second->StartParticalEmitter();
+    }
 }
 
 void RSParticalsContainer::PauseRSParticalEmitter(
     std::string& _name)
 {
-
+    auto found = mParticalEmitterMap.find(_name);
+    if (found != mParticalEmitterMap.end())
+    {
+        found->second->PauseParticalEmitter();
+    }
 }
