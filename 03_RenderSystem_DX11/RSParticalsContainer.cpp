@@ -11,8 +11,8 @@
 #include "RSRoot_DX11.h"
 
 RSParticalsContainer::RSParticalsContainer() :
-    mRootPtr(nullptr), mParticalEmitterVec({}),
-    mParticalEmitterMap({})
+    mRootPtr(nullptr), mResetFlg(true),
+    mParticalEmitterVec({}), mParticalEmitterMap({})
 {
 
 }
@@ -34,6 +34,21 @@ void RSParticalsContainer::CleanAndStop()
 {
     mParticalEmitterMap.clear();
     mParticalEmitterVec.clear();
+}
+
+bool RSParticalsContainer::GetResetFlg()
+{
+    return mResetFlg;
+}
+
+void RSParticalsContainer::ResetRSParticalSystem()
+{
+    mResetFlg = true;
+}
+
+void RSParticalsContainer::FinishResetRsParticalSystem()
+{
+    mResetFlg = false;
 }
 
 RSParticalEmitter* RSParticalsContainer::CreateRSParticalEmitter(

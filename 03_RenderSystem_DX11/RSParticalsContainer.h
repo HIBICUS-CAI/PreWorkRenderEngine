@@ -22,6 +22,10 @@ public:
     bool StartUp(class RSRoot_DX11* _root);
     void CleanAndStop();
 
+    bool GetResetFlg();
+    void ResetRSParticalSystem();
+    void FinishResetRsParticalSystem();
+
     RSParticalEmitter* CreateRSParticalEmitter(
         std::string& _name, PARTICAL_EMITTER_INFO* _info);
     void DeleteRSParticalEmitter(std::string& _name);
@@ -34,6 +38,9 @@ public:
 
 private:
     class RSRoot_DX11* mRootPtr;
+
+    bool mResetFlg;
+
     std::vector<RSParticalEmitter> mParticalEmitterVec;
     std::unordered_map<std::string, RSParticalEmitter*>
         mParticalEmitterMap;
