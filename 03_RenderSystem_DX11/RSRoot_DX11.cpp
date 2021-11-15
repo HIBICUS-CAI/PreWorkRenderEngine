@@ -19,7 +19,7 @@
 #include "RSStaticResources.h"
 #include "RSLightsContainer.h"
 #include "RSCamerasContainer.h"
-#include "RSParticalsContainer.h"
+#include "RSParticlesContainer.h"
 #include "RSMeshHelper.h"
 #include <assert.h>
 
@@ -40,7 +40,7 @@ RSRoot_DX11::RSRoot_DX11() :
     mDrawCallsPoolPtr(nullptr), mTexturesManagerPtr(nullptr),
     mStaticResourcesPtr(nullptr), mCamerasContainerPtr(nullptr),
     mLightsContainerPtr(nullptr), mMeshHelperPtr(nullptr),
-    mParticalsContainerPtr(nullptr)
+    mParticlesContainerPtr(nullptr)
 {
 
 }
@@ -94,8 +94,8 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
-    mParticalsContainerPtr = new RSParticalsContainer();
-    if (!mParticalsContainerPtr->StartUp(this))
+    mParticlesContainerPtr = new RSParticlesContainer();
+    if (!mParticlesContainerPtr->StartUp(this))
     {
         return false;
     }
@@ -147,11 +147,11 @@ void RSRoot_DX11::CleanAndStop()
         mLightsContainerPtr = nullptr;
     }
 
-    if (mParticalsContainerPtr)
+    if (mParticlesContainerPtr)
     {
-        mParticalsContainerPtr->CleanAndStop();
-        delete mParticalsContainerPtr;
-        mParticalsContainerPtr = nullptr;
+        mParticlesContainerPtr->CleanAndStop();
+        delete mParticlesContainerPtr;
+        mParticlesContainerPtr = nullptr;
     }
 
     if (mStaticResourcesPtr)
@@ -218,9 +218,9 @@ RSLightsContainer* RSRoot_DX11::LightsContainer() const
     return mLightsContainerPtr;
 }
 
-RSParticalsContainer* RSRoot_DX11::ParticalsContainer() const
+RSParticlesContainer* RSRoot_DX11::ParticlesContainer() const
 {
-    return mParticalsContainerPtr;
+    return mParticlesContainerPtr;
 }
 
 RSMeshHelper* RSRoot_DX11::MeshHelper() const

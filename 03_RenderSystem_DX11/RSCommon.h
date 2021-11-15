@@ -106,14 +106,14 @@ struct RS_LIGHT_INFO
     float mSpotPower = 0.f;
 };
 
-enum class PARTICAL_TEXTURE
+enum class PARTICLE_TEXTURE
 {
     WHITE_CIRCLE,
 
-    PARTICAL_TEXTURE_SIZE
+    PARTICLE_TEXTURE_SIZE
 };
 
-struct PARTICAL_EMITTER_INFO
+struct PARTICLE_EMITTER_INFO
 {
     float mEmitNumPerSecond = 0.f;
     DirectX::XMFLOAT3 mPosition = {};
@@ -121,17 +121,17 @@ struct PARTICAL_EMITTER_INFO
     DirectX::XMFLOAT3 mPosVariance = {};
     float mVelVariance = 0.f;
     DirectX::XMFLOAT3 mAcceleration = {};
-    float mParticalMass = 0.f;
+    float mParticleMass = 0.f;
     float mLifeSpan = 0.f;
     float mOffsetStartSize = 0.f;
     float mOffsetEndSize = 0.f;
     DirectX::XMFLOAT4 mOffsetStartColor = {};
     DirectX::XMFLOAT4 mOffsetEndColor = {};
     bool mEnableStreak = false;
-    PARTICAL_TEXTURE mTextureID = PARTICAL_TEXTURE::WHITE_CIRCLE;
+    PARTICLE_TEXTURE mTextureID = PARTICLE_TEXTURE::WHITE_CIRCLE;
 };
 
-struct RS_PARTICAL_EMITTER_INFO
+struct RS_PARTICLE_EMITTER_INFO
 {
     UINT mEmitterIndex = 0;
     float mEmitNumPerSecond = 0.f;
@@ -142,13 +142,13 @@ struct RS_PARTICAL_EMITTER_INFO
     DirectX::XMFLOAT3 mPosVariance = {};
     float mVelVariance = 0.f;
     DirectX::XMFLOAT3 mAcceleration = {};
-    float mParticalMass = 0.f;
+    float mParticleMass = 0.f;
     float mLifeSpan = 0.f;
     float mOffsetStartSize = 0.f;
     float mOffsetEndSize = 0.f;
     DirectX::XMFLOAT4 mOffsetStartColor = {};
     DirectX::XMFLOAT4 mOffsetEndColor = {};
-    UINT mTextureID = (UINT)(PARTICAL_TEXTURE::WHITE_CIRCLE);
+    UINT mTextureID = (UINT)(PARTICLE_TEXTURE::WHITE_CIRCLE);
     UINT mStreakFlg = 0;
     UINT mMiscFlg = 0;
 };

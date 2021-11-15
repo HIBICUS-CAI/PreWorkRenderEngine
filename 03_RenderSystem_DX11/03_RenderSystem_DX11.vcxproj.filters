@@ -76,10 +76,10 @@
     <ClInclude Include="RSShaderCompile.h">
       <Filter>Tool</Filter>
     </ClInclude>
-    <ClInclude Include="RSParticalsContainer.h">
+    <ClInclude Include="RSParticlesContainer.h">
       <Filter>SubSystem</Filter>
     </ClInclude>
-    <ClInclude Include="RSParticalEmitter.h">
+    <ClInclude Include="RSParticleEmitter.h">
       <Filter>SubSystem</Filter>
     </ClInclude>
   </ItemGroup>
@@ -129,10 +129,10 @@
     <ClCompile Include="RSShaderCompile.cpp">
       <Filter>Tool</Filter>
     </ClCompile>
-    <ClCompile Include="RSParticalsContainer.cpp">
+    <ClCompile Include="RSParticlesContainer.cpp">
       <Filter>SubSystem</Filter>
     </ClCompile>
-    <ClCompile Include="RSParticalEmitter.cpp">
+    <ClCompile Include="RSParticleEmitter.cpp">
       <Filter>SubSystem</Filter>
     </ClCompile>
   </ItemGroup>

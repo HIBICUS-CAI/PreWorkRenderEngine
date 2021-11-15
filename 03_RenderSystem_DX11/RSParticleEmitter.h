@@ -1,5 +1,5 @@
 //---------------------------------------------------------------
-// File: RSParticalEmitter.h
+// File: RSParticleEmitter.h
 // Proj: RenderSystem_DX11
 // Info: 描述并具体执行一个粒子发射器的具体机能
 // Date: 2021.11.11
@@ -11,21 +11,21 @@
 
 #include "RSCommon.h"
 
-class RSParticalEmitter
+class RSParticleEmitter
 {
 public:
-    RSParticalEmitter(PARTICAL_EMITTER_INFO* _info);
-    ~RSParticalEmitter();
+    RSParticleEmitter(PARTICLE_EMITTER_INFO* _info);
+    ~RSParticleEmitter();
 
-    void ResetParticalEmitterInfo(PARTICAL_EMITTER_INFO* _info);
+    void ResetParticleEmitterInfo(PARTICLE_EMITTER_INFO* _info);
 
-    RS_PARTICAL_EMITTER_INFO& GetRSParticalEmitterInfo();
+    RS_PARTICLE_EMITTER_INFO& GetRSParticleEmitterInfo();
 
-    void StartParticalEmitter();
-    void PauseParticalEmitter();
+    void StartParticleEmitter();
+    void PauseParticleEmitter();
 
 private:
-    RS_PARTICAL_EMITTER_INFO mRSParticalEmitterInfo;
+    RS_PARTICLE_EMITTER_INFO mRSParticleEmitterInfo;
     bool mActiveFlg;
     bool mStaticFlg;
 };
