@@ -33,6 +33,9 @@
     <ClCompile Include="TempRenderConfig.cpp">
       <Filter>Temp</Filter>
     </ClCompile>
+    <ClCompile Include="TempTopic_Particle.cpp">
+      <Filter>Temp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TempMesh.h">
@@ -45,6 +48,9 @@
       <Filter>Temp</Filter>
     </ClInclude>
     <ClInclude Include="TempRenderConfig.h">
+      <Filter>Temp</Filter>
+    </ClInclude>
+    <ClInclude Include="TempTopic_Particle.h">
       <Filter>Temp</Filter>
     </ClInclude>
   </ItemGroup>
