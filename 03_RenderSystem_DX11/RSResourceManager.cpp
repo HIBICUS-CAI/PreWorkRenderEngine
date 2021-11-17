@@ -49,7 +49,7 @@ void RSTexturesManager::CleanAndStop()
 }
 
 void RSTexturesManager::AddDataTexture(
-    std::string& _name, DATA_TEXTURE_INFO& _tex)
+    std::string& _name, RS_RESOURCE_INFO& _tex)
 {
     if (mDataTexMap.find(_name) == mDataTexMap.end())
     {
@@ -66,7 +66,7 @@ void RSTexturesManager::AddMeshSrv(
     }
 }
 
-DATA_TEXTURE_INFO* RSTexturesManager::GetDataTexInfo(
+RS_RESOURCE_INFO* RSTexturesManager::GetDataTexInfo(
     std::string& _name)
 {
     auto found = mDataTexMap.find(_name);

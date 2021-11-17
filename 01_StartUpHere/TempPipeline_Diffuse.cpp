@@ -333,7 +333,7 @@ bool RSPass_Diffuse::CreateViews()
         depthTex, &desDSV, &mDepthStencilView);
     if (FAILED(hr)) { return false; }
 
-    DATA_TEXTURE_INFO dti = {};
+    RS_RESOURCE_INFO dti = {};
     std::string name = "temp-tex-depth";
     dti.mTexture = depthTex;
     dti.mDsv = mDepthStencilView;

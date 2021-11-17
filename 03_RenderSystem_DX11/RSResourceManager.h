@@ -22,10 +22,10 @@ public:
     void CleanAndStop();
 
     void AddDataTexture(
-        std::string& _name, DATA_TEXTURE_INFO& _tex);
+        std::string& _name, RS_RESOURCE_INFO& _tex);
     void AddMeshSrv(
         std::string& _name, ID3D11ShaderResourceView* _srv);
-    DATA_TEXTURE_INFO* GetDataTexInfo(std::string& _name);
+    RS_RESOURCE_INFO* GetDataTexInfo(std::string& _name);
     ID3D11ShaderResourceView* GetMeshSrv(std::string& _name);
     void DeleteDataTex(std::string& _name);
     void DeleteMeshSrv(std::string& _name);
@@ -34,7 +34,7 @@ public:
 
 private:
     class RSRoot_DX11* mRootPtr;
-    std::unordered_map<std::string, DATA_TEXTURE_INFO>
+    std::unordered_map<std::string, RS_RESOURCE_INFO>
         mDataTexMap;
     std::unordered_map<std::string, ID3D11ShaderResourceView*>
         mMeshSrvMap;

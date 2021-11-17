@@ -985,7 +985,7 @@ bool RSPass_Shadow::CreateViews()
         depthTex, &desSRV, &srv);
     if (FAILED(hr)) { return false; }
 
-    DATA_TEXTURE_INFO dti = {};
+    RS_RESOURCE_INFO dti = {};
     std::string name = "light-depth-light-other";
     dti.mTexture = depthTex;
     dti.mSrv = srv;
@@ -1397,7 +1397,7 @@ bool RSPass_Ssao::CreateTextures()
 {
     HRESULT hr = S_OK;
     std::string name = "";
-    DATA_TEXTURE_INFO dti = {};
+    RS_RESOURCE_INFO dti = {};
     D3D11_TEXTURE2D_DESC texDesc = {};
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
@@ -2616,7 +2616,7 @@ bool RSPass_MRT::CreateViews()
     ZeroMemory(&rtvDesc, sizeof(rtvDesc));
     ZeroMemory(&srvDesc, sizeof(srvDesc));
     ZeroMemory(&dsvDesc, sizeof(dsvDesc));
-    DATA_TEXTURE_INFO dti = {};
+    RS_RESOURCE_INFO dti = {};
     std::string name = "";
 
     ID3D11Texture2D* texture = nullptr;
@@ -3712,7 +3712,7 @@ bool RSPass_Bloom::CreateViews()
     ZeroMemory(&rtvDesc, sizeof(rtvDesc));
     ZeroMemory(&srvDesc, sizeof(srvDesc));
     ZeroMemory(&uavDesc, sizeof(uavDesc));
-    DATA_TEXTURE_INFO dti = {};
+    RS_RESOURCE_INFO dti = {};
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();

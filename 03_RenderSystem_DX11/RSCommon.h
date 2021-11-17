@@ -252,7 +252,7 @@ struct RSDrawCallsPipe
     std::vector<RS_DRAWCALL_DATA> mDatas = {};
 };
 
-struct DATA_TEXTURE_INFO
+struct RS_RESOURCE_INFO
 {
     ID3D11Texture2D* mTexture = nullptr;
     ID3D11RenderTargetView* mRtv = nullptr;
