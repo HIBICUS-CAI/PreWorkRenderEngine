@@ -42,7 +42,6 @@ void RSResourceManager::CleanAndStop()
         SAFE_RELEASE(resource.second.mSrv);
         SAFE_RELEASE(resource.second.mDsv);
         SAFE_RELEASE(resource.second.mRtv);
-        SAFE_RELEASE(resource.second.mTexture);
         auto type = resource.second.mType;
         switch (type)
         {
@@ -125,7 +124,6 @@ void RSResourceManager::DeleteResource(std::string& _name)
         SAFE_RELEASE(found->second.mSrv);
         SAFE_RELEASE(found->second.mDsv);
         SAFE_RELEASE(found->second.mRtv);
-        SAFE_RELEASE(found->second.mTexture);
         auto type = found->second.mType;
         switch (type)
         {
@@ -170,7 +168,6 @@ void RSResourceManager::ClearResources()
         SAFE_RELEASE(resource.second.mSrv);
         SAFE_RELEASE(resource.second.mDsv);
         SAFE_RELEASE(resource.second.mRtv);
-        SAFE_RELEASE(resource.second.mTexture);
         auto type = resource.second.mType;
         switch (type)
         {

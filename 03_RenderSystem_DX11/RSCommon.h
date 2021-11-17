@@ -274,7 +274,6 @@ struct RS_RESOURCE_INFO
         ID3D11Texture3D* mTexture3D;
     } mResource;
 
-    ID3D11Texture2D* mTexture = nullptr;
     ID3D11RenderTargetView* mRtv = nullptr;
     ID3D11DepthStencilView* mDsv = nullptr;
     ID3D11ShaderResourceView* mSrv = nullptr;

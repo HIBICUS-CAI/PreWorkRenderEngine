@@ -335,7 +335,8 @@ bool RSPass_Diffuse::CreateViews()
 
     RS_RESOURCE_INFO dti = {};
     std::string name = "temp-tex-depth";
-    dti.mTexture = depthTex;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = depthTex;
     dti.mDsv = mDepthStencilView;
     g_Root->ResourceManager()->AddResource(name, dti);
 
@@ -377,7 +378,8 @@ bool RSPass_Diffuse::CreateViews()
     if (FAILED(hr)) { return false; }
 
     dti = {};
-    dti.mTexture = tempTex;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = tempTex;
     dti.mRtv = mRenderTargetView;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);

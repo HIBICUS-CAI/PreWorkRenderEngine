@@ -987,7 +987,8 @@ bool RSPass_Shadow::CreateViews()
 
     RS_RESOURCE_INFO dti = {};
     std::string name = "light-depth-light-other";
-    dti.mTexture = depthTex;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = depthTex;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
 
@@ -1463,7 +1464,8 @@ bool RSPass_Ssao::CreateTextures()
 
     dti = {};
     name = "random-tex-ssao";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
 
@@ -1501,7 +1503,8 @@ bool RSPass_Ssao::CreateTextures()
 
     dti = {};
     name = "ssao-tex-ssao";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = rtv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -1548,7 +1551,8 @@ bool RSPass_Ssao::CreateTextures()
 
     dti = {};
     name = "ssao-tex-compress-ssao";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = rtv;
     dti.mSrv = srv;
     dti.mUav = uav;
@@ -2655,7 +2659,8 @@ bool RSPass_MRT::CreateViews()
 
     dti = {};
     name = "mrt-depth";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mDsv = mDepthDsv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -2694,7 +2699,8 @@ bool RSPass_MRT::CreateViews()
 
     dti = {};
     name = "mrt-normal";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mNormalRtv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -2733,7 +2739,8 @@ bool RSPass_MRT::CreateViews()
 
     dti = {};
     name = "mrt-worldpos";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mWorldPosRtv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -2772,7 +2779,8 @@ bool RSPass_MRT::CreateViews()
 
     dti = {};
     name = "mrt-diffuse";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mDiffuseRtv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -2811,7 +2819,8 @@ bool RSPass_MRT::CreateViews()
 
     dti = {};
     name = "mrt-diffuse-albedo";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mDiffAlbeRtv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -2850,7 +2859,8 @@ bool RSPass_MRT::CreateViews()
 
     dti = {};
     name = "mrt-fresnel-shinese";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mFresShinRtv;
     dti.mSrv = srv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -3748,7 +3758,8 @@ bool RSPass_Bloom::CreateViews()
 
     dti = {};
     name = "bloom-light";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mRtv;
     dti.mSrv = mNotCompressSrv;
     g_Root->ResourceManager()->AddResource(name, dti);
@@ -3795,7 +3806,8 @@ bool RSPass_Bloom::CreateViews()
 
     dti = {};
     name = "bloom-compress-light";
-    dti.mTexture = texture;
+    dti.mType = RS_RESOURCE_TYPE::TEXTURE2D;
+    dti.mResource.mTexture2D = texture;
     dti.mRtv = mCompressRtv;
     dti.mSrv = srv;
     dti.mUav = uav;
