@@ -36,7 +36,7 @@
     <ClInclude Include="RSRoot_DX11.h" />
     <ClInclude Include="RSShaderCompile.h" />
     <ClInclude Include="RSStaticResources.h" />
-    <ClInclude Include="RSTexturesManager.h" />
+    <ClInclude Include="RSResourceManager.h" />
     <ClInclude Include="RSTopic.h" />
     <ClInclude Include="RSVertexType.h" />
   </ItemGroup>
@@ -56,7 +56,7 @@
     <ClCompile Include="RSRoot_DX11.cpp" />
     <ClCompile Include="RSShaderCompile.cpp" />
     <ClCompile Include="RSStaticResources.cpp" />
-    <ClCompile Include="RSTexturesManager.cpp" />
+    <ClCompile Include="RSResourceManager.cpp" />
     <ClCompile Include="RSTopic.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

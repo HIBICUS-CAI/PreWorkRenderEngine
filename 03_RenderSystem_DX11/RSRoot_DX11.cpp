@@ -15,7 +15,7 @@
 #include "RSDevices.h"
 #include "RSPipelinesManager.h"
 #include "RSDrawCallsPool.h"
-#include "RSTexturesManager.h"
+#include "RSResourceManager.h"
 #include "RSStaticResources.h"
 #include "RSLightsContainer.h"
 #include "RSCamerasContainer.h"

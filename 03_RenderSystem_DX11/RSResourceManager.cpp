@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------
-// File: RSTexturesManager.cpp
+// File: RSResourceManager.cpp
 // Proj: RenderSystem_DX11
-// Info: 保存并管理所有的纹理
+// Info: 保存并管理所有被创建的资源
 // Date: 2021.9.13
 // Mail: cai_genkan@outlook.com
 // Comt: NULL
 //---------------------------------------------------------------
 
-#include "RSTexturesManager.h"
+#include "RSResourceManager.h"
 #include "RSRoot_DX11.h"
 
 RSTexturesManager::RSTexturesManager() :

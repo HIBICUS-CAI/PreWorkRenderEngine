@@ -10,7 +10,7 @@
 #include "RSMeshHelper.h"
 #include "RSRoot_DX11.h"
 #include "RSDevices.h"
-#include "RSTexturesManager.h"
+#include "RSResourceManager.h"
 #include "RSStaticResources.h"
 #include <assert.h>
 #include <DirectXTK\WICTextureLoader.h>

@@ -10,7 +10,7 @@
 #include <DirectXTK\DDSTextureLoader.h>
 #include <DirectXTK\WICTextureLoader.h>
 #include "RSDevices.h"
-#include "RSTexturesManager.h"
+#include "RSResourceManager.h"
 
 TempSubMesh::TempSubMesh(
     std::vector<UINT>& _index,

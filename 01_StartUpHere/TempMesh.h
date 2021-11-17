@@ -8,7 +8,7 @@
 #include "RSMeshHelper.h"
 #include "RSDrawCallsPool.h"
 #include "RSRoot_DX11.h"
-#include "RSTexturesManager.h"
+#include "RSResourceManager.h"
 #include "RSCamerasContainer.h"
 #include "RSStaticResources.h"
 

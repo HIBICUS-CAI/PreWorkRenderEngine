@@ -10,7 +10,7 @@
 #include "RSLight.h"
 #include "RSCamerasContainer.h"
 #include "RSRoot_DX11.h"
-#include "RSTexturesManager.h"
+#include "RSResourceManager.h"
 #include "RSDrawCallsPool.h"
 #include "RSMeshHelper.h"
 

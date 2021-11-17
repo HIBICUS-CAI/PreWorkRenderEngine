@@ -49,7 +49,7 @@
     <ClInclude Include="RSStaticResources.h">
       <Filter>SubSystem</Filter>
     </ClInclude>
-    <ClInclude Include="RSTexturesManager.h">
+    <ClInclude Include="RSResourceManager.h">
       <Filter>SubSystem</Filter>
     </ClInclude>
     <ClInclude Include="RSRoot_DX11.h">
@@ -111,7 +111,7 @@
     <ClCompile Include="RSStaticResources.cpp">
       <Filter>SubSystem</Filter>
     </ClCompile>
-    <ClCompile Include="RSTexturesManager.cpp">
+    <ClCompile Include="RSResourceManager.cpp">
       <Filter>SubSystem</Filter>
     </ClCompile>
     <ClCompile Include="RSRoot_DX11.cpp">
