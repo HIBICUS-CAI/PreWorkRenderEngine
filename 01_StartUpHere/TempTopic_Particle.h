@@ -1,7 +1,8 @@
 #pragma once
 
-#include "RSPass_Base.h"
 #include <string>
+#include <vector>
+#include "RSPass_Base.h"
 
 class RSPass_PriticleSimulate :public RSPass_Base
 {
@@ -30,7 +31,7 @@ private:
     ID3D11ShaderResourceView* mPartA_Srv;
     ID3D11UnorderedAccessView* mPartA_Uav;
 
-    ID3D11Buffer* mParticalPartB;
+    ID3D11Buffer* mParticlePartB;
     ID3D11UnorderedAccessView* mPartB_Uav;
 
     ID3D11Buffer* mViewspacePosBuffer;
