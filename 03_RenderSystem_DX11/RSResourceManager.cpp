@@ -36,13 +36,35 @@ void RSResourceManager::CleanAndStop()
     {
         SAFE_RELEASE(meshSrv.second);
     }
-    for (auto& dataTex : mResourceMap)
+    for (auto& resource : mResourceMap)
     {
-        SAFE_RELEASE(dataTex.second.mUav);
-        SAFE_RELEASE(dataTex.second.mSrv);
-        SAFE_RELEASE(dataTex.second.mDsv);
-        SAFE_RELEASE(dataTex.second.mRtv);
-        SAFE_RELEASE(dataTex.second.mTexture);
+        SAFE_RELEASE(resource.second.mUav);
+        SAFE_RELEASE(resource.second.mSrv);
+        SAFE_RELEASE(resource.second.mDsv);
+        SAFE_RELEASE(resource.second.mRtv);
+        SAFE_RELEASE(resource.second.mTexture);
+        auto type = resource.second.mType;
+        switch (type)
+        {
+        case RS_RESOURCE_TYPE::BUFFER:
+            SAFE_RELEASE(resource.second.mResource.mBuffer);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE1D:
+            SAFE_RELEASE(resource.second.mResource.mTexture1D);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE2D:
+            SAFE_RELEASE(resource.second.mResource.mTexture2D);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE3D:
+            SAFE_RELEASE(resource.second.mResource.mTexture3D);
+            break;
+        default:
+        {
+            bool unvalid_resource_type = false;
+            assert(unvalid_resource_type);
+            break;
+        }
+        }
     }
     mMeshSrvMap.clear();
     mResourceMap.clear();
@@ -104,6 +126,28 @@ void RSResourceManager::DeleteResource(std::string& _name)
         SAFE_RELEASE(found->second.mDsv);
         SAFE_RELEASE(found->second.mRtv);
         SAFE_RELEASE(found->second.mTexture);
+        auto type = found->second.mType;
+        switch (type)
+        {
+        case RS_RESOURCE_TYPE::BUFFER:
+            SAFE_RELEASE(found->second.mResource.mBuffer);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE1D:
+            SAFE_RELEASE(found->second.mResource.mTexture1D);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE2D:
+            SAFE_RELEASE(found->second.mResource.mTexture2D);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE3D:
+            SAFE_RELEASE(found->second.mResource.mTexture3D);
+            break;
+        default:
+        {
+            bool unvalid_resource_type = false;
+            assert(unvalid_resource_type);
+            break;
+        }
+        }
         mResourceMap.erase(found);
     }
 }
@@ -120,13 +164,35 @@ void RSResourceManager::DeleteMeshSrv(std::string& _name)
 
 void RSResourceManager::ClearResources()
 {
-    for (auto& dataTex : mResourceMap)
+    for (auto& resource : mResourceMap)
     {
-        SAFE_RELEASE(dataTex.second.mUav);
-        SAFE_RELEASE(dataTex.second.mSrv);
-        SAFE_RELEASE(dataTex.second.mDsv);
-        SAFE_RELEASE(dataTex.second.mRtv);
-        SAFE_RELEASE(dataTex.second.mTexture);
+        SAFE_RELEASE(resource.second.mUav);
+        SAFE_RELEASE(resource.second.mSrv);
+        SAFE_RELEASE(resource.second.mDsv);
+        SAFE_RELEASE(resource.second.mRtv);
+        SAFE_RELEASE(resource.second.mTexture);
+        auto type = resource.second.mType;
+        switch (type)
+        {
+        case RS_RESOURCE_TYPE::BUFFER:
+            SAFE_RELEASE(resource.second.mResource.mBuffer);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE1D:
+            SAFE_RELEASE(resource.second.mResource.mTexture1D);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE2D:
+            SAFE_RELEASE(resource.second.mResource.mTexture2D);
+            break;
+        case RS_RESOURCE_TYPE::TEXTURE3D:
+            SAFE_RELEASE(resource.second.mResource.mTexture3D);
+            break;
+        default:
+        {
+            bool unvalid_resource_type = false;
+            assert(unvalid_resource_type);
+            break;
+        }
+        }
     }
     mResourceMap.clear();
 }
