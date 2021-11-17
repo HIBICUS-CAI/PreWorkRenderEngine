@@ -252,8 +252,28 @@ struct RSDrawCallsPipe
     std::vector<RS_DRAWCALL_DATA> mDatas = {};
 };
 
+enum class RS_RESOURCE_TYPE
+{
+    BUFFER,
+    TEXTURE1D,
+    TEXTURE2D,
+    TEXTURE3D,
+
+    RESOURCE_SIZE
+};
+
 struct RS_RESOURCE_INFO
 {
+    RS_RESOURCE_TYPE mType = RS_RESOURCE_TYPE::BUFFER;
+
+    union RS_RESOURCE_DATA
+    {
+        ID3D11Buffer* mBuffer = nullptr;
+        ID3D11Texture1D* mTexture1D;
+        ID3D11Texture2D* mTexture2D;
+        ID3D11Texture3D* mTexture3D;
+    } mResource;
+
     ID3D11Texture2D* mTexture = nullptr;
     ID3D11RenderTargetView* mRtv = nullptr;
     ID3D11DepthStencilView* mDsv = nullptr;
