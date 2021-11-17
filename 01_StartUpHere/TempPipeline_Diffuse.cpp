@@ -167,9 +167,9 @@ void RSPass_Diffuse::ReleasePass()
     RS_RELEASE(mRasterizerState);
 
     std::string name = "temp-tex-depth";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "temp-tex";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
 }
 
 void RSPass_Diffuse::ExecuatePass()
@@ -337,7 +337,7 @@ bool RSPass_Diffuse::CreateViews()
     std::string name = "temp-tex-depth";
     dti.mTexture = depthTex;
     dti.mDsv = mDepthStencilView;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     name = "temp-tex";
     ID3D11Texture2D* tempTex = nullptr;
@@ -380,7 +380,7 @@ bool RSPass_Diffuse::CreateViews()
     dti.mTexture = tempTex;
     dti.mRtv = mRenderTargetView;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     ZeroMemory(&desSRV, sizeof(desSRV));
@@ -497,7 +497,7 @@ void RSPass_FromTex::ReleasePass()
     //RS_RELEASE(mSwapChainRtv);
     //RS_RELEASE(mInputSrv);
     std::string name = "temp-tex-depth";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
 }
 
 void RSPass_FromTex::ExecuatePass()
@@ -587,7 +587,7 @@ bool RSPass_FromTex::CreateViews()
 {
     std::string name = "temp-tex";
     mSwapChainRtv = g_Root->Devices()->GetSwapChainRtv();
-    auto info = g_Root->TexturesManager()->GetDataTexInfo(name);
+    auto info = g_Root->ResourceManager()->GetResourceInfo(name);
     if (!info) { return false; }
     mInputSrv = info->mSrv;
     if (!mInputSrv) { return false; }

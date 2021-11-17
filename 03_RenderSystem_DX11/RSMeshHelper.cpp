@@ -31,7 +31,7 @@ RSMeshHelper::~RSMeshHelper()
 }
 
 bool RSMeshHelper::StartUp(
-    RSRoot_DX11* _root, RSTexturesManager* _texManager)
+    RSRoot_DX11* _root, RSResourceManager* _texManager)
 {
     if (!_root || !_texManager) { return false; }
 
@@ -312,7 +312,7 @@ void RSMeshHelper::ReleaseSubMesh(RS_SUBMESH_DATA& _result)
 RSGeometryGenerator::RSGeometryGenerator(RSRoot_DX11* _root) :
     mMeshHelperPtr(_root->MeshHelper()),
     mDevicesPtr(_root->Devices()),
-    mTexManagerPtr(_root->TexturesManager()) {}
+    mTexManagerPtr(_root->ResourceManager()) {}
 
 RSGeometryGenerator::~RSGeometryGenerator() {}
 

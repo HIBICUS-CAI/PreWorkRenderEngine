@@ -299,7 +299,7 @@ bool TempMesh::LoadByBinary(const std::string& _path)
 }
 
 bool TempGeoMesh::CreateBumpedTex(std::string&& _texPath,
-    RSDevices* _devices, RSTexturesManager* _texManager)
+    RSDevices* _devices, RSResourceManager* _texManager)
 {
     static std::wstring wstr = L"";
     static std::string name = "";

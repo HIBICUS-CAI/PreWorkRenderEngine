@@ -12,30 +12,30 @@
 #include "RSCommon.h"
 #include <unordered_map>
 
-class RSTexturesManager
+class RSResourceManager
 {
 public:
-    RSTexturesManager();
-    ~RSTexturesManager();
+    RSResourceManager();
+    ~RSResourceManager();
 
     bool StartUp(class RSRoot_DX11* _root);
     void CleanAndStop();
 
-    void AddDataTexture(
-        std::string& _name, RS_RESOURCE_INFO& _tex);
+    void AddResource(
+        std::string& _name, RS_RESOURCE_INFO& _resource);
     void AddMeshSrv(
         std::string& _name, ID3D11ShaderResourceView* _srv);
-    RS_RESOURCE_INFO* GetDataTexInfo(std::string& _name);
+    RS_RESOURCE_INFO* GetResourceInfo(std::string& _name);
     ID3D11ShaderResourceView* GetMeshSrv(std::string& _name);
-    void DeleteDataTex(std::string& _name);
+    void DeleteResource(std::string& _name);
     void DeleteMeshSrv(std::string& _name);
-    void ClearDataTexs();
+    void ClearResources();
     void ClearMeshSrvs();
 
 private:
     class RSRoot_DX11* mRootPtr;
     std::unordered_map<std::string, RS_RESOURCE_INFO>
-        mDataTexMap;
+        mResourceMap;
     std::unordered_map<std::string, ID3D11ShaderResourceView*>
         mMeshSrvMap;
 };

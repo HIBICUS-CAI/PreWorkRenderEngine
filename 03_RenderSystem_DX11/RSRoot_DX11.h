@@ -25,7 +25,7 @@ public:
     class RSDevices* Devices() const;
     class RSPipelinesManager* PipelinesManager() const;
     class RSDrawCallsPool* DrawCallsPool() const;
-    class RSTexturesManager* TexturesManager() const;
+    class RSResourceManager* ResourceManager() const;
     class RSStaticResources* StaticResources() const;
     class RSCamerasContainer* CamerasContainer() const;
     class RSLightsContainer* LightsContainer() const;
@@ -36,7 +36,7 @@ private:
     class RSDevices* mDevicesPtr;
     class RSPipelinesManager* mPipelinesManagerPtr;
     class RSDrawCallsPool* mDrawCallsPoolPtr;
-    class RSTexturesManager* mTexturesManagerPtr;
+    class RSResourceManager* mResourceManagerPtr;
     class RSStaticResources* mStaticResourcesPtr;
     class RSCamerasContainer* mCamerasContainerPtr;
     class RSLightsContainer* mLightsContainerPtr;

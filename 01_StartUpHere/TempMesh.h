@@ -129,7 +129,7 @@ public:
         data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &instance;
         data.mTextureDatas[0].mUse = true;
-        data.mTextureDatas[0].mSrv = _root->TexturesManager()->
+        data.mTextureDatas[0].mSrv = _root->ResourceManager()->
             GetMeshSrv(mData.mTextures[0]);
         static std::string name = "copper";
         data.mMaterialData = *(_root->StaticResources()->
@@ -250,12 +250,12 @@ public:
         data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &mInstance;
         data.mTextureDatas[0].mUse = true;
-        data.mTextureDatas[0].mSrv = _root->TexturesManager()->
+        data.mTextureDatas[0].mSrv = _root->ResourceManager()->
             GetMeshSrv(mData.mTextures[0]);
         if (mData.mTextures.size() > 1)
         {
             data.mTextureDatas[1].mUse = true;
-            data.mTextureDatas[1].mSrv = _root->TexturesManager()->
+            data.mTextureDatas[1].mSrv = _root->ResourceManager()->
                 GetMeshSrv(mData.mTextures[1]);
         }
         name = "copper";
@@ -290,7 +290,7 @@ public:
 
     bool CreateBumpedTex(std::string&& _texPath,
         class RSDevices* _devices,
-        class RSTexturesManager* _texManager);
+        class RSResourceManager* _texManager);
 
 private:
     RS_SUBMESH_DATA mData;
@@ -342,7 +342,7 @@ public:
         data.mMeshData.mIndexCount = mData.mIndexCount;
         data.mInstanceData.mDataPtr = &mInstance;
         data.mTextureDatas[0].mUse = true;
-        data.mTextureDatas[0].mSrv = _root->TexturesManager()->
+        data.mTextureDatas[0].mSrv = _root->ResourceManager()->
             GetMeshSrv(mData.mTextures[0]);
 
         _pool->AddDrawCallToPipe(DRAWCALL_TYPE::UI_SPRITE, data);

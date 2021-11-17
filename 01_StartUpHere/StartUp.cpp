@@ -48,7 +48,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "tile.dds"));
     floor->CreateBumpedTex("tile_nmap.dds",
-        root->Devices(), root->TexturesManager());
+        root->Devices(), root->ResourceManager());
     floor->AddInstanceData(
         { 0.f,-5.f,0.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
 
@@ -58,7 +58,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "bricks.dds"));
     walls->CreateBumpedTex("bricks_nmap.dds",
-        root->Devices(), root->TexturesManager());
+        root->Devices(), root->ResourceManager());
     walls->AddInstanceData(
         { 0.f,1.25f,25.f },
         { 0.f,0.f,0.f },
@@ -104,7 +104,7 @@ int WINAPI WinMain(
             LAYOUT_TYPE::NORMAL_TANGENT_TEX, false,
             {}, "bricks2.dds"));
     pillars->CreateBumpedTex("bricks2_nmap.dds",
-        root->Devices(), root->TexturesManager());
+        root->Devices(), root->ResourceManager());
     pillars->AddInstanceData(
         { 20.f,10.f,20.f }, { 0.f,0.f,0.f }, { 1.f,1.f,1.f });
     pillars->AddInstanceData(

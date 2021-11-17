@@ -19,7 +19,7 @@ public:
 
     bool StartUp(
         class RSRoot_DX11* _root,
-        class RSTexturesManager* _texManager);
+        class RSResourceManager* _texManager);
     void CleanAndStop();
 
     void ProcessSubMesh(RS_SUBMESH_DATA* _result,
@@ -45,7 +45,7 @@ private:
 
 private:
     class RSRoot_DX11* mRootPtr;
-    class RSTexturesManager* mTexManagerPtr;
+    class RSResourceManager* mTexManagerPtr;
     class RSDevices* mDevicesPtr;
     class RSGeometryGenerator* mGeoGeneratorPtr;
 };
@@ -123,5 +123,5 @@ private:
 private:
     RSMeshHelper* mMeshHelperPtr;
     class RSDevices* mDevicesPtr;
-    class RSTexturesManager* mTexManagerPtr;
+    class RSResourceManager* mTexManagerPtr;
 };

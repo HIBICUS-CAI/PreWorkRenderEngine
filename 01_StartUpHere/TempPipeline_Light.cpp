@@ -432,8 +432,8 @@ void RSPass_Light::ExecuatePass()
         3, 1, &mLightStructedBufferSrv);
     static std::string depthtex = "light-depth-light-other";
     STContext()->PSSetShaderResources(
-        5, 1, &g_Root->TexturesManager()->
-        GetDataTexInfo(depthtex)->mSrv);
+        5, 1, &g_Root->ResourceManager()->
+        GetResourceInfo(depthtex)->mSrv);
     STContext()->PSSetShaderResources(
         6, 1, &mSsaoSrv);
 
@@ -615,8 +615,8 @@ bool RSPass_Light::CreateViews()
 
     HRESULT hr = S_OK;
     std::string name = "mrt-depth";
-    mDepthStencilView = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mDsv;
+    mDepthStencilView = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mDsv;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     ZeroMemory(&desSRV, sizeof(desSRV));
@@ -661,8 +661,8 @@ bool RSPass_Light::CreateViews()
     if (FAILED(hr)) { return false; }
 
     name = "ssao-tex-compress-ssao";
-    mSsaoSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mSsaoSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
 
     return true;
 }
@@ -766,15 +766,15 @@ void RSPass_Shadow::ReleasePass()
     RS_RELEASE(mInstanceStructedBuffer);
 
     std::string name = "light-depth-light-other";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "light-depth-light-dep0";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "light-depth-light-dep1";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "light-depth-light-dep2";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "light-depth-light-dep3";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
 }
 
 void RSPass_Shadow::ExecuatePass()
@@ -989,21 +989,21 @@ bool RSPass_Shadow::CreateViews()
     std::string name = "light-depth-light-other";
     dti.mTexture = depthTex;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     dti = {};
     name = "light-depth-light-dep0";
     dti.mDsv = mDepthStencilView[0];
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
     name = "light-depth-light-dep1";
     dti.mDsv = mDepthStencilView[1];
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
     name = "light-depth-light-dep2";
     dti.mDsv = mDepthStencilView[2];
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
     name = "light-depth-light-dep3";
     dti.mDsv = mDepthStencilView[3];
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     ZeroMemory(&desSRV, sizeof(desSRV));
     desSRV.Format = DXGI_FORMAT_UNKNOWN;
@@ -1150,11 +1150,11 @@ void RSPass_Ssao::ReleasePass()
     RS_RELEASE(mIndexBuffer);
 
     std::string name = "random-tex-ssao";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "ssao-tex-ssao";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "ssao-tex-compress-ssao";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
 }
 
 void RSPass_Ssao::ExecuatePass()
@@ -1465,7 +1465,7 @@ bool RSPass_Ssao::CreateTextures()
     name = "random-tex-ssao";
     dti.mTexture = texture;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();
@@ -1504,7 +1504,7 @@ bool RSPass_Ssao::CreateTextures()
     dti.mTexture = texture;
     dti.mRtv = rtv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth() / 2;
@@ -1552,7 +1552,7 @@ bool RSPass_Ssao::CreateTextures()
     dti.mRtv = rtv;
     dti.mSrv = srv;
     dti.mUav = uav;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     return true;
 }
@@ -1560,22 +1560,22 @@ bool RSPass_Ssao::CreateTextures()
 bool RSPass_Ssao::CreateViews()
 {
     std::string name = "random-tex-ssao";
-    mRandomMapSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mRandomMapSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-normal";
-    mNormalMapSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mNormalMapSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-depth";
-    mDepthMapSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mDepthMapSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "ssao-tex-ssao";
-    mRenderTargetView = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mRtv;
-    mNotCompressSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mRenderTargetView = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mRtv;
+    mNotCompressSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "ssao-tex-compress-ssao";
-    mCompressRtv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mRtv;
+    mCompressRtv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mRtv;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     HRESULT hr = S_OK;
@@ -1763,14 +1763,14 @@ bool RSPass_KBBlur::CreateShaders()
 bool RSPass_KBBlur::CreateViews()
 {
     std::string name = "mrt-normal";
-    mNormalMapSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mNormalMapSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-depth";
-    mDepthMapSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mDepthMapSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "ssao-tex-compress-ssao";
-    mSsaoTexUav = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mUav;
+    mSsaoTexUav = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mUav;
 
     return true;
 }
@@ -1898,7 +1898,7 @@ void RSPass_SkyShpere::ExecuatePass()
         0, 1, &mSkyShpereInfoStructedBufferSrv);
     static std::string tex = mSkySphereMesh.mTextures[0];
     static ID3D11ShaderResourceView* cube = nullptr;
-    cube = g_Root->TexturesManager()->GetMeshSrv(tex);
+    cube = g_Root->ResourceManager()->GetMeshSrv(tex);
     STContext()->PSSetShaderResources(
         0, 1, &cube);
     STContext()->PSSetSamplers(0, 1, &mLinearWrapSampler);
@@ -1992,8 +1992,8 @@ bool RSPass_SkyShpere::CreateViews()
 {
     mRenderTargerView = g_Root->Devices()->GetSwapChainRtv();
     std::string name = "mrt-depth";
-    mDepthStencilView = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mDsv;
+    mDepthStencilView = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mDsv;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC desSRV = {};
     HRESULT hr = S_OK;
@@ -2393,17 +2393,17 @@ void RSPass_MRT::ReleasePass()
     RS_RELEASE(mLinearSampler);
 
     std::string name = "mrt-depth";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "mrt-normal";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "mrt-diffuse";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "mrt-worldpos";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "mrt-diffuse-albedo";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "mrt-fresnel-shinese";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
 }
 
 void RSPass_MRT::ExecuatePass()
@@ -2658,7 +2658,7 @@ bool RSPass_MRT::CreateViews()
     dti.mTexture = texture;
     dti.mDsv = mDepthDsv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();
@@ -2697,7 +2697,7 @@ bool RSPass_MRT::CreateViews()
     dti.mTexture = texture;
     dti.mRtv = mNormalRtv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();
@@ -2736,7 +2736,7 @@ bool RSPass_MRT::CreateViews()
     dti.mTexture = texture;
     dti.mRtv = mWorldPosRtv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();
@@ -2775,7 +2775,7 @@ bool RSPass_MRT::CreateViews()
     dti.mTexture = texture;
     dti.mRtv = mDiffuseRtv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();
@@ -2814,7 +2814,7 @@ bool RSPass_MRT::CreateViews()
     dti.mTexture = texture;
     dti.mRtv = mDiffAlbeRtv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth();
@@ -2853,7 +2853,7 @@ bool RSPass_MRT::CreateViews()
     dti.mTexture = texture;
     dti.mRtv = mFresShinRtv;
     dti.mSrv = srv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     return true;
 }
@@ -3249,26 +3249,26 @@ bool RSPass_Defered::CreateViews()
     mRenderTargetView = g_Root->Devices()->GetSwapChainRtv();
 
     std::string name = "mrt-worldpos";
-    mWorldPosSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mWorldPosSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-normal";
-    mNormalSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mNormalSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-diffuse";
-    mDiffuseSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mDiffuseSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-diffuse-albedo";
-    mDiffuseAlbedoSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mDiffuseAlbedoSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "mrt-fresnel-shinese";
-    mFresenlShineseSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mFresenlShineseSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "ssao-tex-compress-ssao";
-    mSsaoSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mSsaoSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     name = "light-depth-light-other";
-    mShadowDepthSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mShadowDepthSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
 
     HRESULT hr = S_OK;
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -3415,9 +3415,9 @@ bool RSPass_Bloom::InitPass()
 void RSPass_Bloom::ReleasePass()
 {
     std::string name = "bloom-light";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
     name = "bloom-compress-light";
-    g_Root->TexturesManager()->DeleteDataTex(name);
+    g_Root->ResourceManager()->DeleteResource(name);
 
     RS_RELEASE(mVertexShader);
     RS_RELEASE(mPixelShader);
@@ -3689,8 +3689,8 @@ bool RSPass_Bloom::CreateViews()
     std::string name = "";
 
     name = "mrt-depth";
-    mDepthDsv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mDsv;
+    mDepthDsv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mDsv;
     if (!mDepthDsv) { return false; }
 
     ZeroMemory(&srvDesc, sizeof(srvDesc));
@@ -3751,7 +3751,7 @@ bool RSPass_Bloom::CreateViews()
     dti.mTexture = texture;
     dti.mRtv = mRtv;
     dti.mSrv = mNotCompressSrv;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     texDesc.Width = GetRSRoot_DX11_Singleton()->Devices()->
         GetCurrWndWidth() / 2;
@@ -3799,7 +3799,7 @@ bool RSPass_Bloom::CreateViews()
     dti.mRtv = mCompressRtv;
     dti.mSrv = srv;
     dti.mUav = uav;
-    g_Root->TexturesManager()->AddDataTexture(name, dti);
+    g_Root->ResourceManager()->AddResource(name, dti);
 
     return true;
 }
@@ -4037,8 +4037,8 @@ bool RSPass_BloomOn::CreateViews()
     mRtv = g_Root->Devices()->GetSwapChainRtv();
 
     std::string name = "bloom-compress-light";
-    mBloomTexSrv = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mSrv;
+    mBloomTexSrv = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mSrv;
     if (!mBloomTexSrv) { return false; }
 
     return true;
@@ -4147,8 +4147,8 @@ bool RSPass_Blur::CreateShaders()
 bool RSPass_Blur::CreateViews()
 {
     std::string name = "bloom-compress-light";
-    mLightTexUav = g_Root->TexturesManager()->
-        GetDataTexInfo(name)->mUav;
+    mLightTexUav = g_Root->ResourceManager()->
+        GetResourceInfo(name)->mUav;
     if (!mLightTexUav) { return false; }
 
     return true;

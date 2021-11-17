@@ -37,7 +37,7 @@ RSRoot_DX11* GetRSRoot_DX11_Singleton()
 
 RSRoot_DX11::RSRoot_DX11() :
     mDevicesPtr(nullptr), mPipelinesManagerPtr(nullptr),
-    mDrawCallsPoolPtr(nullptr), mTexturesManagerPtr(nullptr),
+    mDrawCallsPoolPtr(nullptr), mResourceManagerPtr(nullptr),
     mStaticResourcesPtr(nullptr), mCamerasContainerPtr(nullptr),
     mLightsContainerPtr(nullptr), mMeshHelperPtr(nullptr),
     mParticlesContainerPtr(nullptr)
@@ -70,8 +70,8 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
         return false;
     }
 
-    mTexturesManagerPtr = new RSTexturesManager();
-    if (!mTexturesManagerPtr->StartUp(this))
+    mResourceManagerPtr = new RSResourceManager();
+    if (!mResourceManagerPtr->StartUp(this))
     {
         return false;
     }
@@ -101,7 +101,7 @@ bool RSRoot_DX11::StartUp(HWND _wndHandle)
     }
 
     mMeshHelperPtr = new RSMeshHelper();
-    if (!mMeshHelperPtr->StartUp(this, mTexturesManagerPtr))
+    if (!mMeshHelperPtr->StartUp(this, mResourceManagerPtr))
     {
         return false;
     }
@@ -161,11 +161,11 @@ void RSRoot_DX11::CleanAndStop()
         mStaticResourcesPtr = nullptr;
     }
 
-    if (mTexturesManagerPtr)
+    if (mResourceManagerPtr)
     {
-        mTexturesManagerPtr->CleanAndStop();
-        delete mTexturesManagerPtr;
-        mTexturesManagerPtr = nullptr;
+        mResourceManagerPtr->CleanAndStop();
+        delete mResourceManagerPtr;
+        mResourceManagerPtr = nullptr;
     }
 
     if (mDrawCallsPoolPtr)
@@ -198,9 +198,9 @@ RSDrawCallsPool* RSRoot_DX11::DrawCallsPool() const
     return mDrawCallsPoolPtr;
 }
 
-RSTexturesManager* RSRoot_DX11::TexturesManager() const
+RSResourceManager* RSRoot_DX11::ResourceManager() const
 {
-    return mTexturesManagerPtr;
+    return mResourceManagerPtr;
 }
 
 RSStaticResources* RSRoot_DX11::StaticResources() const
