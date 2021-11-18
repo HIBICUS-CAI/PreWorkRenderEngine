@@ -237,7 +237,6 @@ struct RS_MISC_INFO
     float mDeltaTime;
 };
 
-// 不包含光照信息，之后从相关地方调取
 struct RS_DRAWCALL_DATA
 {
     RS_SUBMESH_DRAWCALL_DATA mMeshData = {};
