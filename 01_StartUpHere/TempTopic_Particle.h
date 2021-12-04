@@ -50,6 +50,10 @@ private:
     ID3D11ShaderResourceView* mStridedCoarseCullCounter_Srv;
     ID3D11UnorderedAccessView* mStridedCoarseCullCounter_Uav;
 
+    ID3D11Buffer* mTiledIndexBuffer;
+    ID3D11ShaderResourceView* mTiledIndex_Srv;
+    ID3D11UnorderedAccessView* mTiledIndex_Uav;
+
     ID3D11Buffer* mDeadListBuffer;
     ID3D11UnorderedAccessView* mDeadList_Uav;
 
@@ -62,4 +66,6 @@ private:
 
     ID3D11Buffer* mEmitterConstantBuffer;
     ID3D11Buffer* mTilingConstantBuffer;
+
+    ID3D11Buffer* mDebugCounterBuffer;
 };

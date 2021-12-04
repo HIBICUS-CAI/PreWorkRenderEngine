@@ -15,12 +15,17 @@ RSPass_PriticleSimulate::RSPass_PriticleSimulate(
     mStridedCoarseCullCounterBuffer(nullptr),
     mStridedCoarseCullCounter_Srv(nullptr),
     mStridedCoarseCullCounter_Uav(nullptr),
+    mTiledIndexBuffer(nullptr),
+    mTiledIndex_Srv(nullptr),
+    mTiledIndex_Uav(nullptr),
     mDeadListBuffer(nullptr), mDeadList_Uav(nullptr),
     mAliveIndexBuffer(nullptr),
     mAliveIndex_Srv(nullptr), mAliveIndex_Uav(nullptr),
     mDeadListConstantBuffer(nullptr),
     mActiveListConstantBuffer(nullptr),
-    mEmitterConstantBuffer(nullptr), mTilingConstantBuffer(nullptr)
+    mEmitterConstantBuffer(nullptr),
+    mTilingConstantBuffer(nullptr),
+    mDebugCounterBuffer(nullptr)
 {
 
 }
@@ -45,6 +50,9 @@ RSPass_PriticleSimulate::RSPass_PriticleSimulate(
     mStridedCoarseCullCounterBuffer(_source.mStridedCoarseCullCounterBuffer),
     mStridedCoarseCullCounter_Srv(_source.mStridedCoarseCullCounter_Srv),
     mStridedCoarseCullCounter_Uav(_source.mStridedCoarseCullCounter_Uav),
+    mTiledIndexBuffer(_source.mTiledIndexBuffer),
+    mTiledIndex_Srv(_source.mTiledIndex_Srv),
+    mTiledIndex_Uav(_source.mTiledIndex_Uav),
     mDeadListBuffer(_source.mDeadListBuffer),
     mDeadList_Uav(_source.mDeadList_Uav),
     mAliveIndexBuffer(_source.mAliveIndexBuffer),
@@ -53,7 +61,8 @@ RSPass_PriticleSimulate::RSPass_PriticleSimulate(
     mDeadListConstantBuffer(_source.mDeadListConstantBuffer),
     mActiveListConstantBuffer(_source.mActiveListConstantBuffer),
     mEmitterConstantBuffer(_source.mEmitterConstantBuffer),
-    mTilingConstantBuffer(_source.mTilingConstantBuffer)
+    mTilingConstantBuffer(_source.mTilingConstantBuffer),
+    mDebugCounterBuffer(_source.mDebugCounterBuffer)
 {
 
 }
