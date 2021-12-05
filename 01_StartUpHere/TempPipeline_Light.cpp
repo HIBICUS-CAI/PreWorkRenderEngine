@@ -18,6 +18,7 @@
 #include <ctime>
 #include "TempMesh.h"
 #include "TempRenderConfig.h"
+#include "TempTopic_Particle.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 static RSRoot_DX11* g_Root = nullptr;
@@ -84,13 +85,25 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::RENDER, g_Root);
     bloomblend->SetExecuateOrder(3);
 
+    name = "particle-setup-pass";
+    RSPass_PriticleSetUp* ptcsetup = new RSPass_PriticleSetUp(
+        name, PASS_TYPE::COMPUTE, g_Root);
+    ptcsetup->SetExecuateOrder(1);
+
+    name = "paricle-topic";
+    RSTopic* particle_topic = new RSTopic(name);
+    particle_topic->StartTopicAssembly();
+    particle_topic->InsertPass(ptcsetup);
+    particle_topic->SetExecuateOrder(6);
+    particle_topic->FinishTopicAssembly();
+
     name = "bloom-topic";
     RSTopic* bloom_topic = new RSTopic(name);
     bloom_topic->StartTopicAssembly();
     bloom_topic->InsertPass(bloomdraw);
     bloom_topic->InsertPass(bloomblur);
     bloom_topic->InsertPass(bloomblend);
-    bloom_topic->SetExecuateOrder(6);
+    bloom_topic->SetExecuateOrder(7);
     bloom_topic->FinishTopicAssembly();
 
     name = "mrt-topic";
@@ -104,7 +117,7 @@ bool CreateTempLightPipeline()
     RSTopic* sprite_topic = new RSTopic(name);
     sprite_topic->StartTopicAssembly();
     sprite_topic->InsertPass(sprite);
-    sprite_topic->SetExecuateOrder(7);
+    sprite_topic->SetExecuateOrder(8);
     sprite_topic->FinishTopicAssembly();
 
     name = "skysphere-topic";
@@ -162,6 +175,7 @@ bool CreateTempLightPipeline()
     g_TempPipeline->InsertTopic(sprite_topic);
     g_TempPipeline->InsertTopic(mrt_topic);
     g_TempPipeline->InsertTopic(bloom_topic);
+    g_TempPipeline->InsertTopic(particle_topic);
     g_TempPipeline->FinishPipelineAssembly();
 
     if (!g_TempPipeline->InitAllTopics(g_Root->Devices(),

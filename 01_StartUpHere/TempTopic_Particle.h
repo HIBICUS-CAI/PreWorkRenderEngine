@@ -4,6 +4,21 @@
 #include <vector>
 #include "RSPass_Base.h"
 
+constexpr auto PTC_A_NAME = "particle-part-a";
+constexpr auto PTC_B_NAME = "particle-part-b";
+constexpr auto PTC_VIEW_SPCACE_POS_NAME = "particle-view-space-pos";
+constexpr auto PTC_MAX_RADIUS_NAME = "particle-max-radius";
+constexpr auto PTC_COARSE_CULL_NAME = "particle-coarse-cull";
+constexpr auto PTC_COARSE_CULL_COUNTER_NAME = "particle-coarse-cull-counter";
+constexpr auto PTC_TILED_INDEX_NAME = "particle-tiled-index";
+constexpr auto PTC_DEAD_LIST_NAME = "particle-dead-list";
+constexpr auto PTC_ALIVE_INDEX_NAME = "particle-alive-index";
+constexpr auto PTC_DEAD_LIST_CONSTANT_NAME = "particle-dead-list-constant";
+constexpr auto PTC_ALIVE_LIST_CONSTANT_NAME = "particle-alive-list-constant";
+constexpr auto PTC_EMITTER_CONSTANT_NAME = "particle-emitter-constant";
+constexpr auto PTC_TILING_CONSTANT_NAME = "particle-tiling-constant";
+constexpr auto PTC_DEBUG_COUNTER_NAME = "particle-debug-counter";
+
 class RSPass_PriticleSetUp :public RSPass_Base
 {
 public:
@@ -22,7 +37,6 @@ public:
     virtual void ExecuatePass();
 
 private:
-    bool CreateShaders();
     bool CreateBuffers();
     bool CreateViews();
 

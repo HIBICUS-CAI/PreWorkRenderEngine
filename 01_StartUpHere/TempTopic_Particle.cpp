@@ -1,5 +1,6 @@
 #include "TempTopic_Particle.h"
 #include "RSRoot_DX11.h"
+#include "RSResourceManager.h"
 
 RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
@@ -79,7 +80,6 @@ RSPass_PriticleSetUp* RSPass_PriticleSetUp::ClonePass()
 
 bool RSPass_PriticleSetUp::InitPass()
 {
-    if (!CreateShaders()) { return false; }
     if (!CreateBuffers()) { return false; }
     if (!CreateViews()) { return false; }
 
@@ -88,18 +88,40 @@ bool RSPass_PriticleSetUp::InitPass()
 
 void RSPass_PriticleSetUp::ReleasePass()
 {
-
+    auto root = GetRSRoot_DX11_Singleton();
+    std::string name = PTC_A_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_B_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_VIEW_SPCACE_POS_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_MAX_RADIUS_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_COARSE_CULL_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_COARSE_CULL_COUNTER_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_TILED_INDEX_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_DEAD_LIST_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_ALIVE_INDEX_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_DEAD_LIST_CONSTANT_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_ALIVE_LIST_CONSTANT_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_EMITTER_CONSTANT_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_TILING_CONSTANT_NAME;
+    root->ResourceManager()->DeleteResource(name);
+    name = PTC_DEBUG_COUNTER_NAME;
+    root->ResourceManager()->DeleteResource(name);
 }
 
 void RSPass_PriticleSetUp::ExecuatePass()
 {
 
-}
-
-bool RSPass_PriticleSetUp::CreateShaders()
-{
-    // TEMP-----------
-    return false;
 }
 
 bool RSPass_PriticleSetUp::CreateBuffers()
