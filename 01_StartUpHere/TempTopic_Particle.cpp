@@ -1,7 +1,7 @@
 #include "TempTopic_Particle.h"
 #include "RSRoot_DX11.h"
 
-RSPass_PriticleSimulate::RSPass_PriticleSimulate(
+RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
     RSPass_Base(_name, _type, _root),
     mParticlePartA(nullptr), mPartA_Srv(nullptr), mPartA_Uav(nullptr),
@@ -30,8 +30,8 @@ RSPass_PriticleSimulate::RSPass_PriticleSimulate(
 
 }
 
-RSPass_PriticleSimulate::RSPass_PriticleSimulate(
-    const RSPass_PriticleSimulate& _source) :
+RSPass_PriticleSetUp::RSPass_PriticleSetUp(
+    const RSPass_PriticleSetUp& _source) :
     RSPass_Base(_source),
     mParticlePartA(_source.mParticlePartA),
     mPartA_Srv(_source.mPartA_Srv),
@@ -67,45 +67,48 @@ RSPass_PriticleSimulate::RSPass_PriticleSimulate(
 
 }
 
-RSPass_PriticleSimulate::~RSPass_PriticleSimulate()
+RSPass_PriticleSetUp::~RSPass_PriticleSetUp()
 {
 
 }
 
-RSPass_PriticleSimulate* RSPass_PriticleSimulate::ClonePass()
+RSPass_PriticleSetUp* RSPass_PriticleSetUp::ClonePass()
 {
-    return new RSPass_PriticleSimulate(*this);
+    return new RSPass_PriticleSetUp(*this);
 }
 
-bool RSPass_PriticleSimulate::InitPass()
+bool RSPass_PriticleSetUp::InitPass()
 {
-    // TEMP-------------
-    return false;
+    if (!CreateShaders()) { return false; }
+    if (!CreateBuffers()) { return false; }
+    if (!CreateViews()) { return false; }
+
+    return true;
 }
 
-void RSPass_PriticleSimulate::ReleasePass()
-{
-
-}
-
-void RSPass_PriticleSimulate::ExecuatePass()
+void RSPass_PriticleSetUp::ReleasePass()
 {
 
 }
 
-bool RSPass_PriticleSimulate::CreateShaders()
+void RSPass_PriticleSetUp::ExecuatePass()
+{
+
+}
+
+bool RSPass_PriticleSetUp::CreateShaders()
 {
     // TEMP-----------
     return false;
 }
 
-bool RSPass_PriticleSimulate::CreateBuffers()
+bool RSPass_PriticleSetUp::CreateBuffers()
 {
     // TEMP---------------
     return false;
 }
 
-bool RSPass_PriticleSimulate::CreateViews()
+bool RSPass_PriticleSetUp::CreateViews()
 {
     // TEMP-----------------
     return false;

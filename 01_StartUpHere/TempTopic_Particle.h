@@ -4,16 +4,16 @@
 #include <vector>
 #include "RSPass_Base.h"
 
-class RSPass_PriticleSimulate :public RSPass_Base
+class RSPass_PriticleSetUp :public RSPass_Base
 {
 public:
-    RSPass_PriticleSimulate(std::string& _name, PASS_TYPE _type,
+    RSPass_PriticleSetUp(std::string& _name, PASS_TYPE _type,
         class RSRoot_DX11* _root);
-    RSPass_PriticleSimulate(const RSPass_PriticleSimulate& _source);
-    virtual ~RSPass_PriticleSimulate();
+    RSPass_PriticleSetUp(const RSPass_PriticleSetUp& _source);
+    virtual ~RSPass_PriticleSetUp();
 
 public:
-    virtual RSPass_PriticleSimulate* ClonePass() override;
+    virtual RSPass_PriticleSetUp* ClonePass() override;
 
     virtual bool InitPass();
 
