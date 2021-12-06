@@ -38,6 +38,7 @@
     <ClInclude Include="RSStaticResources.h" />
     <ClInclude Include="RSResourceManager.h" />
     <ClInclude Include="RSTopic.h" />
+    <ClInclude Include="RSUtilityFunctions.h" />
     <ClInclude Include="RSVertexType.h" />
   </ItemGroup>
   <ItemGroup>
@@ -58,6 +59,7 @@
     <ClCompile Include="RSStaticResources.cpp" />
     <ClCompile Include="RSResourceManager.cpp" />
     <ClCompile Include="RSTopic.cpp" />
+    <ClCompile Include="RSUtilityFunctions.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

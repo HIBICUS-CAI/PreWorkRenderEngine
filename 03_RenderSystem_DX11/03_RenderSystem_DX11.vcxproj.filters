@@ -82,6 +82,9 @@
     <ClInclude Include="RSParticleEmitter.h">
       <Filter>SubSystem</Filter>
     </ClInclude>
+    <ClInclude Include="RSUtilityFunctions.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RSCamera.cpp">
@@ -134,6 +137,9 @@
     </ClCompile>
     <ClCompile Include="RSParticleEmitter.cpp">
       <Filter>SubSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="RSUtilityFunctions.cpp">
+      <Filter>Tool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
