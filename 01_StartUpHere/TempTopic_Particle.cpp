@@ -541,3 +541,51 @@ bool RSPass_PriticleSetUp::CreateViews()
 
     return true;
 }
+
+RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root)
+{
+
+}
+
+RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
+    const RSPass_PriticleEmitSimulate& _source) :
+    RSPass_Base(_source)
+{
+
+}
+
+RSPass_PriticleEmitSimulate::~RSPass_PriticleEmitSimulate()
+{
+
+}
+
+RSPass_PriticleEmitSimulate* RSPass_PriticleEmitSimulate::ClonePass()
+{
+    return new RSPass_PriticleEmitSimulate(*this);
+}
+
+bool RSPass_PriticleEmitSimulate::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+
+    return true;
+}
+
+void RSPass_PriticleEmitSimulate::ReleasePass()
+{
+
+}
+
+void RSPass_PriticleEmitSimulate::ExecuatePass()
+{
+
+}
+
+bool RSPass_PriticleEmitSimulate::CreateShaders()
+{
+    HRESULT hr = S_OK;
+
+    return true;
+}

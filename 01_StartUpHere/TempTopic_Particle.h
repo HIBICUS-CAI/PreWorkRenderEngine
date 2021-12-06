@@ -143,3 +143,26 @@ private:
     ID3D11Texture2D* mParticleRandomTexture;
     ID3D11ShaderResourceView* mParticleRandom_Srv;
 };
+
+class RSPass_PriticleEmitSimulate :public RSPass_Base
+{
+public:
+    RSPass_PriticleEmitSimulate(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_PriticleEmitSimulate(const RSPass_PriticleEmitSimulate& _source);
+    virtual ~RSPass_PriticleEmitSimulate();
+
+public:
+    virtual RSPass_PriticleEmitSimulate* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+
+private:
+};

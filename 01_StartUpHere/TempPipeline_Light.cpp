@@ -90,10 +90,16 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::COMPUTE, g_Root);
     ptcsetup->SetExecuateOrder(1);
 
+    name = "particle-emit-simulate-pass";
+    RSPass_PriticleEmitSimulate* ptcemitsimul = new RSPass_PriticleEmitSimulate(
+        name, PASS_TYPE::COMPUTE, g_Root);
+    ptcemitsimul->SetExecuateOrder(2);
+
     name = "paricle-topic";
     RSTopic* particle_topic = new RSTopic(name);
     particle_topic->StartTopicAssembly();
     particle_topic->InsertPass(ptcsetup);
+    particle_topic->InsertPass(ptcemitsimul);
     particle_topic->SetExecuateOrder(6);
     particle_topic->FinishTopicAssembly();
 
