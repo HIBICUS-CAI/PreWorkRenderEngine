@@ -11,6 +11,7 @@
 #include "RSLight.h"
 #include "RSCamerasContainer.h"
 #include "RSLightsContainer.h"
+#include "RSUtilityFunctions.h"
 #include <DirectXColors.h>
 #include <DirectXPackedVector.h>
 #include <DirectXTK\DDSTextureLoader.h>
@@ -1727,6 +1728,12 @@ void RSPass_KBBlur::ExecuatePass()
     };
 
     static UINT loopCount = GetRenderConfig().mSsaoBlurLoopCount;
+    static UINT width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth() / 2;
+    static UINT height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight() / 2;
+    UINT dispatchVert = Tool::Align(width, 256) / 256;
+    UINT dispatchHori = Tool::Align(height, 256) / 256;
 
     for (UINT i = 0; i < loopCount; i++)
     {
@@ -1734,7 +1741,7 @@ void RSPass_KBBlur::ExecuatePass()
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mSsaoTexUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, srv);
-        STContext()->Dispatch(3, 360, 1);
+        STContext()->Dispatch(dispatchVert, height, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, nullSrv);
@@ -1743,7 +1750,7 @@ void RSPass_KBBlur::ExecuatePass()
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mSsaoTexUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, srv);
-        STContext()->Dispatch(640, 2, 1);
+        STContext()->Dispatch(width, dispatchHori, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
         STContext()->CSSetShaderResources(0, 2, nullSrv);
@@ -4123,20 +4130,26 @@ void RSPass_Blur::ExecuatePass()
     static ID3D11UnorderedAccessView* nullUav = nullptr;
 
     static UINT loopCount = GetRenderConfig().mBloomBlurLoopCount;
+    static UINT width = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndWidth() / 2;
+    static UINT height = GetRSRoot_DX11_Singleton()->Devices()->
+        GetCurrWndHeight() / 2;
+    UINT dispatchVert = Tool::Align(width, 256) / 256;
+    UINT dispatchHori = Tool::Align(height, 256) / 256;
 
     for (UINT i = 0; i < loopCount; i++)
     {
         STContext()->CSSetShader(mHoriBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mLightTexUav, nullptr);
-        STContext()->Dispatch(3, 360, 1);
+        STContext()->Dispatch(dispatchVert, height, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
 
         STContext()->CSSetShader(mVertBlurShader, nullptr, 0);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &mLightTexUav, nullptr);
-        STContext()->Dispatch(640, 2, 1);
+        STContext()->Dispatch(width, dispatchHori, 1);
         STContext()->CSSetUnorderedAccessViews(0, 1,
             &nullUav, nullptr);
     }
