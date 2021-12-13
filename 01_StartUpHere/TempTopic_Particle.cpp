@@ -2,6 +2,10 @@
 #include "RSRoot_DX11.h"
 #include "RSResourceManager.h"
 #include "RSUtilityFunctions.h"
+#include "RSShaderCompile.h"
+#include "RSParticlesContainer.h"
+
+#define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 
 RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
@@ -30,8 +34,11 @@ RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     mDeadListConstantBuffer(nullptr),
     mActiveListConstantBuffer(nullptr),
     mEmitterConstantBuffer(nullptr),
+    mCameraConstantBuffer(nullptr),
     mTilingConstantBuffer(nullptr),
-    mDebugCounterBuffer(nullptr)
+    mDebugCounterBuffer(nullptr),
+    mSimulEmitterStructedBuffer(nullptr),
+    mSimulEmitterStructedBuffer_Srv(nullptr)
 {
 
 }
@@ -73,8 +80,11 @@ RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     mDeadListConstantBuffer(_source.mDeadListConstantBuffer),
     mActiveListConstantBuffer(_source.mActiveListConstantBuffer),
     mEmitterConstantBuffer(_source.mEmitterConstantBuffer),
+    mCameraConstantBuffer(_source.mCameraConstantBuffer),
     mTilingConstantBuffer(_source.mTilingConstantBuffer),
-    mDebugCounterBuffer(_source.mDebugCounterBuffer)
+    mDebugCounterBuffer(_source.mDebugCounterBuffer),
+    mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer),
+    mSimulEmitterStructedBuffer_Srv(_source.mSimulEmitterStructedBuffer_Srv)
 {
 
 }
@@ -213,6 +223,12 @@ bool RSPass_PriticleSetUp::InitPass()
 
     res = {};
     res.mType = RS_RESOURCE_TYPE::BUFFER;
+    res.mResource.mBuffer = mCameraConstantBuffer;
+    name = PTC_CAMERA_CONSTANT_NAME;
+    resManager->AddResource(name, res);
+
+    res = {};
+    res.mType = RS_RESOURCE_TYPE::BUFFER;
     res.mResource.mBuffer = mTilingConstantBuffer;
     name = PTC_TILING_CONSTANT_NAME;
     resManager->AddResource(name, res);
@@ -228,6 +244,13 @@ bool RSPass_PriticleSetUp::InitPass()
     res.mResource.mTexture2D = mParticleRandomTexture;
     res.mSrv = mParticleRandom_Srv;
     name = PTC_RAMDOM_TEXTURE_NAME;
+    resManager->AddResource(name, res);
+
+    res = {};
+    res.mType = RS_RESOURCE_TYPE::BUFFER;
+    res.mResource.mBuffer = mSimulEmitterStructedBuffer;
+    res.mSrv = mSimulEmitterStructedBuffer_Srv;
+    name = PTC_SIMU_EMITTER_STRU_NAME;
     resManager->AddResource(name, res);
 
     return true;
@@ -262,11 +285,15 @@ void RSPass_PriticleSetUp::ReleasePass()
     resManager->DeleteResource(name);
     name = PTC_EMITTER_CONSTANT_NAME;
     resManager->DeleteResource(name);
+    name = PTC_CAMERA_CONSTANT_NAME;
+    resManager->DeleteResource(name);
     name = PTC_TILING_CONSTANT_NAME;
     resManager->DeleteResource(name);
     name = PTC_DEBUG_COUNTER_NAME;
     resManager->DeleteResource(name);
     name = PTC_RAMDOM_TEXTURE_NAME;
+    resManager->DeleteResource(name);
+    name = PTC_SIMU_EMITTER_STRU_NAME;
     resManager->DeleteResource(name);
 }
 
@@ -361,6 +388,10 @@ bool RSPass_PriticleSetUp::CreateBuffers()
     hr = Device()->CreateBuffer(&bfrDesc, nullptr, &mEmitterConstantBuffer);
     if (FAILED(hr)) { return false; }
 
+    bfrDesc.ByteWidth = sizeof(CAMERA_STATUS);
+    hr = Device()->CreateBuffer(&bfrDesc, nullptr, &mCameraConstantBuffer);
+    if (FAILED(hr)) { return false; }
+
     bfrDesc.ByteWidth = sizeof(RS_TILING_CONSTANT);
     hr = Device()->CreateBuffer(&bfrDesc, nullptr, &mTilingConstantBuffer);
     if (FAILED(hr)) { return false; }
@@ -371,6 +402,18 @@ bool RSPass_PriticleSetUp::CreateBuffers()
     bfrDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     bfrDesc.ByteWidth = sizeof(UINT);
     hr = Device()->CreateBuffer(&bfrDesc, nullptr, &mDebugCounterBuffer);
+    if (FAILED(hr)) { return false; }
+
+    ZeroMemory(&bfrDesc, sizeof(bfrDesc));
+    bfrDesc.Usage = D3D11_USAGE_DYNAMIC;
+    bfrDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bfrDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    bfrDesc.ByteWidth = MAX_PARTICLE_EMITTER_SIZE *
+        sizeof(SIMULATE_EMITTER_INFO);
+    bfrDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    bfrDesc.StructureByteStride = sizeof(SIMULATE_EMITTER_INFO);
+    hr = Device()->CreateBuffer(
+        &bfrDesc, nullptr, &mSimulEmitterStructedBuffer);
     if (FAILED(hr)) { return false; }
 
     texDesc.Width = 1024;
@@ -539,19 +582,36 @@ bool RSPass_PriticleSetUp::CreateViews()
         mParticleRandomTexture, &srvDesc, &mParticleRandom_Srv);
     if (FAILED(hr)) { return false; }
 
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    srvDesc.Buffer.ElementWidth = MAX_PARTICLE_EMITTER_SIZE;
+    hr = Device()->CreateShaderResourceView(
+        mSimulEmitterStructedBuffer,
+        &srvDesc, &mSimulEmitterStructedBuffer_Srv);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
 RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
-    RSPass_Base(_name, _type, _root)
+    RSPass_Base(_name, _type, _root),
+    mRSParticleContainerPtr(nullptr),
+    mInitDeadListShader(nullptr), mResetParticlesShader(nullptr),
+    mEmitParticleShader(nullptr), mSimulateShader(nullptr)
 {
 
 }
 
 RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     const RSPass_PriticleEmitSimulate& _source) :
-    RSPass_Base(_source)
+    RSPass_Base(_source),
+    mRSParticleContainerPtr(_source.mRSParticleContainerPtr),
+    mInitDeadListShader(_source.mInitDeadListShader),
+    mResetParticlesShader(_source.mResetParticlesShader),
+    mEmitParticleShader(_source.mEmitParticleShader),
+    mSimulateShader(_source.mSimulateShader)
 {
 
 }
@@ -568,7 +628,11 @@ RSPass_PriticleEmitSimulate* RSPass_PriticleEmitSimulate::ClonePass()
 
 bool RSPass_PriticleEmitSimulate::InitPass()
 {
+    mRSParticleContainerPtr = GetRSRoot_DX11_Singleton()->ParticlesContainer();
+    if (!mRSParticleContainerPtr) { return false; }
+
     if (!CreateShaders()) { return false; }
+    if (!CheckResources()) { return false; }
 
     return true;
 }
@@ -584,6 +648,50 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
 }
 
 bool RSPass_PriticleEmitSimulate::CreateShaders()
+{
+    ID3DBlob* shaderBlob = nullptr;
+    HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_init_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mInitDeadListShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_reset_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mResetParticlesShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_emit_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mEmitParticleShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_simulate_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mSimulateShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_PriticleEmitSimulate::CheckResources()
 {
     HRESULT hr = S_OK;
 

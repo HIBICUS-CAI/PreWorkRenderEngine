@@ -17,9 +17,11 @@ constexpr auto PTC_ALIVE_INDEX_NAME = "particle-alive-index";
 constexpr auto PTC_DEAD_LIST_CONSTANT_NAME = "particle-dead-list-constant";
 constexpr auto PTC_ALIVE_LIST_CONSTANT_NAME = "particle-alive-list-constant";
 constexpr auto PTC_EMITTER_CONSTANT_NAME = "particle-emitter-constant";
+constexpr auto PTC_CAMERA_CONSTANT_NAME = "particle-camera-constant";
 constexpr auto PTC_TILING_CONSTANT_NAME = "particle-tiling-constant";
 constexpr auto PTC_DEBUG_COUNTER_NAME = "particle-debug-counter";
 constexpr auto PTC_RAMDOM_TEXTURE_NAME = "particle-ramdom-texture";
+constexpr auto PTC_SIMU_EMITTER_STRU_NAME = "particle-simu-emitter-structed";
 constexpr UINT PTC_MAX_PARTICLE_SIZE = 400 * 1024;
 constexpr UINT PTC_MAX_COARSE_CULL_TILE_X = 16;
 constexpr UINT PTC_MAX_COARSE_CULL_TILE_Y = 8;
@@ -51,12 +53,33 @@ struct RS_PARTICLE_PART_B
     float mAge = 0.f;
     float mStartSize = 0.f;
     float mEndSize = 0.f;
+    DirectX::XMFLOAT4 mStartColor = {};
+    DirectX::XMFLOAT4 mEndColor = {};
+    DirectX::XMFLOAT3 mAcceleration = {};
+    float mPads[1] = { 0.f };
 };
 
 struct RS_ALIVE_INDEX_BUFFER_ELEMENT
 {
     float mDistance;
     float mIndex;
+};
+
+struct CAMERA_STATUS
+{
+    DirectX::XMFLOAT4X4 mView = {};
+    DirectX::XMFLOAT4X4 mInvView = {};
+    DirectX::XMFLOAT4X4 mProj = {};
+    DirectX::XMFLOAT4X4 mInvProj = {};
+    DirectX::XMFLOAT4X4 mViewProj = {};
+    DirectX::XMFLOAT3 mEyePosition = {};
+    float mPad[1] = { 0.f };
+};
+
+struct SIMULATE_EMITTER_INFO
+{
+    DirectX::XMFLOAT3 mWorldPosition = {};
+    float mPads[1] = { 0.f };
 };
 
 struct RS_TILING_CONSTANT
@@ -136,12 +159,16 @@ private:
     ID3D11Buffer* mActiveListConstantBuffer;
 
     ID3D11Buffer* mEmitterConstantBuffer;
+    ID3D11Buffer* mCameraConstantBuffer;
     ID3D11Buffer* mTilingConstantBuffer;
 
     ID3D11Buffer* mDebugCounterBuffer;
 
     ID3D11Texture2D* mParticleRandomTexture;
     ID3D11ShaderResourceView* mParticleRandom_Srv;
+
+    ID3D11Buffer* mSimulEmitterStructedBuffer;
+    ID3D11ShaderResourceView* mSimulEmitterStructedBuffer_Srv;
 };
 
 class RSPass_PriticleEmitSimulate :public RSPass_Base
@@ -164,5 +191,13 @@ public:
 private:
     bool CreateShaders();
 
+    bool CheckResources();
+
 private:
+    class RSParticlesContainer* mRSParticleContainerPtr;
+
+    ID3D11ComputeShader* mInitDeadListShader;
+    ID3D11ComputeShader* mResetParticlesShader;
+    ID3D11ComputeShader* mEmitParticleShader;
+    ID3D11ComputeShader* mSimulateShader;
 };
