@@ -138,20 +138,20 @@ struct RS_PARTICLE_EMITTER_INFO
     float mEmitNumPerSecond = 0.f;
     UINT mNumToEmit = 0;
     float mAccumulation = 0.f;
-    DirectX::XMFLOAT3 mPosition = {};
-    DirectX::XMFLOAT3 mVelocity = {};
-    DirectX::XMFLOAT3 mPosVariance = {};
+    alignas(16) DirectX::XMFLOAT3 mPosition = {};
+    alignas(16) DirectX::XMFLOAT3 mVelocity = {};
+    alignas(16) DirectX::XMFLOAT3 mPosVariance = {};
+    alignas(16) DirectX::XMFLOAT3 mAcceleration = {};
     float mVelVariance = 0.f;
-    DirectX::XMFLOAT3 mAcceleration = {};
     float mParticleMass = 0.f;
     float mLifeSpan = 0.f;
     float mOffsetStartSize = 0.f;
     float mOffsetEndSize = 0.f;
-    DirectX::XMFLOAT4 mOffsetStartColor = {};
-    DirectX::XMFLOAT4 mOffsetEndColor = {};
     UINT mTextureID = (UINT)(PARTICLE_TEXTURE::WHITE_CIRCLE);
     UINT mStreakFlg = 0;
     UINT mMiscFlg = 0;
+    DirectX::XMFLOAT4 mOffsetStartColor = {};
+    DirectX::XMFLOAT4 mOffsetEndColor = {};
 };
 
 struct MATERIAL_INFO

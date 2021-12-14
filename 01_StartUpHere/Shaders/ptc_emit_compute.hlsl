@@ -35,17 +35,17 @@ cbuffer EmitterConstantBuffer : register(b0)
     float3 gPosition;
     float3 gVelocity;
     float3 gPosVariance;
-    float gVelVariance;
     float3 gAcceleration;
+    float gVelVariance;
     float gParticleMass;
     float gLifeSpan;
     float gOffsetStartSize;
     float gOffsetEndSize;
-    float4 gOffsetStartColor;
-    float4 gOffsetEndColor;
-    uint gTextureID;
+	uint gTextureID;
     uint gStreakFlg;
     uint gMiscFlg;
+    float4 gOffsetStartColor;
+    float4 gOffsetEndColor;
 };
 
 cbuffer DeadListCount : register(b1)
