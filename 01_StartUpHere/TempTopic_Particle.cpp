@@ -716,11 +716,22 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
         D3D11_MAPPED_SUBRESOURCE msr = {};
         for (auto& emitter : *emitters)
         {
+            auto& rsinfo = emitter.GetRSParticleEmitterInfo();
+            rsinfo.mAccumulation += rsinfo.mEmitNumPerSecond *
+                0.016666667f;
+            if (rsinfo.mAccumulation > 1.f)
+            {
+                float integerPart = 0.0f;
+                float fraction = modf(rsinfo.mAccumulation,
+                    &integerPart);
+                rsinfo.mNumToEmit = (int)integerPart;
+                rsinfo.mAccumulation = fraction;
+            }
+
             STContext()->Map(mEmitterConstantBuffer, 0,
                 D3D11_MAP_WRITE_DISCARD, 0, &msr);
             RS_PARTICLE_EMITTER_INFO* emitterCon =
                 (RS_PARTICLE_EMITTER_INFO*)msr.pData;
-            auto& rsinfo = emitter.GetRSParticleEmitterInfo();
             emitterCon->mEmitterIndex = rsinfo.mEmitterIndex;
             emitterCon->mEmitNumPerSecond = rsinfo.mEmitNumPerSecond;
             emitterCon->mNumToEmit = rsinfo.mNumToEmit;
