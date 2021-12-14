@@ -599,7 +599,10 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     RSPass_Base(_name, _type, _root),
     mRSParticleContainerPtr(nullptr),
     mInitDeadListShader(nullptr), mResetParticlesShader(nullptr),
-    mEmitParticleShader(nullptr), mSimulateShader(nullptr)
+    mEmitParticleShader(nullptr), mSimulateShader(nullptr),
+    mDeadList_Uav(nullptr), mPartA_Uav(nullptr), mPartB_Uav(nullptr),
+    mRandomTex_Srv(nullptr), mEmitterConstantBuffer(nullptr),
+    mDeadListConstantBuffer(nullptr)
 {
 
 }
@@ -611,7 +614,12 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mInitDeadListShader(_source.mInitDeadListShader),
     mResetParticlesShader(_source.mResetParticlesShader),
     mEmitParticleShader(_source.mEmitParticleShader),
-    mSimulateShader(_source.mSimulateShader)
+    mSimulateShader(_source.mSimulateShader),
+    mDeadList_Uav(_source.mDeadList_Uav),
+    mPartA_Uav(_source.mPartA_Uav), mPartB_Uav(_source.mPartB_Uav),
+    mRandomTex_Srv(_source.mRandomTex_Srv),
+    mEmitterConstantBuffer(_source.mEmitterConstantBuffer),
+    mDeadListConstantBuffer(_source.mDeadListConstantBuffer)
 {
 
 }
@@ -634,17 +642,107 @@ bool RSPass_PriticleEmitSimulate::InitPass()
     if (!CreateShaders()) { return false; }
     if (!CheckResources()) { return false; }
 
+    mRSParticleContainerPtr->ResetRSParticleSystem();
+
     return true;
 }
 
 void RSPass_PriticleEmitSimulate::ReleasePass()
 {
-
+    RS_RELEASE(mSimulateShader);
+    RS_RELEASE(mEmitParticleShader);
+    RS_RELEASE(mResetParticlesShader);
+    RS_RELEASE(mInitDeadListShader);
 }
 
 void RSPass_PriticleEmitSimulate::ExecuatePass()
 {
+    if (mRSParticleContainerPtr->GetResetFlg())
+    {
+        {
+            STContext()->CSSetShader(mInitDeadListShader,
+                nullptr, 0);
+            UINT initialCount[] = { 0 };
+            STContext()->CSSetUnorderedAccessViews(0, 1,
+                &mDeadList_Uav, initialCount);
 
+            STContext()->Dispatch(
+                Tool::Align(PTC_MAX_PARTICLE_SIZE, 256) / 256, 1, 1);
+        }
+
+        {
+            STContext()->CSSetShader(mResetParticlesShader,
+                nullptr, 0);
+            ID3D11UnorderedAccessView* uav[] =
+            {
+                mPartA_Uav,mPartB_Uav
+            };
+            UINT initialCount[] = { (UINT)-1,(UINT)-1 };
+            STContext()->CSSetUnorderedAccessViews(0,
+                ARRAYSIZE(uav), uav, initialCount);
+
+            STContext()->Dispatch(
+                Tool::Align(PTC_MAX_PARTICLE_SIZE, 256) / 256, 1, 1);
+        }
+
+        mRSParticleContainerPtr->FinishResetRSParticleSystem();
+    }
+
+    {
+        STContext()->CSSetShader(mEmitParticleShader, nullptr, 0);
+        ID3D11UnorderedAccessView* uav[] =
+        {
+            mPartA_Uav,mPartB_Uav,mDeadList_Uav
+        };
+        ID3D11ShaderResourceView* srv[] = { mRandomTex_Srv };
+        ID3D11Buffer* cbuffer[] =
+        {
+            mEmitterConstantBuffer,mDeadListConstantBuffer
+        };
+        UINT initialCount[] = { (UINT)-1,(UINT)-1,(UINT)-1 };
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
+            uav, initialCount);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cbuffer),
+            cbuffer);
+
+        auto emitters = mRSParticleContainerPtr->
+            GetAllParticleEmitters();
+        D3D11_MAPPED_SUBRESOURCE msr = {};
+        for (auto& emitter : *emitters)
+        {
+            STContext()->Map(mEmitterConstantBuffer, 0,
+                D3D11_MAP_WRITE_DISCARD, 0, &msr);
+            RS_PARTICLE_EMITTER_INFO* emitterCon =
+                (RS_PARTICLE_EMITTER_INFO*)msr.pData;
+            auto& rsinfo = emitter.GetRSParticleEmitterInfo();
+            emitterCon->mEmitterIndex = rsinfo.mEmitterIndex;
+            emitterCon->mEmitNumPerSecond = rsinfo.mEmitNumPerSecond;
+            emitterCon->mNumToEmit = rsinfo.mNumToEmit;
+            emitterCon->mAccumulation = rsinfo.mAccumulation;
+            emitterCon->mPosition = rsinfo.mPosition;
+            emitterCon->mVelocity = rsinfo.mVelocity;
+            emitterCon->mPosVariance = rsinfo.mPosVariance;
+            emitterCon->mVelVariance = rsinfo.mVelVariance;
+            emitterCon->mAcceleration = rsinfo.mAcceleration;
+            emitterCon->mParticleMass = rsinfo.mParticleMass;
+            emitterCon->mLifeSpan = rsinfo.mLifeSpan;
+            emitterCon->mOffsetStartSize = rsinfo.mOffsetStartSize;
+            emitterCon->mOffsetEndSize = rsinfo.mOffsetEndSize;
+            emitterCon->mOffsetStartColor = rsinfo.mOffsetStartColor;
+            emitterCon->mOffsetEndColor = rsinfo.mOffsetEndColor;
+            emitterCon->mTextureID = rsinfo.mTextureID;
+            emitterCon->mStreakFlg = rsinfo.mStreakFlg;
+            emitterCon->mMiscFlg = rsinfo.mMiscFlg;
+            STContext()->Unmap(mEmitterConstantBuffer, 0);
+            STContext()->CopyStructureCount(mDeadListConstantBuffer,
+                0, mDeadList_Uav);
+
+            int threadGroupNum = Tool::Align(
+                rsinfo.mNumToEmit, 1024) / 1024;
+            STContext()->Dispatch(threadGroupNum, 1, 1);
+        }
+    }
 }
 
 bool RSPass_PriticleEmitSimulate::CreateShaders()
@@ -693,7 +791,34 @@ bool RSPass_PriticleEmitSimulate::CreateShaders()
 
 bool RSPass_PriticleEmitSimulate::CheckResources()
 {
-    HRESULT hr = S_OK;
+    auto resManager = GetRSRoot_DX11_Singleton()->ResourceManager();
+    if (!resManager) { return false; }
+
+    std::string name = PTC_DEAD_LIST_NAME;
+    mDeadList_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mDeadList_Uav) { return false; }
+
+    name = PTC_A_NAME;
+    mPartA_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mPartA_Uav) { return false; }
+
+    name = PTC_B_NAME;
+    mPartB_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mPartB_Uav) { return false; }
+
+    name = PTC_RAMDOM_TEXTURE_NAME;
+    mRandomTex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mRandomTex_Srv) { return false; }
+
+    name = PTC_EMITTER_CONSTANT_NAME;
+    mEmitterConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mEmitterConstantBuffer) { return false; }
+
+    name = PTC_DEAD_LIST_CONSTANT_NAME;
+    mDeadListConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mDeadListConstantBuffer) { return false; }
 
     return true;
 }

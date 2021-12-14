@@ -9,6 +9,7 @@
 #include "RSCamera.h"
 #include "RSCamerasContainer.h"
 #include "RSLightsContainer.h"
+#include "RSParticlesContainer.h"
 #include "RSPipelinesManager.h"
 #include "RSDrawCallsPool.h"
 #include "RSDevices.h"
@@ -253,6 +254,25 @@ int WINAPI WinMain(
     root->LightsContainer()->InsertAmbientLight("temp-ambient",
         { 0.3f,0.3f,0.3f,1.f });
     root->LightsContainer()->SetCurrentAmbientLight("temp-ambient");
+
+    name = "ptc-emitter-1";
+    PARTICLE_EMITTER_INFO pei = {};
+    pei.mAcceleration = { 0.f,-9.8f,0.f };
+    pei.mEmitNumPerSecond = 60.f;
+    pei.mEnableStreak = true;
+    pei.mLifeSpan = 10.f;
+    pei.mOffsetEndColor = { 0.f,0.f,0.f,0.f };
+    pei.mOffsetEndSize = 0.f;
+    pei.mOffsetStartColor = { 1.f,1.f,1.f,1.f };
+    pei.mOffsetStartSize = 2.f;
+    pei.mParticleMass = 0.1f;
+    pei.mPosition = { 0.f,4.f,0.f };
+    pei.mPosVariance = { 1.f,1.f,1.f };
+    pei.mTextureID = PARTICLE_TEXTURE::WHITE_CIRCLE;
+    pei.mVelocity = { 0.f,1.f,0.f };
+    pei.mVelVariance = 0.5f;
+    root->ParticlesContainer()->CreateRSParticleEmitter(
+        name, &pei);
 
     if (!CreateTempWireFramePipeline())
     {
