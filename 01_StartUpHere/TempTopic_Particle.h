@@ -190,7 +190,7 @@ public:
 
 private:
     bool CreateShaders();
-
+    bool CreateSampler();
     bool CheckResources();
 
 private:
@@ -207,4 +207,6 @@ private:
     ID3D11UnorderedAccessView* mPartB_Uav;
     ID3D11Buffer* mEmitterConstantBuffer;
     ID3D11Buffer* mDeadListConstantBuffer;
+
+    ID3D11SamplerState* mLinearWrapSampler;
 };

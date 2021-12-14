@@ -602,7 +602,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mEmitParticleShader(nullptr), mSimulateShader(nullptr),
     mDeadList_Uav(nullptr), mPartA_Uav(nullptr), mPartB_Uav(nullptr),
     mRandomTex_Srv(nullptr), mEmitterConstantBuffer(nullptr),
-    mDeadListConstantBuffer(nullptr)
+    mDeadListConstantBuffer(nullptr),
+    mLinearWrapSampler(nullptr)
 {
 
 }
@@ -619,7 +620,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mPartA_Uav(_source.mPartA_Uav), mPartB_Uav(_source.mPartB_Uav),
     mRandomTex_Srv(_source.mRandomTex_Srv),
     mEmitterConstantBuffer(_source.mEmitterConstantBuffer),
-    mDeadListConstantBuffer(_source.mDeadListConstantBuffer)
+    mDeadListConstantBuffer(_source.mDeadListConstantBuffer),
+    mLinearWrapSampler(_source.mLinearWrapSampler)
 {
 
 }
@@ -640,6 +642,7 @@ bool RSPass_PriticleEmitSimulate::InitPass()
     if (!mRSParticleContainerPtr) { return false; }
 
     if (!CreateShaders()) { return false; }
+    if (!CreateSampler()) { return false; }
     if (!CheckResources()) { return false; }
 
     mRSParticleContainerPtr->ResetRSParticleSystem();
@@ -699,12 +702,14 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
         {
             mEmitterConstantBuffer,mDeadListConstantBuffer
         };
+        ID3D11SamplerState* sam[] = { mLinearWrapSampler };
         UINT initialCount[] = { (UINT)-1,(UINT)-1,(UINT)-1 };
         STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
             uav, initialCount);
         STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
         STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cbuffer),
             cbuffer);
+        STContext()->CSSetSamplers(0, ARRAYSIZE(sam), sam);
 
         auto emitters = mRSParticleContainerPtr->
             GetAllParticleEmitters();
@@ -743,6 +748,25 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
             STContext()->Dispatch(threadGroupNum, 1, 1);
         }
     }
+}
+
+bool RSPass_PriticleEmitSimulate::CreateSampler()
+{
+    HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = Device()->CreateSamplerState(&sampDesc, &mLinearWrapSampler);
+    if (FAILED(hr)) { return false; }
+
+    return true;
 }
 
 bool RSPass_PriticleEmitSimulate::CreateShaders()
