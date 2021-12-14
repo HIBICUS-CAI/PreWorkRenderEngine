@@ -258,7 +258,7 @@ int WINAPI WinMain(
     name = "ptc-emitter-1";
     PARTICLE_EMITTER_INFO pei = {};
     pei.mAcceleration = { 0.f,-9.8f,0.f };
-    pei.mEmitNumPerSecond = 60.f;
+    pei.mEmitNumPerSecond = 600.f;
     pei.mEnableStreak = true;
     pei.mLifeSpan = 10.f;
     pei.mOffsetEndColor = { 0.f,0.f,0.f,0.f };
