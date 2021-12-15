@@ -211,6 +211,7 @@ private:
     ID3D11UnorderedAccessView* mViewSpacePos_Uav;
     ID3D11UnorderedAccessView* mMaxRadius_Uav;
     ID3D11Buffer* mEmitterConstantBuffer;
+    ID3D11Buffer* mCameraConstantBuffer;
     ID3D11Buffer* mDeadListConstantBuffer;
     ID3D11Buffer* mSimulEmitterStructedBuffer;
 

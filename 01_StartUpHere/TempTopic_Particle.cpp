@@ -608,7 +608,7 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mDepthTex_Srv(nullptr), mSimulEmitterStructedBuffer_Srv(nullptr),
     mAliveIndex_Uav(nullptr), mViewSpacePos_Uav(nullptr),
     mMaxRadius_Uav(nullptr), mSimulEmitterStructedBuffer(nullptr),
-    mRSCameraInfo(nullptr)
+    mRSCameraInfo(nullptr), mCameraConstantBuffer(nullptr)
 {
 
 }
@@ -633,7 +633,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mViewSpacePos_Uav(_source.mViewSpacePos_Uav),
     mMaxRadius_Uav(_source.mMaxRadius_Uav),
     mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer),
-    mRSCameraInfo(_source.mRSCameraInfo)
+    mRSCameraInfo(_source.mRSCameraInfo),
+    mCameraConstantBuffer(_source.mCameraConstantBuffer)
 {
 
 }
@@ -785,6 +786,66 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
 
     {
         D3D11_MAPPED_SUBRESOURCE msr = {};
+        DirectX::XMMATRIX mat = {};
+
+        STContext()->Map(mCameraConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        CAMERA_STATUS* camStatus =
+            (CAMERA_STATUS*)msr.pData;
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mViewProj), mat);
+        camStatus->mEyePosition = mRSCameraInfo->mEyePosition;
+        STContext()->Unmap(mCameraConstantBuffer, 0);
+
+        static auto emitterVec = mRSParticleContainerPtr->
+            GetAllParticleEmitters();
+        auto size = emitterVec->size();
+        STContext()->Map(mSimulEmitterStructedBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        SIMULATE_EMITTER_INFO* emitter =
+            (SIMULATE_EMITTER_INFO*)msr.pData;
+        for (size_t i = 0; i < size; i++)
+        {
+            emitter[i].mWorldPosition = (*emitterVec)[i].
+                GetRSParticleEmitterInfo().mPosition;
+        }
+        STContext()->Unmap(mSimulEmitterStructedBuffer, 0);
+
+        ID3D11Buffer* cb[] = { mCameraConstantBuffer };
+        ID3D11ShaderResourceView* srv[] =
+        { mDepthTex_Srv,mSimulEmitterStructedBuffer_Srv };
+        ID3D11UnorderedAccessView* uav[] =
+        { mPartA_Uav,mPartB_Uav,mDeadList_Uav,mAliveIndex_Uav,
+        mViewSpacePos_Uav,mMaxRadius_Uav };
+        UINT initialCount[] =
+        { (UINT)-1,(UINT)-1,(UINT)-1,0,(UINT)-1,(UINT)-1 };
+
+        STContext()->CSSetShader(mSimulateShader, nullptr, 0);
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
+            uav, initialCount);
+        static int threadGroupNum = Tool::Align(
+            PTC_MAX_PARTICLE_SIZE, 256) / 256;
+        STContext()->Dispatch(threadGroupNum, 1, 1);
+
+        ZeroMemory(uav, sizeof(uav));
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
+        ZeroMemory(srv, sizeof(srv));
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
     }
 }
 
@@ -881,6 +942,11 @@ bool RSPass_PriticleEmitSimulate::CheckResources()
     mDeadListConstantBuffer = resManager->GetResourceInfo(name)->
         mResource.mBuffer;
     if (!mDeadListConstantBuffer) { return false; }
+
+    name = PTC_CAMERA_CONSTANT_NAME;
+    mCameraConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mCameraConstantBuffer) { return false; }
 
     name = PTC_SIMU_EMITTER_STRU_NAME;
     mSimulEmitterStructedBuffer_Srv = resManager->GetResourceInfo(name)->mSrv;
