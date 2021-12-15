@@ -603,7 +603,10 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mDeadList_Uav(nullptr), mPartA_Uav(nullptr), mPartB_Uav(nullptr),
     mRandomTex_Srv(nullptr), mEmitterConstantBuffer(nullptr),
     mDeadListConstantBuffer(nullptr),
-    mLinearWrapSampler(nullptr)
+    mLinearWrapSampler(nullptr),
+    mDepthTex_Srv(nullptr), mSimulEmitterStructedBuffer_Srv(nullptr),
+    mAliveIndex_Uav(nullptr), mViewSpacePos_Uav(nullptr),
+    mMaxRadius_Uav(nullptr), mSimulEmitterStructedBuffer(nullptr)
 {
 
 }
@@ -621,7 +624,13 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mRandomTex_Srv(_source.mRandomTex_Srv),
     mEmitterConstantBuffer(_source.mEmitterConstantBuffer),
     mDeadListConstantBuffer(_source.mDeadListConstantBuffer),
-    mLinearWrapSampler(_source.mLinearWrapSampler)
+    mLinearWrapSampler(_source.mLinearWrapSampler),
+    mDepthTex_Srv(_source.mDepthTex_Srv),
+    mSimulEmitterStructedBuffer_Srv(_source.mSimulEmitterStructedBuffer_Srv),
+    mAliveIndex_Uav(_source.mAliveIndex_Uav),
+    mViewSpacePos_Uav(_source.mViewSpacePos_Uav),
+    mMaxRadius_Uav(_source.mMaxRadius_Uav),
+    mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer)
 {
 
 }
@@ -665,27 +674,33 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
         {
             STContext()->CSSetShader(mInitDeadListShader,
                 nullptr, 0);
+            ID3D11UnorderedAccessView* uav[] = { mDeadList_Uav };
             UINT initialCount[] = { 0 };
-            STContext()->CSSetUnorderedAccessViews(0, 1,
-                &mDeadList_Uav, initialCount);
+            STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
+                uav, initialCount);
 
             STContext()->Dispatch(
                 Tool::Align(PTC_MAX_PARTICLE_SIZE, 256) / 256, 1, 1);
+
+            ZeroMemory(uav, sizeof(uav));
+            STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
+                uav, nullptr);
         }
 
         {
             STContext()->CSSetShader(mResetParticlesShader,
                 nullptr, 0);
-            ID3D11UnorderedAccessView* uav[] =
-            {
-                mPartA_Uav,mPartB_Uav
-            };
+            ID3D11UnorderedAccessView* uav[] = { mPartA_Uav,mPartB_Uav };
             UINT initialCount[] = { (UINT)-1,(UINT)-1 };
             STContext()->CSSetUnorderedAccessViews(0,
                 ARRAYSIZE(uav), uav, initialCount);
 
             STContext()->Dispatch(
                 Tool::Align(PTC_MAX_PARTICLE_SIZE, 256) / 256, 1, 1);
+
+            ZeroMemory(uav, sizeof(uav));
+            STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
+                uav, nullptr);
         }
 
         mRSParticleContainerPtr->FinishResetRSParticleSystem();
@@ -694,21 +709,16 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
     {
         STContext()->CSSetShader(mEmitParticleShader, nullptr, 0);
         ID3D11UnorderedAccessView* uav[] =
-        {
-            mPartA_Uav,mPartB_Uav,mDeadList_Uav
-        };
+        { mPartA_Uav,mPartB_Uav,mDeadList_Uav };
         ID3D11ShaderResourceView* srv[] = { mRandomTex_Srv };
         ID3D11Buffer* cbuffer[] =
-        {
-            mEmitterConstantBuffer,mDeadListConstantBuffer
-        };
+        { mEmitterConstantBuffer,mDeadListConstantBuffer };
         ID3D11SamplerState* sam[] = { mLinearWrapSampler };
         UINT initialCount[] = { (UINT)-1,(UINT)-1,(UINT)-1 };
         STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
             uav, initialCount);
         STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
-        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cbuffer),
-            cbuffer);
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cbuffer), cbuffer);
         STContext()->CSSetSamplers(0, ARRAYSIZE(sam), sam);
 
         auto emitters = mRSParticleContainerPtr->
@@ -758,6 +768,11 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
                 rsinfo.mNumToEmit, 1024) / 1024;
             STContext()->Dispatch(threadGroupNum, 1, 1);
         }
+
+        ZeroMemory(uav, sizeof(uav));
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
+        ZeroMemory(srv, sizeof(srv));
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
     }
 }
 
@@ -854,6 +869,28 @@ bool RSPass_PriticleEmitSimulate::CheckResources()
     mDeadListConstantBuffer = resManager->GetResourceInfo(name)->
         mResource.mBuffer;
     if (!mDeadListConstantBuffer) { return false; }
+
+    name = PTC_SIMU_EMITTER_STRU_NAME;
+    mSimulEmitterStructedBuffer_Srv = resManager->GetResourceInfo(name)->mSrv;
+    mSimulEmitterStructedBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mSimulEmitterStructedBuffer_Srv || !mSimulEmitterStructedBuffer) { return false; }
+
+    name = PTC_ALIVE_INDEX_NAME;
+    mAliveIndex_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mAliveIndex_Uav) { return false; }
+
+    name = PTC_VIEW_SPCACE_POS_NAME;
+    mViewSpacePos_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mViewSpacePos_Uav) { return false; }
+
+    name = PTC_MAX_RADIUS_NAME;
+    mMaxRadius_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mMaxRadius_Uav) { return false; }
+
+    name = "mrt-depth";
+    mDepthTex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mDepthTex_Srv) { return false; }
 
     return true;
 }

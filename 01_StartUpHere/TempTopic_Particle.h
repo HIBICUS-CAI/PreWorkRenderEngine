@@ -201,12 +201,18 @@ private:
     ID3D11ComputeShader* mEmitParticleShader;
     ID3D11ComputeShader* mSimulateShader;
 
+    ID3D11ShaderResourceView* mDepthTex_Srv;
     ID3D11ShaderResourceView* mRandomTex_Srv;
+    ID3D11ShaderResourceView* mSimulEmitterStructedBuffer_Srv;
     ID3D11UnorderedAccessView* mDeadList_Uav;
     ID3D11UnorderedAccessView* mPartA_Uav;
     ID3D11UnorderedAccessView* mPartB_Uav;
+    ID3D11UnorderedAccessView* mAliveIndex_Uav;
+    ID3D11UnorderedAccessView* mViewSpacePos_Uav;
+    ID3D11UnorderedAccessView* mMaxRadius_Uav;
     ID3D11Buffer* mEmitterConstantBuffer;
     ID3D11Buffer* mDeadListConstantBuffer;
+    ID3D11Buffer* mSimulEmitterStructedBuffer;
 
     ID3D11SamplerState* mLinearWrapSampler;
 };
