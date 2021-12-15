@@ -219,3 +219,29 @@ private:
 
     RS_CAM_INFO* mRSCameraInfo;
 };
+
+class RSPass_PriticleTileRender :public RSPass_Base
+{
+public:
+    RSPass_PriticleTileRender(std::string& _name, PASS_TYPE _type,
+        class RSRoot_DX11* _root);
+    RSPass_PriticleTileRender(const RSPass_PriticleTileRender& _source);
+    virtual ~RSPass_PriticleTileRender();
+
+public:
+    virtual RSPass_PriticleTileRender* ClonePass() override;
+
+    virtual bool InitPass();
+
+    virtual void ReleasePass();
+
+    virtual void ExecuatePass();
+
+private:
+    bool CreateShaders();
+    bool CreateSampler();
+    bool CheckResources();
+
+private:
+
+};

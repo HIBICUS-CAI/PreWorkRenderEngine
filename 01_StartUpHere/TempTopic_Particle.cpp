@@ -972,3 +972,67 @@ bool RSPass_PriticleEmitSimulate::CheckResources()
 
     return true;
 }
+
+RSPass_PriticleTileRender::RSPass_PriticleTileRender(
+    std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
+    RSPass_Base(_name, _type, _root)
+{
+
+}
+
+RSPass_PriticleTileRender::RSPass_PriticleTileRender(
+    const RSPass_PriticleTileRender& _source) :
+    RSPass_Base(_source)
+{
+
+}
+
+RSPass_PriticleTileRender::~RSPass_PriticleTileRender()
+{
+
+}
+
+RSPass_PriticleTileRender* RSPass_PriticleTileRender::ClonePass()
+{
+    return new RSPass_PriticleTileRender(*this);
+}
+
+bool RSPass_PriticleTileRender::InitPass()
+{
+    if (!CreateShaders()) { return false; }
+    if (!CreateSampler()) { return false; }
+    if (!CheckResources()) { return false; }
+
+    return true;
+}
+
+void RSPass_PriticleTileRender::ReleasePass()
+{
+
+}
+
+void RSPass_PriticleTileRender::ExecuatePass()
+{
+
+}
+
+bool RSPass_PriticleTileRender::CreateShaders()
+{
+    HRESULT hr = S_OK;
+
+    return true;
+}
+
+bool RSPass_PriticleTileRender::CreateSampler()
+{
+    HRESULT hr = S_OK;
+
+    return true;
+}
+
+bool RSPass_PriticleTileRender::CheckResources()
+{
+    HRESULT hr = S_OK;
+
+    return true;
+}

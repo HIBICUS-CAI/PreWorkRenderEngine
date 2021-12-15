@@ -96,11 +96,17 @@ bool CreateTempLightPipeline()
         name, PASS_TYPE::COMPUTE, g_Root);
     ptcemitsimul->SetExecuateOrder(2);
 
+    name = "particle-tile-render-pass";
+    RSPass_PriticleTileRender* ptctile = new RSPass_PriticleTileRender(
+        name, PASS_TYPE::COMPUTE, g_Root);
+    ptctile->SetExecuateOrder(3);
+
     name = "paricle-topic";
     RSTopic* particle_topic = new RSTopic(name);
     particle_topic->StartTopicAssembly();
     particle_topic->InsertPass(ptcsetup);
     particle_topic->InsertPass(ptcemitsimul);
+    particle_topic->InsertPass(ptctile);
     particle_topic->SetExecuateOrder(6);
     particle_topic->FinishTopicAssembly();
 
