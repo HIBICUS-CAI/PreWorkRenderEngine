@@ -215,4 +215,6 @@ private:
     ID3D11Buffer* mSimulEmitterStructedBuffer;
 
     ID3D11SamplerState* mLinearWrapSampler;
+
+    RS_CAM_INFO* mRSCameraInfo;
 };

@@ -4,6 +4,7 @@
 #include "RSUtilityFunctions.h"
 #include "RSShaderCompile.h"
 #include "RSParticlesContainer.h"
+#include "RSCamerasContainer.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 
@@ -606,7 +607,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mLinearWrapSampler(nullptr),
     mDepthTex_Srv(nullptr), mSimulEmitterStructedBuffer_Srv(nullptr),
     mAliveIndex_Uav(nullptr), mViewSpacePos_Uav(nullptr),
-    mMaxRadius_Uav(nullptr), mSimulEmitterStructedBuffer(nullptr)
+    mMaxRadius_Uav(nullptr), mSimulEmitterStructedBuffer(nullptr),
+    mRSCameraInfo(nullptr)
 {
 
 }
@@ -630,7 +632,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mAliveIndex_Uav(_source.mAliveIndex_Uav),
     mViewSpacePos_Uav(_source.mViewSpacePos_Uav),
     mMaxRadius_Uav(_source.mMaxRadius_Uav),
-    mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer)
+    mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -649,6 +652,11 @@ bool RSPass_PriticleEmitSimulate::InitPass()
 {
     mRSParticleContainerPtr = GetRSRoot_DX11_Singleton()->ParticlesContainer();
     if (!mRSParticleContainerPtr) { return false; }
+
+    std::string name = "temp-cam";
+    mRSCameraInfo = GetRSRoot_DX11_Singleton()->CamerasContainer()->
+        GetRSCameraInfo(name);
+    if (!mRSCameraInfo) { return false; }
 
     if (!CreateShaders()) { return false; }
     if (!CreateSampler()) { return false; }
@@ -773,6 +781,10 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
         STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
         ZeroMemory(srv, sizeof(srv));
         STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+    }
+
+    {
+        D3D11_MAPPED_SUBRESOURCE msr = {};
     }
 }
 
