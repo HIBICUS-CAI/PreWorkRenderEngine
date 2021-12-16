@@ -999,7 +999,8 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     mTiledIndex_Srv(nullptr), mTiledIndex_Uav(nullptr),
     mParticleRender_Srv(nullptr), mParticleRender_Uav(nullptr),
     mLinearClampSampler(nullptr), mParticleTex_Srv(nullptr),
-    mRSCameraInfo(nullptr)
+    mRSCameraInfo(nullptr), mParticleBlendState(nullptr),
+    mBlendVertexShader(nullptr), mBlendPixelShader(nullptr)
 {
 
 }
@@ -1029,7 +1030,10 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     mLinearClampSampler(_source.mLinearClampSampler),
     mParticleTex_Srv(_source.mParticleTex_Srv),
     mAliveIndex_Uav(_source.mAliveIndex_Uav),
-    mRSCameraInfo(_source.mRSCameraInfo)
+    mRSCameraInfo(_source.mRSCameraInfo),
+    mBlendVertexShader(_source.mBlendVertexShader),
+    mBlendPixelShader(_source.mBlendPixelShader),
+    mParticleBlendState(_source.mParticleBlendState)
 {
 
 }
@@ -1054,6 +1058,7 @@ bool RSPass_PriticleTileRender::InitPass()
     if (!CreateShaders()) { return false; }
     if (!CreateViews()) { return false; }
     if (!CreateSampler()) { return false; }
+    if (!CreateBlend()) { return false; }
     if (!CheckResources()) { return false; }
 
     return true;
@@ -1064,6 +1069,9 @@ void RSPass_PriticleTileRender::ReleasePass()
     RS_RELEASE(mCoarseCullingShader);
     RS_RELEASE(mTileCullingShader);
     RS_RELEASE(mTileRenderShader);
+    RS_RELEASE(mBlendVertexShader);
+    RS_RELEASE(mBlendPixelShader);
+    RS_RELEASE(mParticleBlendState);
 
     RS_RELEASE(mLinearClampSampler);
 
@@ -1271,6 +1279,29 @@ void RSPass_PriticleTileRender::ExecuatePass()
         STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
         STContext()->CSSetShader(nullptr, nullptr, 0);
     }
+
+    {
+        static auto rtv = GetRSRoot_DX11_Singleton()->Devices()->GetSwapChainRtv();
+        static D3D11_VIEWPORT vp = {};
+        vp.Width = 1280.f; vp.Height = 720.f; vp.MinDepth = 0.f;
+        vp.MaxDepth = 1.f; vp.TopLeftX = 0.f; vp.TopLeftY = 0.f;
+        STContext()->VSSetShader(mBlendVertexShader, nullptr, 0);
+        STContext()->PSSetShader(mBlendPixelShader, nullptr, 0);
+        STContext()->OMSetBlendState(mParticleBlendState, nullptr, 0xFFFFFFFF);
+        STContext()->OMSetRenderTargets(1, &rtv, nullptr);
+        STContext()->RSSetViewports(1, &vp);
+        STContext()->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
+        STContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        ID3D11ShaderResourceView* srv[] = { mParticleRender_Srv };
+        STContext()->PSSetShaderResources(0, ARRAYSIZE(srv), srv);
+
+        STContext()->Draw(3, 0);
+
+        ZeroMemory(srv, sizeof(srv));
+        STContext()->PSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+    }
 }
 
 bool RSPass_PriticleTileRender::CreateShaders()
@@ -1305,6 +1336,24 @@ bool RSPass_PriticleTileRender::CreateShaders()
     RS_RELEASE(shaderBlob);
     if (FAILED(hr)) { return false; }
 
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_blend_vertex.hlsl",
+        "Main", "vs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateVertexShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mBlendVertexShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_blend_pixel.hlsl",
+        "Main", "ps_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreatePixelShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mBlendPixelShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
     return true;
 }
 
@@ -1334,6 +1383,28 @@ bool RSPass_PriticleTileRender::CreateSampler()
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = Device()->CreateSamplerState(&sampDesc, &mLinearClampSampler);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
+bool RSPass_PriticleTileRender::CreateBlend()
+{
+    HRESULT hr = S_OK;
+
+    D3D11_BLEND_DESC bldDesc = {};
+    ZeroMemory(&bldDesc, sizeof(D3D11_BLEND_DESC));
+    bldDesc.AlphaToCoverageEnable = false;
+    bldDesc.IndependentBlendEnable = false;
+    bldDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    bldDesc.RenderTarget[0].BlendEnable = true;
+    bldDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+    bldDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    bldDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    bldDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+    bldDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    bldDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    hr = Device()->CreateBlendState(&bldDesc, &mParticleBlendState);
     if (FAILED(hr)) { return false; }
 
     return true;

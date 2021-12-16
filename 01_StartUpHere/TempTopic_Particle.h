@@ -244,12 +244,15 @@ private:
     bool CreateShaders();
     bool CreateViews();
     bool CreateSampler();
+    bool CreateBlend();
     bool CheckResources();
 
 private:
     ID3D11ComputeShader* mCoarseCullingShader;
     ID3D11ComputeShader* mTileCullingShader;
     ID3D11ComputeShader* mTileRenderShader;
+    ID3D11VertexShader* mBlendVertexShader;
+    ID3D11PixelShader* mBlendPixelShader;
 
     ID3D11Buffer* mCameraConstantBuffer;
     ID3D11Buffer* mTilingConstantBuffer;
@@ -270,6 +273,7 @@ private:
     ID3D11UnorderedAccessView* mParticleRender_Uav;
 
     ID3D11SamplerState* mLinearClampSampler;
+    ID3D11BlendState* mParticleBlendState;
 
     ID3D11ShaderResourceView* mParticleTex_Srv;
 
