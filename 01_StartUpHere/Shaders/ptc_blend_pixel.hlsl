@@ -17,7 +17,7 @@ float4 Main(float4 posH : SV_POSITION) : SV_Target
 	float x = posH.x - (gScreenWidth / 2);
 	float y = posH.y;
 	uint pixelIndex = x + (y * gScreenWidth);
-	float4 particleValue = gParticleRenderBuffer.Load( pixelIndex );
+	float4 particleValue = gParticleRenderBuffer.Load(pixelIndex);
 	color = particleValue;
 
 	return color;
