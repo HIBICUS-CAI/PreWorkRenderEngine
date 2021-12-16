@@ -60,7 +60,7 @@ StructuredBuffer<float4> gViewSpacePositions : register(t1);
 Texture2D<float> gDepthTexture : register(t2);
 Buffer<uint> gTiledIndexBuffer : register(t3);
 Buffer<uint> gCoarseBufferCounters : register(t4);
-Texture2D gParticleTexture : register(t6);
+Texture2D gParticleTexture : register(t5);
 
 RWBuffer<float4> gOutputBuffer : register(u0);
 

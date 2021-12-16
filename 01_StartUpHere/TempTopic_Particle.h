@@ -30,6 +30,7 @@ constexpr UINT PTC_NUM_PER_TILE = 1023;
 constexpr UINT PTC_TILE_BUFFER_SIZE = PTC_NUM_PER_TILE + 1;
 constexpr UINT PTC_TILE_X_SIZE = 32;
 constexpr UINT PTC_TILE_Y_SIZE = 32;
+constexpr UINT PTC_COARSE_CULLING_THREADS = 256;
 
 struct RS_PARTICLE_PART_A
 {
@@ -256,8 +257,9 @@ private:
     ID3D11ShaderResourceView* mDepthTex_Srv;
     ID3D11ShaderResourceView* mViewSpacePos_Srv;
     ID3D11ShaderResourceView* mMaxRadius_Srv;
-    ID3D11ShaderResourceView* mAliveIndex_Srv;
     ID3D11ShaderResourceView* mPartA_Srv;
+    ID3D11ShaderResourceView* mAliveIndex_Srv;
+    ID3D11UnorderedAccessView* mAliveIndex_Uav;
     ID3D11ShaderResourceView* mCoarseTileIndex_Srv;
     ID3D11UnorderedAccessView* mCoarseTileIndex_Uav;
     ID3D11ShaderResourceView* mCoarseTileIndexCounter_Srv;
@@ -270,4 +272,6 @@ private:
     ID3D11SamplerState* mLinearClampSampler;
 
     ID3D11ShaderResourceView* mParticleTex_Srv;
+
+    RS_CAM_INFO* mRSCameraInfo;
 };

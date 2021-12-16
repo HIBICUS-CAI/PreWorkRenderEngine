@@ -989,7 +989,7 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
     RSPass_Base(_name, _type, _root),
     mCoarseCullingShader(nullptr), mTileCullingShader(nullptr),
-    mTileRenderShader(nullptr),
+    mTileRenderShader(nullptr), mAliveIndex_Uav(nullptr),
     mCameraConstantBuffer(nullptr), mTilingConstantBuffer(nullptr),
     mActiveListConstantBuffer(nullptr), mDepthTex_Srv(nullptr),
     mViewSpacePos_Srv(nullptr), mMaxRadius_Srv(nullptr),
@@ -998,7 +998,8 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     mCoarseTileIndexCounter_Srv(nullptr), mCoarseTileIndexCounter_Uav(nullptr),
     mTiledIndex_Srv(nullptr), mTiledIndex_Uav(nullptr),
     mParticleRender_Srv(nullptr), mParticleRender_Uav(nullptr),
-    mLinearClampSampler(nullptr), mParticleTex_Srv(nullptr)
+    mLinearClampSampler(nullptr), mParticleTex_Srv(nullptr),
+    mRSCameraInfo(nullptr)
 {
 
 }
@@ -1026,7 +1027,9 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     mParticleRender_Srv(_source.mParticleRender_Srv),
     mParticleRender_Uav(_source.mParticleRender_Uav),
     mLinearClampSampler(_source.mLinearClampSampler),
-    mParticleTex_Srv(_source.mParticleTex_Srv)
+    mParticleTex_Srv(_source.mParticleTex_Srv),
+    mAliveIndex_Uav(_source.mAliveIndex_Uav),
+    mRSCameraInfo(_source.mRSCameraInfo)
 {
 
 }
@@ -1043,6 +1046,11 @@ RSPass_PriticleTileRender* RSPass_PriticleTileRender::ClonePass()
 
 bool RSPass_PriticleTileRender::InitPass()
 {
+    std::string name = "temp-cam";
+    mRSCameraInfo = GetRSRoot_DX11_Singleton()->CamerasContainer()->
+        GetRSCameraInfo(name);
+    if (!mRSCameraInfo) { return false; }
+
     if (!CreateShaders()) { return false; }
     if (!CreateViews()) { return false; }
     if (!CreateSampler()) { return false; }
@@ -1064,7 +1072,205 @@ void RSPass_PriticleTileRender::ReleasePass()
 
 void RSPass_PriticleTileRender::ExecuatePass()
 {
+    {
+        D3D11_MAPPED_SUBRESOURCE msr = {};
+        DirectX::XMMATRIX mat = {};
+        STContext()->Map(mCameraConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        CAMERA_STATUS* camStatus = (CAMERA_STATUS*)msr.pData;
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mViewProj), mat);
+        camStatus->mEyePosition = mRSCameraInfo->mEyePosition;
+        STContext()->Unmap(mCameraConstantBuffer, 0);
+        STContext()->Map(mTilingConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_TILING_CONSTANT* tiling = (RS_TILING_CONSTANT*)msr.pData;
+        tiling->mNumTilesX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumTilesX;
+        tiling->mNumTilesY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumTilesY;
+        tiling->mNumCoarseCullingTilesX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCoarseCullingTilesX;
+        tiling->mNumCoarseCullingTilesY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCoarseCullingTilesY;
+        tiling->mNumCullingTilesPerCoarseTileX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCullingTilesPerCoarseTileX;
+        tiling->mNumCullingTilesPerCoarseTileY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCullingTilesPerCoarseTileY;
+        STContext()->Unmap(mTilingConstantBuffer, 0);
+        STContext()->CopyStructureCount(mActiveListConstantBuffer, 0,
+            mAliveIndex_Uav);
 
+        ID3D11Buffer* cb[] =
+        { mCameraConstantBuffer,mTilingConstantBuffer,mActiveListConstantBuffer };
+        ID3D11ShaderResourceView* srv[] =
+        { mViewSpacePos_Srv,mMaxRadius_Srv,mAliveIndex_Srv };
+        ID3D11UnorderedAccessView* uav[] =
+        { mCoarseTileIndex_Uav,mCoarseTileIndexCounter_Uav };
+        UINT initial[] = { (UINT)-1,(UINT)-1 };
+
+        STContext()->CSSetShader(mCoarseCullingShader, nullptr, 0);
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, initial);
+
+        static int threadGroupNum = Tool::Align(PTC_MAX_PARTICLE_SIZE,
+            PTC_COARSE_CULLING_THREADS) / PTC_COARSE_CULLING_THREADS;
+        STContext()->Dispatch(threadGroupNum, 1, 1);
+
+        ZeroMemory(cb, sizeof(cb));
+        ZeroMemory(srv, sizeof(srv));
+        ZeroMemory(uav, sizeof(uav));
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
+    }
+
+    {
+        D3D11_MAPPED_SUBRESOURCE msr = {};
+        DirectX::XMMATRIX mat = {};
+        STContext()->Map(mCameraConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        CAMERA_STATUS* camStatus = (CAMERA_STATUS*)msr.pData;
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mViewProj), mat);
+        camStatus->mEyePosition = mRSCameraInfo->mEyePosition;
+        STContext()->Unmap(mCameraConstantBuffer, 0);
+        STContext()->Map(mTilingConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_TILING_CONSTANT* tiling = (RS_TILING_CONSTANT*)msr.pData;
+        tiling->mNumTilesX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumTilesX;
+        tiling->mNumTilesY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumTilesY;
+        tiling->mNumCoarseCullingTilesX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCoarseCullingTilesX;
+        tiling->mNumCoarseCullingTilesY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCoarseCullingTilesY;
+        tiling->mNumCullingTilesPerCoarseTileX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCullingTilesPerCoarseTileX;
+        tiling->mNumCullingTilesPerCoarseTileY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCullingTilesPerCoarseTileY;
+        STContext()->Unmap(mTilingConstantBuffer, 0);
+
+        ID3D11Buffer* cb[] =
+        { mCameraConstantBuffer,mTilingConstantBuffer,mActiveListConstantBuffer };
+        ID3D11ShaderResourceView* srv[] =
+        { mViewSpacePos_Srv,mMaxRadius_Srv,mAliveIndex_Srv,
+        mDepthTex_Srv,mCoarseTileIndex_Srv,mCoarseTileIndexCounter_Srv };
+        ID3D11UnorderedAccessView* uav[] = { mTiledIndex_Uav };
+        UINT initial[] = { (UINT)-1 };
+
+        STContext()->CSSetShader(mTileCullingShader, nullptr, 0);
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, initial);
+
+        STContext()->Dispatch(
+            g_ParticleSetUpPass->GetTilingConstantInfo().mNumTilesX,
+            g_ParticleSetUpPass->GetTilingConstantInfo().mNumTilesY, 1);
+
+        ZeroMemory(cb, sizeof(cb));
+        ZeroMemory(srv, sizeof(srv));
+        ZeroMemory(uav, sizeof(uav));
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
+    }
+
+    {
+        D3D11_MAPPED_SUBRESOURCE msr = {};
+        DirectX::XMMATRIX mat = {};
+        STContext()->Map(mCameraConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        CAMERA_STATUS* camStatus = (CAMERA_STATUS*)msr.pData;
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvViewMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvView), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mInvProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mInvProj), mat);
+        mat = DirectX::XMLoadFloat4x4(&mRSCameraInfo->mViewProjMat);
+        mat = DirectX::XMMatrixTranspose(mat);
+        DirectX::XMStoreFloat4x4(&(camStatus->mViewProj), mat);
+        camStatus->mEyePosition = mRSCameraInfo->mEyePosition;
+        STContext()->Unmap(mCameraConstantBuffer, 0);
+        STContext()->Map(mTilingConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        RS_TILING_CONSTANT* tiling = (RS_TILING_CONSTANT*)msr.pData;
+        tiling->mNumTilesX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumTilesX;
+        tiling->mNumTilesY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumTilesY;
+        tiling->mNumCoarseCullingTilesX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCoarseCullingTilesX;
+        tiling->mNumCoarseCullingTilesY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCoarseCullingTilesY;
+        tiling->mNumCullingTilesPerCoarseTileX = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCullingTilesPerCoarseTileX;
+        tiling->mNumCullingTilesPerCoarseTileY = g_ParticleSetUpPass->
+            GetTilingConstantInfo().mNumCullingTilesPerCoarseTileY;
+        STContext()->Unmap(mTilingConstantBuffer, 0);
+
+        ID3D11Buffer* cb[] =
+        { mCameraConstantBuffer,mTilingConstantBuffer };
+        ID3D11ShaderResourceView* srv[] =
+        { mPartA_Srv,mViewSpacePos_Srv,mDepthTex_Srv,mTiledIndex_Srv,
+        mCoarseTileIndexCounter_Srv,mParticleTex_Srv };
+        ID3D11UnorderedAccessView* uav[] = { mParticleRender_Uav };
+        UINT initial[] = { (UINT)-1 };
+        ID3D11SamplerState* sam[] = { mLinearClampSampler };
+
+        STContext()->CSSetShader(mTileRenderShader, nullptr, 0);
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, initial);
+        STContext()->CSSetSamplers(0, ARRAYSIZE(sam), sam);
+
+        STContext()->Dispatch(
+            g_ParticleSetUpPass->GetTilingConstantInfo().mNumTilesX,
+            g_ParticleSetUpPass->GetTilingConstantInfo().mNumTilesY, 1);
+
+        ZeroMemory(cb, sizeof(cb));
+        ZeroMemory(srv, sizeof(srv));
+        ZeroMemory(uav, sizeof(uav));
+        STContext()->CSSetConstantBuffers(0, ARRAYSIZE(cb), cb);
+        STContext()->CSSetShaderResources(0, ARRAYSIZE(srv), srv);
+        STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav), uav, nullptr);
+        STContext()->CSSetShader(nullptr, nullptr, 0);
+    }
 }
 
 bool RSPass_PriticleTileRender::CreateShaders()
@@ -1167,7 +1373,9 @@ bool RSPass_PriticleTileRender::CheckResources()
 
     name = PTC_ALIVE_INDEX_NAME;
     mAliveIndex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    mAliveIndex_Uav = resManager->GetResourceInfo(name)->mUav;
     if (!mAliveIndex_Srv) { return false; }
+    if (!mAliveIndex_Uav) { return false; }
 
     name = PTC_A_NAME;
     mPartA_Srv = resManager->GetResourceInfo(name)->mSrv;
