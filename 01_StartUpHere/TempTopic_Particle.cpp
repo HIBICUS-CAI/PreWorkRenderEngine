@@ -118,8 +118,8 @@ bool RSPass_PriticleSetUp::InitPass()
         Tool::Align(width, PTC_TILE_X_SIZE) / PTC_TILE_X_SIZE;
     mTilingConstant.mNumTilesY =
         Tool::Align(height, PTC_TILE_Y_SIZE) / PTC_TILE_Y_SIZE;
-    mTilingConstant.mNumCoarseCullingTilesX = 8;
-    mTilingConstant.mNumCoarseCullingTilesY = 8;
+    mTilingConstant.mNumCoarseCullingTilesX = PTC_MAX_COARSE_CULL_TILE_X;
+    mTilingConstant.mNumCoarseCullingTilesY = PTC_MAX_COARSE_CULL_TILE_Y;
     mTilingConstant.mNumCullingTilesPerCoarseTileX =
         Tool::Align(
             mTilingConstant.mNumTilesX,
