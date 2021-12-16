@@ -243,5 +243,7 @@ private:
     bool CheckResources();
 
 private:
-
+    ID3D11ComputeShader* mCoarseCullingShader;
+    ID3D11ComputeShader* mTileCullingShader;
+    ID3D11ComputeShader* mTileRenderShader;
 };

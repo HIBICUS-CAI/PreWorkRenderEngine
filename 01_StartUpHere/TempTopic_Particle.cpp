@@ -975,14 +975,19 @@ bool RSPass_PriticleEmitSimulate::CheckResources()
 
 RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
-    RSPass_Base(_name, _type, _root)
+    RSPass_Base(_name, _type, _root),
+    mCoarseCullingShader(nullptr), mTileCullingShader(nullptr),
+    mTileRenderShader(nullptr)
 {
 
 }
 
 RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     const RSPass_PriticleTileRender& _source) :
-    RSPass_Base(_source)
+    RSPass_Base(_source),
+    mCoarseCullingShader(_source.mCoarseCullingShader),
+    mTileCullingShader(_source.mTileCullingShader),
+    mTileRenderShader(_source.mTileRenderShader)
 {
 
 }
@@ -1008,7 +1013,9 @@ bool RSPass_PriticleTileRender::InitPass()
 
 void RSPass_PriticleTileRender::ReleasePass()
 {
-
+    RS_RELEASE(mCoarseCullingShader);
+    RS_RELEASE(mTileCullingShader);
+    RS_RELEASE(mTileRenderShader);
 }
 
 void RSPass_PriticleTileRender::ExecuatePass()
@@ -1018,7 +1025,35 @@ void RSPass_PriticleTileRender::ExecuatePass()
 
 bool RSPass_PriticleTileRender::CreateShaders()
 {
+    ID3DBlob* shaderBlob = nullptr;
     HRESULT hr = S_OK;
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_coarse_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mCoarseCullingShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_cull_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mTileCullingShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Tool::CompileShaderFromFile(L".\\Shaders\\ptc_render_compute.hlsl",
+        "Main", "cs_5_0", &shaderBlob);
+    if (FAILED(hr)) { return false; }
+
+    hr = Device()->CreateComputeShader(shaderBlob->GetBufferPointer(),
+        shaderBlob->GetBufferSize(), nullptr, &mTileRenderShader);
+    RS_RELEASE(shaderBlob);
+    if (FAILED(hr)) { return false; }
 
     return true;
 }
