@@ -55,7 +55,7 @@ void RSParticleEmitter::ResetParticleEmitterInfo(
     mRSParticleEmitterInfo.mOffsetEndColor =
         _info->mOffsetEndColor;
     mRSParticleEmitterInfo.mTextureID =
-        (UINT)(1 << (UINT)(_info->mTextureID));
+        (UINT)(_info->mTextureID);
     mRSParticleEmitterInfo.mStreakFlg =
         (_info->mEnableStreak ? 1 : 0);
     mRSParticleEmitterInfo.mMiscFlg = 0;
