@@ -101,6 +101,8 @@ public:
     RSPass_PriticleSetUp(const RSPass_PriticleSetUp& _source);
     virtual ~RSPass_PriticleSetUp();
 
+    const RS_TILING_CONSTANT& GetTilingConstantInfo() const;
+
 public:
     virtual RSPass_PriticleSetUp* ClonePass() override;
 
@@ -239,6 +241,7 @@ public:
 
 private:
     bool CreateShaders();
+    bool CreateViews();
     bool CreateSampler();
     bool CheckResources();
 
@@ -246,4 +249,25 @@ private:
     ID3D11ComputeShader* mCoarseCullingShader;
     ID3D11ComputeShader* mTileCullingShader;
     ID3D11ComputeShader* mTileRenderShader;
+
+    ID3D11Buffer* mCameraConstantBuffer;
+    ID3D11Buffer* mTilingConstantBuffer;
+    ID3D11Buffer* mActiveListConstantBuffer;
+    ID3D11ShaderResourceView* mDepthTex_Srv;
+    ID3D11ShaderResourceView* mViewSpacePos_Srv;
+    ID3D11ShaderResourceView* mMaxRadius_Srv;
+    ID3D11ShaderResourceView* mAliveIndex_Srv;
+    ID3D11ShaderResourceView* mPartA_Srv;
+    ID3D11ShaderResourceView* mCoarseTileIndex_Srv;
+    ID3D11UnorderedAccessView* mCoarseTileIndex_Uav;
+    ID3D11ShaderResourceView* mCoarseTileIndexCounter_Srv;
+    ID3D11UnorderedAccessView* mCoarseTileIndexCounter_Uav;
+    ID3D11ShaderResourceView* mTiledIndex_Srv;
+    ID3D11UnorderedAccessView* mTiledIndex_Uav;
+    ID3D11ShaderResourceView* mParticleRender_Srv;
+    ID3D11UnorderedAccessView* mParticleRender_Uav;
+
+    ID3D11SamplerState* mLinearClampSampler;
+
+    ID3D11ShaderResourceView* mParticleTex_Srv;
 };

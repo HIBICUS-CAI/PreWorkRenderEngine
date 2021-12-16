@@ -1,12 +1,16 @@
 #include "TempTopic_Particle.h"
 #include "RSRoot_DX11.h"
+#include "RSDevices.h"
 #include "RSResourceManager.h"
 #include "RSUtilityFunctions.h"
 #include "RSShaderCompile.h"
 #include "RSParticlesContainer.h"
 #include "RSCamerasContainer.h"
+#include "DirectXTK/DDSTextureLoader.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
+
+static RSPass_PriticleSetUp* g_ParticleSetUpPass = nullptr;
 
 RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
@@ -41,7 +45,7 @@ RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     mSimulEmitterStructedBuffer(nullptr),
     mSimulEmitterStructedBuffer_Srv(nullptr)
 {
-
+    g_ParticleSetUpPass = this;
 }
 
 RSPass_PriticleSetUp::RSPass_PriticleSetUp(
@@ -87,12 +91,17 @@ RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer),
     mSimulEmitterStructedBuffer_Srv(_source.mSimulEmitterStructedBuffer_Srv)
 {
-
+    g_ParticleSetUpPass = this;
 }
 
 RSPass_PriticleSetUp::~RSPass_PriticleSetUp()
 {
 
+}
+
+const RS_TILING_CONSTANT& RSPass_PriticleSetUp::GetTilingConstantInfo() const
+{
+    return mTilingConstant;
 }
 
 RSPass_PriticleSetUp* RSPass_PriticleSetUp::ClonePass()
@@ -102,10 +111,13 @@ RSPass_PriticleSetUp* RSPass_PriticleSetUp::ClonePass()
 
 bool RSPass_PriticleSetUp::InitPass()
 {
+    int width = GetRSRoot_DX11_Singleton()->Devices()->GetCurrWndWidth();
+    int height = GetRSRoot_DX11_Singleton()->Devices()->GetCurrWndHeight();
+
     mTilingConstant.mNumTilesX =
-        Tool::Align(1280, PTC_TILE_X_SIZE) / PTC_TILE_X_SIZE;
+        Tool::Align(width, PTC_TILE_X_SIZE) / PTC_TILE_X_SIZE;
     mTilingConstant.mNumTilesY =
-        Tool::Align(720, PTC_TILE_Y_SIZE) / PTC_TILE_Y_SIZE;
+        Tool::Align(height, PTC_TILE_Y_SIZE) / PTC_TILE_Y_SIZE;
     mTilingConstant.mNumCoarseCullingTilesX = 8;
     mTilingConstant.mNumCoarseCullingTilesY = 8;
     mTilingConstant.mNumCullingTilesPerCoarseTileX =
@@ -977,7 +989,16 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     std::string& _name, PASS_TYPE _type, RSRoot_DX11* _root) :
     RSPass_Base(_name, _type, _root),
     mCoarseCullingShader(nullptr), mTileCullingShader(nullptr),
-    mTileRenderShader(nullptr)
+    mTileRenderShader(nullptr),
+    mCameraConstantBuffer(nullptr), mTilingConstantBuffer(nullptr),
+    mActiveListConstantBuffer(nullptr), mDepthTex_Srv(nullptr),
+    mViewSpacePos_Srv(nullptr), mMaxRadius_Srv(nullptr),
+    mAliveIndex_Srv(nullptr), mPartA_Srv(nullptr),
+    mCoarseTileIndex_Srv(nullptr), mCoarseTileIndex_Uav(nullptr),
+    mCoarseTileIndexCounter_Srv(nullptr), mCoarseTileIndexCounter_Uav(nullptr),
+    mTiledIndex_Srv(nullptr), mTiledIndex_Uav(nullptr),
+    mParticleRender_Srv(nullptr), mParticleRender_Uav(nullptr),
+    mLinearClampSampler(nullptr), mParticleTex_Srv(nullptr)
 {
 
 }
@@ -987,7 +1008,25 @@ RSPass_PriticleTileRender::RSPass_PriticleTileRender(
     RSPass_Base(_source),
     mCoarseCullingShader(_source.mCoarseCullingShader),
     mTileCullingShader(_source.mTileCullingShader),
-    mTileRenderShader(_source.mTileRenderShader)
+    mTileRenderShader(_source.mTileRenderShader),
+    mCameraConstantBuffer(_source.mCameraConstantBuffer),
+    mTilingConstantBuffer(_source.mTilingConstantBuffer),
+    mActiveListConstantBuffer(_source.mActiveListConstantBuffer),
+    mDepthTex_Srv(_source.mDepthTex_Srv),
+    mViewSpacePos_Srv(_source.mViewSpacePos_Srv),
+    mMaxRadius_Srv(_source.mMaxRadius_Srv),
+    mAliveIndex_Srv(_source.mAliveIndex_Srv),
+    mPartA_Srv(_source.mPartA_Srv),
+    mCoarseTileIndex_Srv(_source.mCoarseTileIndex_Srv),
+    mCoarseTileIndex_Uav(_source.mCoarseTileIndex_Uav),
+    mCoarseTileIndexCounter_Srv(_source.mCoarseTileIndexCounter_Srv),
+    mCoarseTileIndexCounter_Uav(_source.mCoarseTileIndexCounter_Uav),
+    mTiledIndex_Srv(_source.mTiledIndex_Srv),
+    mTiledIndex_Uav(_source.mTiledIndex_Uav),
+    mParticleRender_Srv(_source.mParticleRender_Srv),
+    mParticleRender_Uav(_source.mParticleRender_Uav),
+    mLinearClampSampler(_source.mLinearClampSampler),
+    mParticleTex_Srv(_source.mParticleTex_Srv)
 {
 
 }
@@ -1005,6 +1044,7 @@ RSPass_PriticleTileRender* RSPass_PriticleTileRender::ClonePass()
 bool RSPass_PriticleTileRender::InitPass()
 {
     if (!CreateShaders()) { return false; }
+    if (!CreateViews()) { return false; }
     if (!CreateSampler()) { return false; }
     if (!CheckResources()) { return false; }
 
@@ -1016,6 +1056,10 @@ void RSPass_PriticleTileRender::ReleasePass()
     RS_RELEASE(mCoarseCullingShader);
     RS_RELEASE(mTileCullingShader);
     RS_RELEASE(mTileRenderShader);
+
+    RS_RELEASE(mLinearClampSampler);
+
+    RS_RELEASE(mParticleTex_Srv);
 }
 
 void RSPass_PriticleTileRender::ExecuatePass()
@@ -1058,16 +1102,100 @@ bool RSPass_PriticleTileRender::CreateShaders()
     return true;
 }
 
+bool RSPass_PriticleTileRender::CreateViews()
+{
+    HRESULT hr = S_OK;
+
+    std::wstring path = L".\\Textures\\particle_atlas.dds";
+    hr = DirectX::CreateDDSTextureFromFile(Device(), path.c_str(),
+        nullptr, &mParticleTex_Srv);
+    if (FAILED(hr)) { return false; }
+
+    return true;
+}
+
 bool RSPass_PriticleTileRender::CreateSampler()
 {
     HRESULT hr = S_OK;
+    D3D11_SAMPLER_DESC sampDesc = {};
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = Device()->CreateSamplerState(&sampDesc, &mLinearClampSampler);
+    if (FAILED(hr)) { return false; }
 
     return true;
 }
 
 bool RSPass_PriticleTileRender::CheckResources()
 {
-    HRESULT hr = S_OK;
+    auto resManager = GetRSRoot_DX11_Singleton()->ResourceManager();
+    if (!resManager) { return false; }
+
+    std::string name = PTC_CAMERA_CONSTANT_NAME;
+    mCameraConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mCameraConstantBuffer) { return false; }
+
+    name = PTC_TILING_CONSTANT_NAME;
+    mTilingConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mTilingConstantBuffer) { return false; }
+
+    name = PTC_ALIVE_LIST_CONSTANT_NAME;
+    mActiveListConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mActiveListConstantBuffer) { return false; }
+
+    name = "mrt-depth";
+    mDepthTex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mDepthTex_Srv) { return false; }
+
+    name = PTC_VIEW_SPCACE_POS_NAME;
+    mViewSpacePos_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mViewSpacePos_Srv) { return false; }
+
+    name = PTC_MAX_RADIUS_NAME;
+    mMaxRadius_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mMaxRadius_Srv) { return false; }
+
+    name = PTC_ALIVE_INDEX_NAME;
+    mAliveIndex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mAliveIndex_Srv) { return false; }
+
+    name = PTC_A_NAME;
+    mPartA_Srv = resManager->GetResourceInfo(name)->mSrv;
+    if (!mPartA_Srv) { return false; }
+
+    name = PTC_COARSE_CULL_NAME;
+    mCoarseTileIndex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    mCoarseTileIndex_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mCoarseTileIndex_Srv) { return false; }
+    if (!mCoarseTileIndex_Uav) { return false; }
+
+    name = PTC_COARSE_CULL_COUNTER_NAME;
+    mCoarseTileIndexCounter_Srv = resManager->GetResourceInfo(name)->mSrv;
+    mCoarseTileIndexCounter_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mCoarseTileIndexCounter_Srv) { return false; }
+    if (!mCoarseTileIndexCounter_Uav) { return false; }
+
+    name = PTC_TILED_INDEX_NAME;
+    mTiledIndex_Srv = resManager->GetResourceInfo(name)->mSrv;
+    mTiledIndex_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mTiledIndex_Srv) { return false; }
+    if (!mTiledIndex_Uav) { return false; }
+
+    name = PTC_RENDER_BUFFER_NAME;
+    mParticleRender_Srv = resManager->GetResourceInfo(name)->mSrv;
+    mParticleRender_Uav = resManager->GetResourceInfo(name)->mUav;
+    if (!mParticleRender_Srv) { return false; }
+    if (!mParticleRender_Uav) { return false; }
 
     return true;
 }
