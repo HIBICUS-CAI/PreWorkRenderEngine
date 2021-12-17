@@ -1,9 +1,9 @@
 // TEMP-----------------
-static const uint gScreenWidth = 1280;
-static const uint gScreenHeight = 720;
-static const float3 gSunDirection = float3(0.f, -1.f, -1.f);
-static const float4 gSunAmbient = float4(0.3f, 0.3f, 0.3f, 0.3f);
-static const float4 gSunColor = float4(0.8f, 0.8f, 0.8f, 0.8f);
+#define gScreenWidth (1280)
+#define gScreenHeight (720)
+#define gSunDirection (float3(0.f, -1.f, -1.f))
+#define gSunAmbient (float4(0.3f, 0.3f, 0.3f, 0.3f))
+#define gSunColor (float4(0.8f, 0.8f, 0.8f, 0.8f))
 // TEMP-----------------
 
 #define NUM_PARTICLES_PER_TILE (1023)
@@ -11,15 +11,15 @@ static const float4 gSunColor = float4(0.8f, 0.8f, 0.8f, 0.8f);
 #define	MAX_PARTICLES_PER_TILE_FOR_SORTING (2 * NUM_PARTICLES_PER_TILE)
 #define	MAX_PARTICLES_PER_TILE_FOR_RENDERING (500)
 
-static const uint NUM_COARSE_CULLING_TILES_X = 16;
-static const uint NUM_COARSE_CULLING_TILES_Y = 8;
-static const uint NUM_COARSE_TILES = NUM_COARSE_CULLING_TILES_X * NUM_COARSE_CULLING_TILES_Y;
-static const uint TILE_RES_X = 32;
-static const uint TILE_RES_Y = 32;
-static const uint NUM_THREADS_X = TILE_RES_X;
-static const uint NUM_THREADS_Y = TILE_RES_Y;
-static const uint NUM_THREADS_PER_TILE = (NUM_THREADS_X * NUM_THREADS_Y);
-static const float THRESHOLD_ALPHA = 0.95f;
+#define NUM_COARSE_CULLING_TILES_X (16)
+#define NUM_COARSE_CULLING_TILES_Y (8)
+#define NUM_COARSE_TILES (NUM_COARSE_CULLING_TILES_X * NUM_COARSE_CULLING_TILES_Y)
+#define TILE_RES_X (32)
+#define TILE_RES_Y (32)
+#define NUM_THREADS_X (TILE_RES_X)
+#define NUM_THREADS_Y (TILE_RES_Y)
+#define NUM_THREADS_PER_TILE (NUM_THREADS_X * NUM_THREADS_Y)
+#define THRESHOLD_ALPHA (0.95f)
 
 cbuffer CameraStatus : register(b0)
 {

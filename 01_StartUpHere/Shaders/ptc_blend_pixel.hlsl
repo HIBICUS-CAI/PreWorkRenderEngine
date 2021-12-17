@@ -1,6 +1,6 @@
 // TEMP-----------------------------
-static const uint gScreenWidth = 1280;
-static const uint gScreenHeight = 720;
+#define gScreenWidth (1280)
+#define gScreenHeight (720)
 // TEMP-----------------------------
 
 struct VS_OUTPUT

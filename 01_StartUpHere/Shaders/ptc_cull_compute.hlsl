@@ -1,17 +1,17 @@
 // TEMP---------------
-static const uint gScreenWidth = 1280;
-static const uint gScreenHeight = 720;
+#define gScreenWidth (1280)
+#define gScreenHeight (720)
 // TEMP--------------
 
 #define NUM_PARTICLES_PER_TILE (1023)
 #define PARTICLES_TILE_BUFFER_SIZE (NUM_PARTICLES_PER_TILE + 1)
 #define	MAX_PARTICLES_PER_TILE_FOR_SORTING (2 * NUM_PARTICLES_PER_TILE)
 
-static const uint NUM_COARSE_CULLING_TILES_X = 16;
-static const uint NUM_COARSE_CULLING_TILES_Y = 8;
-static const uint NUM_COARSE_TILES = NUM_COARSE_CULLING_TILES_X * NUM_COARSE_CULLING_TILES_Y;
-static const uint TILE_RES_X = 32;
-static const uint TILE_RES_Y = 32;
+#define NUM_COARSE_CULLING_TILES_X (16)
+#define NUM_COARSE_CULLING_TILES_Y (8)
+#define NUM_COARSE_TILES (NUM_COARSE_CULLING_TILES_X * NUM_COARSE_CULLING_TILES_Y)
+#define TILE_RES_X (32)
+#define TILE_RES_Y (32)
 
 cbuffer CameraStatus : register(b0)
 {

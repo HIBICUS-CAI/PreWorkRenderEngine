@@ -1,9 +1,9 @@
 // TEMP-----------------------------
-static const uint gScreenWidth = 1280;
-static const uint gScreenHeight = 720;
-static const float gDeltaTime = 0.016f;
-static const float gCollisionThickness = 4.f;
-static const float3 gSunDirection = float3(0.f, -1.f, -1.f);
+#define gScreenWidth (1280)
+#define gScreenHeight (720)
+#define gDeltaTime (0.016f)
+#define gCollisionThickness (4.f)
+#define gSunDirection (float3(0.f, -1.f, -1.f))
 // TEMP-----------------------------
 
 struct GPUParticlePartA
