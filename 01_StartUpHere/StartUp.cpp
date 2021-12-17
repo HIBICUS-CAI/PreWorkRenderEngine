@@ -269,7 +269,7 @@ int WINAPI WinMain(
     pei.mPosition = { 0.f,20.f,0.f };
     pei.mPosVariance = { 1.f,1.f,1.f };
     pei.mTextureID = PARTICLE_TEXTURE::WHITE_CIRCLE;
-    pei.mVelocity = { 0.f,3.f,0.f };
+    pei.mVelocity = { 0.f,9.f,0.f };
     pei.mVelVariance = 0.5f;
     root->ParticlesContainer()->CreateRSParticleEmitter(
         name, &pei);
