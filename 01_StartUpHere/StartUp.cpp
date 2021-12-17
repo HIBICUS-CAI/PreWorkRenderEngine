@@ -274,6 +274,25 @@ int WINAPI WinMain(
     root->ParticlesContainer()->CreateRSParticleEmitter(
         name, &pei);
 
+    name = "ptc-emitter-2";
+    pei = {};
+    pei.mAcceleration = { 0.f,-9.8f,0.f };
+    pei.mEmitNumPerSecond = 600.f;
+    pei.mEnableStreak = true;
+    pei.mLifeSpan = 100.f;
+    pei.mOffsetEndColor = { 0.f,0.f,0.f,0.f };
+    pei.mOffsetEndSize = 0.f;
+    pei.mOffsetStartColor = { 1.f,0.f,0.f,1.f };
+    pei.mOffsetStartSize = 0.5f;
+    pei.mParticleMass = 0.1f;
+    pei.mPosition = { 10.f,20.f,10.f };
+    pei.mPosVariance = { 1.f,1.f,1.f };
+    pei.mTextureID = PARTICLE_TEXTURE::WHITE_CIRCLE;
+    pei.mVelocity = { 5.f,5.f,0.f };
+    pei.mVelVariance = 0.5f;
+    root->ParticlesContainer()->CreateRSParticleEmitter(
+        name, &pei);
+
     if (!CreateTempWireFramePipeline())
     {
         return -3;
