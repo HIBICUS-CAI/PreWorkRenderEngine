@@ -54,6 +54,13 @@ cbuffer DeadListCount : register(b1)
 	uint3 gDeadListCountPad;
 };
 
+cbuffer Time : register(b2)
+{
+	float gDeltaTime;
+    float gTotalTime;
+    float gTimePads[2];
+};
+
 Texture2D gRandomTexture : register(t0);
 
 RWStructuredBuffer<GPUParticlePartA> gParticleBufferA : register(u0);
@@ -78,12 +85,10 @@ void Main(uint3 id : SV_DispatchThreadID)
 	{
 		GPUParticlePartA pa = (GPUParticlePartA)0;
 		GPUParticlePartB pb = (GPUParticlePartB)0;
-		
-        static float timer = 0.f;
-        timer += 0.016f;
-		float2 uv0 = float2(id.x / 1024.0, timer);
+
+		float2 uv0 = float2(id.x / 1024.0, gTotalTime);
 		float3 randomValues0 = gRandomTexture.SampleLevel(gSamWrapLinear, uv0, 0.f).xyz;
-		float2 uv1 = float2((id.x + 1) / 1024.0, timer);
+		float2 uv1 = float2((id.x + 1) / 1024.0, gTotalTime);
 		float3 randomValues1 = gRandomTexture.SampleLevel(gSamWrapLinear, uv1, 0.f).xyz;
 
 

@@ -43,7 +43,8 @@ RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     mTilingConstantBuffer(nullptr),
     mDebugCounterBuffer(nullptr),
     mSimulEmitterStructedBuffer(nullptr),
-    mSimulEmitterStructedBuffer_Srv(nullptr)
+    mSimulEmitterStructedBuffer_Srv(nullptr),
+    mTimeConstantBuffer(nullptr)
 {
     g_ParticleSetUpPass = this;
 }
@@ -89,7 +90,8 @@ RSPass_PriticleSetUp::RSPass_PriticleSetUp(
     mTilingConstantBuffer(_source.mTilingConstantBuffer),
     mDebugCounterBuffer(_source.mDebugCounterBuffer),
     mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer),
-    mSimulEmitterStructedBuffer_Srv(_source.mSimulEmitterStructedBuffer_Srv)
+    mSimulEmitterStructedBuffer_Srv(_source.mSimulEmitterStructedBuffer_Srv),
+    mTimeConstantBuffer(_source.mTimeConstantBuffer)
 {
     g_ParticleSetUpPass = this;
 }
@@ -266,6 +268,12 @@ bool RSPass_PriticleSetUp::InitPass()
     name = PTC_SIMU_EMITTER_STRU_NAME;
     resManager->AddResource(name, res);
 
+    res = {};
+    res.mType = RS_RESOURCE_TYPE::BUFFER;
+    res.mResource.mBuffer = mTimeConstantBuffer;
+    name = PTC_TIME_CONSTANT_NAME;
+    resManager->AddResource(name, res);
+
     return true;
 }
 
@@ -307,6 +315,8 @@ void RSPass_PriticleSetUp::ReleasePass()
     name = PTC_RAMDOM_TEXTURE_NAME;
     resManager->DeleteResource(name);
     name = PTC_SIMU_EMITTER_STRU_NAME;
+    resManager->DeleteResource(name);
+    name = PTC_TIME_CONSTANT_NAME;
     resManager->DeleteResource(name);
 }
 
@@ -407,6 +417,10 @@ bool RSPass_PriticleSetUp::CreateBuffers()
 
     bfrDesc.ByteWidth = sizeof(RS_TILING_CONSTANT);
     hr = Device()->CreateBuffer(&bfrDesc, nullptr, &mTilingConstantBuffer);
+    if (FAILED(hr)) { return false; }
+
+    bfrDesc.ByteWidth = sizeof(PTC_TIME_CONSTANT);
+    hr = Device()->CreateBuffer(&bfrDesc, nullptr, &mTimeConstantBuffer);
     if (FAILED(hr)) { return false; }
 
     ZeroMemory(&bfrDesc, sizeof(bfrDesc));
@@ -620,7 +634,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mDepthTex_Srv(nullptr), mSimulEmitterStructedBuffer_Srv(nullptr),
     mAliveIndex_Uav(nullptr), mViewSpacePos_Uav(nullptr),
     mMaxRadius_Uav(nullptr), mSimulEmitterStructedBuffer(nullptr),
-    mRSCameraInfo(nullptr), mCameraConstantBuffer(nullptr)
+    mRSCameraInfo(nullptr), mCameraConstantBuffer(nullptr),
+    mTimeConstantBuffer(nullptr)
 {
 
 }
@@ -646,7 +661,8 @@ RSPass_PriticleEmitSimulate::RSPass_PriticleEmitSimulate(
     mMaxRadius_Uav(_source.mMaxRadius_Uav),
     mSimulEmitterStructedBuffer(_source.mSimulEmitterStructedBuffer),
     mRSCameraInfo(_source.mRSCameraInfo),
-    mCameraConstantBuffer(_source.mCameraConstantBuffer)
+    mCameraConstantBuffer(_source.mCameraConstantBuffer),
+    mTimeConstantBuffer(_source.mTimeConstantBuffer)
 {
 
 }
@@ -733,7 +749,7 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
         { mPartA_Uav,mPartB_Uav,mDeadList_Uav };
         ID3D11ShaderResourceView* srv[] = { mRandomTex_Srv };
         ID3D11Buffer* cbuffer[] =
-        { mEmitterConstantBuffer,mDeadListConstantBuffer };
+        { mEmitterConstantBuffer,mDeadListConstantBuffer,mTimeConstantBuffer };
         ID3D11SamplerState* sam[] = { mLinearWrapSampler };
         UINT initialCount[] = { (UINT)-1,(UINT)-1,(UINT)-1 };
         STContext()->CSSetUnorderedAccessViews(0, ARRAYSIZE(uav),
@@ -745,6 +761,14 @@ void RSPass_PriticleEmitSimulate::ExecuatePass()
         auto emitters = mRSParticleContainerPtr->
             GetAllParticleEmitters();
         D3D11_MAPPED_SUBRESOURCE msr = {};
+        STContext()->Map(mTimeConstantBuffer, 0,
+            D3D11_MAP_WRITE_DISCARD, 0, &msr);
+        PTC_TIME_CONSTANT* time = (PTC_TIME_CONSTANT*)msr.pData;
+        static float timer = 0.f;
+        time->mDeltaTime = 0.016f;
+        timer += 0.016f;
+        time->mTotalTime = timer;
+        STContext()->Unmap(mTimeConstantBuffer, 0);
         for (auto& emitter : *emitters)
         {
             auto& rsinfo = emitter.GetRSParticleEmitterInfo();
@@ -977,6 +1001,11 @@ bool RSPass_PriticleEmitSimulate::CheckResources()
     name = PTC_MAX_RADIUS_NAME;
     mMaxRadius_Uav = resManager->GetResourceInfo(name)->mUav;
     if (!mMaxRadius_Uav) { return false; }
+
+    name = PTC_TIME_CONSTANT_NAME;
+    mTimeConstantBuffer = resManager->GetResourceInfo(name)->
+        mResource.mBuffer;
+    if (!mTimeConstantBuffer) { return false; }
 
     name = "mrt-depth";
     mDepthTex_Srv = resManager->GetResourceInfo(name)->mSrv;

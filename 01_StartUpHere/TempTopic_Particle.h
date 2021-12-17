@@ -19,6 +19,7 @@ constexpr auto PTC_ALIVE_LIST_CONSTANT_NAME = "particle-alive-list-constant";
 constexpr auto PTC_EMITTER_CONSTANT_NAME = "particle-emitter-constant";
 constexpr auto PTC_CAMERA_CONSTANT_NAME = "particle-camera-constant";
 constexpr auto PTC_TILING_CONSTANT_NAME = "particle-tiling-constant";
+constexpr auto PTC_TIME_CONSTANT_NAME = "particle-time-constant";
 constexpr auto PTC_DEBUG_COUNTER_NAME = "particle-debug-counter";
 constexpr auto PTC_RAMDOM_TEXTURE_NAME = "particle-ramdom-texture";
 constexpr auto PTC_SIMU_EMITTER_STRU_NAME = "particle-simu-emitter-structed";
@@ -94,6 +95,13 @@ struct RS_TILING_CONSTANT
     UINT mPads[2] = { 0 };
 };
 
+struct PTC_TIME_CONSTANT
+{
+    float mDeltaTime = 0.016f;
+    float mTotalTime = 0.f;
+    float mPads[2] = { 0.f };
+};
+
 class RSPass_PriticleSetUp :public RSPass_Base
 {
 public:
@@ -164,6 +172,7 @@ private:
     ID3D11Buffer* mEmitterConstantBuffer;
     ID3D11Buffer* mCameraConstantBuffer;
     ID3D11Buffer* mTilingConstantBuffer;
+    ID3D11Buffer* mTimeConstantBuffer;
 
     ID3D11Buffer* mDebugCounterBuffer;
 
@@ -217,6 +226,7 @@ private:
     ID3D11Buffer* mCameraConstantBuffer;
     ID3D11Buffer* mDeadListConstantBuffer;
     ID3D11Buffer* mSimulEmitterStructedBuffer;
+    ID3D11Buffer* mTimeConstantBuffer;
 
     ID3D11SamplerState* mLinearWrapSampler;
 
