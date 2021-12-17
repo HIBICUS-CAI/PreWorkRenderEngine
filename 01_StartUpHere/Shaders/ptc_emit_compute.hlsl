@@ -33,12 +33,12 @@ cbuffer EmitterConstantBuffer : register(b0)
     uint gNumToEmit;
     float gAccumulation;
     float3 gPosition;
-    float3 gVelocity;
-    float3 gPosVariance;
-    float3 gAcceleration;
     float gVelVariance;
+    float3 gVelocity;
     float gParticleMass;
+    float3 gPosVariance;
     float gLifeSpan;
+    float3 gAcceleration;
     float gOffsetStartSize;
     float gOffsetEndSize;
 	uint gTextureID;
