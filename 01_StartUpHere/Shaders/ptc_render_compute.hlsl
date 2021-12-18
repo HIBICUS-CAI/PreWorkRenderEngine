@@ -19,7 +19,7 @@
 #define NUM_THREADS_X (TILE_RES_X)
 #define NUM_THREADS_Y (TILE_RES_Y)
 #define NUM_THREADS_PER_TILE (NUM_THREADS_X * NUM_THREADS_Y)
-#define THRESHOLD_ALPHA (0.95f)
+#define THRESHOLD_ALPHA (0.98f)
 
 cbuffer CameraStatus : register(b0)
 {

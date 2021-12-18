@@ -276,19 +276,19 @@ int WINAPI WinMain(
 
     name = "ptc-emitter-2";
     pei = {};
-    pei.mAcceleration = { 0.f,-9.8f,0.f };
-    pei.mEmitNumPerSecond = 600.f;
-    pei.mEnableStreak = true;
-    pei.mLifeSpan = 100.f;
+    pei.mAcceleration = { 0.02f,0.2f,0.f };
+    pei.mEmitNumPerSecond = 10.f;
+    pei.mEnableStreak = false;
+    pei.mLifeSpan = 10000.f;
     pei.mOffsetEndColor = { 0.f,0.f,0.f,0.f };
-    pei.mOffsetEndSize = 0.f;
-    pei.mOffsetStartColor = { 1.f,0.f,0.f,1.f };
-    pei.mOffsetStartSize = 0.5f;
-    pei.mParticleMass = 0.1f;
+    pei.mOffsetEndSize = 0.1f;
+    pei.mOffsetStartColor = { 1.f,1.f,1.f,1.f };
+    pei.mOffsetStartSize = 3.f;
+    pei.mParticleMass = 0.01f;
     pei.mPosition = { 10.f,20.f,10.f };
-    pei.mPosVariance = { 1.f,1.f,1.f };
-    pei.mTextureID = PARTICLE_TEXTURE::WHITE_CIRCLE;
-    pei.mVelocity = { 5.f,5.f,0.f };
+    pei.mPosVariance = { 2.f,2.f,2.f };
+    pei.mTextureID = PARTICLE_TEXTURE::WHITE_SMOKE;
+    pei.mVelocity = { 0.f,0.5f,0.f };
     pei.mVelVariance = 0.5f;
     root->ParticlesContainer()->CreateRSParticleEmitter(
         name, &pei);
