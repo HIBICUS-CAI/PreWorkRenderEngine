@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DDSTextureLoader11.h" />
     <ClInclude Include="RSCamera.h" />
     <ClInclude Include="RSCamerasContainer.h" />
     <ClInclude Include="RSCommon.h" />
@@ -40,8 +41,10 @@
     <ClInclude Include="RSTopic.h" />
     <ClInclude Include="RSUtilityFunctions.h" />
     <ClInclude Include="RSVertexType.h" />
+    <ClInclude Include="WICTextureLoader11.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DDSTextureLoader11.cpp" />
     <ClCompile Include="RSCamera.cpp" />
     <ClCompile Include="RSCamerasContainer.cpp" />
     <ClCompile Include="RSDevices.cpp" />
@@ -60,6 +63,7 @@
     <ClCompile Include="RSResourceManager.cpp" />
     <ClCompile Include="RSTopic.cpp" />
     <ClCompile Include="RSUtilityFunctions.cpp" />
+    <ClCompile Include="WICTextureLoader11.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

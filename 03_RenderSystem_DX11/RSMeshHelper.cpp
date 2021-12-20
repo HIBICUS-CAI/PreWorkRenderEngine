@@ -13,8 +13,8 @@
 #include "RSResourceManager.h"
 #include "RSStaticResources.h"
 #include <assert.h>
-#include <DirectXTK\WICTextureLoader.h>
-#include <DirectXTK\DDSTextureLoader.h>
+#include "WICTextureLoader11.h"
+#include "DDSTextureLoader11.h"
 
 using namespace DirectX;
 

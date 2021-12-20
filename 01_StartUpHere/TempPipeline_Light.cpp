@@ -14,7 +14,7 @@
 #include "RSUtilityFunctions.h"
 #include <DirectXColors.h>
 #include <DirectXPackedVector.h>
-#include <DirectXTK\DDSTextureLoader.h>
+#include "DDSTextureLoader11.h"
 #include <cstdlib>
 #include <ctime>
 #include "TempMesh.h"
@@ -107,7 +107,7 @@ bool CreateTempLightPipeline()
     particle_topic->InsertPass(ptcsetup);
     particle_topic->InsertPass(ptcemitsimul);
     particle_topic->InsertPass(ptctile);
-    particle_topic->SetExecuateOrder(6);
+    particle_topic->SetExecuateOrder(7);
     particle_topic->FinishTopicAssembly();
 
     name = "bloom-topic";
@@ -116,7 +116,7 @@ bool CreateTempLightPipeline()
     bloom_topic->InsertPass(bloomdraw);
     bloom_topic->InsertPass(bloomblur);
     bloom_topic->InsertPass(bloomblend);
-    bloom_topic->SetExecuateOrder(7);
+    bloom_topic->SetExecuateOrder(6);
     bloom_topic->FinishTopicAssembly();
 
     name = "mrt-topic";

@@ -7,8 +7,8 @@
 #include <rapidjson\filereadstream.h>
 #include <rapidjson\writer.h>
 #include <rapidjson\document.h>
-#include <DirectXTK\DDSTextureLoader.h>
-#include <DirectXTK\WICTextureLoader.h>
+#include "DDSTextureLoader11.h"
+#include "WICTextureLoader11.h"
 #include "RSDevices.h"
 #include "RSResourceManager.h"
 

@@ -4,7 +4,6 @@
 #include <vector>
 #include <array>
 #include "RSPass_Base.h"
-#include <DirectXTK\SpriteFont.h>
 
 struct ViewProj
 {

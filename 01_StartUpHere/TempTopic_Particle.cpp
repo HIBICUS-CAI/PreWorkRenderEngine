@@ -6,7 +6,7 @@
 #include "RSShaderCompile.h"
 #include "RSParticlesContainer.h"
 #include "RSCamerasContainer.h"
-#include "DirectXTK/DDSTextureLoader.h"
+#include "DDSTextureLoader11.h"
 
 #define RS_RELEASE(p) { if (p) { (p)->Release(); (p)=nullptr; } }
 
