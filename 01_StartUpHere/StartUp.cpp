@@ -26,7 +26,12 @@ int WINAPI WinMain(
 {
     WindowInterface::StartUp();
     WindowInterface::CreateInitWindow("a test window",
-        hInstance, iCmdShow);
+#ifdef _DEBUG
+        hInstance, iCmdShow, 1280, 720);
+#else
+        hInstance, iCmdShow, 1280, 720, true);
+#endif // _DEBUG
+
     InputInterface::StartUp();
 
     TempMesh* mesh = new TempMesh();

@@ -35,10 +35,8 @@ bool RSDevices::StartUp(RSRoot_DX11* _root, HWND _wnd)
 
     mRootPtr = _root;
 
-    RECT wndRect = {};
-    GetClientRect(_wnd, &wndRect);
-    UINT wndWidth = wndRect.right - wndRect.left;
-    UINT wndHeight = wndRect.bottom - wndRect.top;
+    UINT wndWidth = 1280;
+    UINT wndHeight = 720;
 
     mWndWidth = wndWidth;
     mWndHeight = wndHeight;
