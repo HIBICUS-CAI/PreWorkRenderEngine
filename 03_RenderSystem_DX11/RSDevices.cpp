@@ -7,11 +7,13 @@
 // Comt: NULL
 //---------------------------------------------------------------
 
+#pragma comment(lib, "dxgi")
+
 #include "RSDevices.h"
 #include "RSRoot_DX11.h"
 
 RSDevices::RSDevices() :
-    mRootPtr(nullptr),
+    mRootPtr(nullptr), mRenderDeivceConfig({}),
     mDriveType(D3D_DRIVER_TYPE_HARDWARE),
     mFeatureLevel(D3D_FEATURE_LEVEL_11_1),
     mDevice(nullptr), mImmediateContext(nullptr),
@@ -146,30 +148,93 @@ bool RSDevices::CreateDevices(HWND _wnd,
     UINT numFeatLevels = ARRAYSIZE(featureLevels);
     mFeatureLevel = featureLevels[0];
 
-    for (UINT i = 0; i < numDriverTypes; i++)
+    std::vector<std::pair<IDXGIAdapter*, std::wstring>> allAdapters = {};
+    allAdapters.clear();
     {
-        mDriveType = driverTypes[i];
-        hr = D3D11CreateDevice(nullptr, mDriveType,
-            nullptr, deviceCreateFlag, featureLevels,
-            numFeatLevels, D3D11_SDK_VERSION,
-            &mDevice, &mFeatureLevel,
-            &mImmediateContext);
+        IDXGIFactory1* dxgiFactory = nullptr;
+        UINT index = 0;
+        IDXGIAdapter* adapter = nullptr;
 
-        if (hr == E_INVALIDARG)
+        hr = CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory));
+        FAIL_HR_RETURN(hr);
+
+        while (dxgiFactory->EnumAdapters(index, &adapter) !=
+            DXGI_ERROR_NOT_FOUND)
         {
-            hr = D3D11CreateDevice(nullptr, mDriveType,
-                nullptr, deviceCreateFlag,
-                featureLevels + 1, numFeatLevels - 1,
-                D3D11_SDK_VERSION, &mDevice,
-                &mFeatureLevel, &mImmediateContext);
+            DXGI_ADAPTER_DESC adapDesc = {};
+            ZeroMemory(&adapDesc, sizeof(adapDesc));
+            std::wstring wstr = L"";
+
+            adapter->GetDesc(&adapDesc);
+            wstr = L"--------------------\nAdapter Info in Index : " +
+                std::to_wstring(index++) + L"\n";
+            wstr += adapDesc.Description;
+            wstr += L"\n--------------------\n";
+            OutputDebugStringW(wstr.c_str());
+            allAdapters.push_back({ adapter,adapDesc.Description });
         }
 
-        if (SUCCEEDED(hr))
+        index = 0;
+        for (auto& adapInfo : allAdapters)
         {
-            break;
+            std::wstring info =
+                L"--------------------\nAdapter Info in Index : " +
+                std::to_wstring(index++) + L"\n" + adapInfo.second +
+                L"\n--------------------\n";
         }
     }
-    FAIL_HR_RETURN(hr);
+
+    UINT adapterIndex = (UINT)(allAdapters.size() - 1);
+    if (allAdapters[adapterIndex].second == L"Microsoft Basic Render Driver")
+    {
+        --adapterIndex;
+    }
+    if (mRenderDeivceConfig.mForceAdapterIndex != (UINT)(-1))
+    {
+        adapterIndex = mRenderDeivceConfig.mForceAdapterIndex;
+    }
+
+    if (adapterIndex >= 0 && adapterIndex < (UINT)allAdapters.size())
+    {
+        hr = D3D11CreateDevice(allAdapters[adapterIndex].first,
+            D3D_DRIVER_TYPE_UNKNOWN,
+            nullptr, deviceCreateFlag, featureLevels, numFeatLevels,
+            D3D11_SDK_VERSION, &mDevice, &mFeatureLevel, &mImmediateContext);
+        if (hr == E_INVALIDARG)
+        {
+            hr = D3D11CreateDevice(allAdapters[adapterIndex].first,
+                D3D_DRIVER_TYPE_UNKNOWN,
+                nullptr, deviceCreateFlag, featureLevels + 1, numFeatLevels - 1,
+                D3D11_SDK_VERSION, &mDevice, &mFeatureLevel, &mImmediateContext);
+        }
+    }
+
+    if (!mDevice && !mImmediateContext)
+    {
+        for (UINT i = 0; i < numDriverTypes; i++)
+        {
+            mDriveType = driverTypes[i];
+            hr = D3D11CreateDevice(nullptr, mDriveType,
+                nullptr, deviceCreateFlag, featureLevels,
+                numFeatLevels, D3D11_SDK_VERSION,
+                &mDevice, &mFeatureLevel,
+                &mImmediateContext);
+
+            if (hr == E_INVALIDARG)
+            {
+                hr = D3D11CreateDevice(nullptr, mDriveType,
+                    nullptr, deviceCreateFlag,
+                    featureLevels + 1, numFeatLevels - 1,
+                    D3D11_SDK_VERSION, &mDevice,
+                    &mFeatureLevel, &mImmediateContext);
+            }
+
+            if (SUCCEEDED(hr)) { break; }
+        }
+        FAIL_HR_RETURN(hr);
+    }
+
+    if (!mDevice || !mImmediateContext) { return false; }
 
     IDXGIFactory1* dxgiFactory1 = nullptr;
     {
@@ -274,7 +339,7 @@ bool RSDevices::GetConcurrentCreateSupport() const
 
 bool RSDevices::GetCommandListSupport() const
 {
-    return mCommandListSupport;
+    return mCommandListSupport && (!mRenderDeivceConfig.mForceSingleThread);
 }
 
 UINT RSDevices::GetCurrWndWidth() const

@@ -9,10 +9,8 @@
 
 #pragma once
 
-#ifdef _RS_DX11
 #include <vector>
 #include <string>
-#endif // _RS_DX11
 #include <d3d11_1.h>
 #include <DirectXMath.h>
 #include <Windows.h>

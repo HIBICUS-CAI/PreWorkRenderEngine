@@ -25,6 +25,8 @@ public:
     class RSCamera* GetRSLightCamera();
     void ResetRSLight(LIGHT_INFO* _info);
 
+    DirectX::XMFLOAT4X4* GetLightWorldMat();
+
     void SetRSLightStrength(DirectX::XMFLOAT3 _strength);
     void SetRSLightDirection(DirectX::XMFLOAT3 _direction);
     void SetRSLightPosition(DirectX::XMFLOAT3 _position);
@@ -33,7 +35,8 @@ public:
 
     void SetLightBloom(RS_SUBMESH_DATA& _meshData);
     void UploadLightDrawCall();
-    void ReleaseLightBloom();
+    void ReleaseLightBloom(bool _deleteByFrame);
+    void UpdateBloomColor();
 
 private:
     LIGHT_TYPE mLightType;

@@ -11,6 +11,12 @@
 
 #include "RSCommon.h"
 
+struct RENDER_DEVICE_CONFIG
+{
+    UINT mForceAdapterIndex = (UINT)-1;
+    bool mForceSingleThread = false;
+};
+
 class RSDevices
 {
 public:
@@ -38,6 +44,8 @@ private:
 
 private:
     class RSRoot_DX11* mRootPtr;
+
+    RENDER_DEVICE_CONFIG mRenderDeivceConfig;
 
     D3D_DRIVER_TYPE mDriveType;
     D3D_FEATURE_LEVEL mFeatureLevel;

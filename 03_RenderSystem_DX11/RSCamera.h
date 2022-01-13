@@ -27,6 +27,11 @@ public:
     void ChangeRSCameraNearFarZ(float _near, float _far);
 
     DirectX::XMFLOAT3 GetRSCameraPosition();
+    void ChangeRSCameraPosition(DirectX::XMFLOAT3& _position);
+    void ChangeRSCameraPosition(DirectX::XMFLOAT3&& _position);
+
+    void ResetRSCameraRotation(DirectX::XMFLOAT3 _lookAt,
+        DirectX::XMFLOAT3 _upVec);
 
 private:
     void CalcRSViewMat();

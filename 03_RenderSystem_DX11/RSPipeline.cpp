@@ -12,6 +12,7 @@
 #include "RSDevices.h"
 #include <algorithm>
 #include <thread>
+#include <process.h>
 
 unsigned __stdcall TopicThreadFunc(PVOID _argu);
 

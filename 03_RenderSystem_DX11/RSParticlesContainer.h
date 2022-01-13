@@ -31,7 +31,7 @@ public:
     void DeleteRSParticleEmitter(std::string& _name);
 
     RSParticleEmitter* GetRSParticleEmitter(std::string& _name);
-    std::vector<RSParticleEmitter>* GetAllParticleEmitters();
+    std::vector<RSParticleEmitter*>* GetAllParticleEmitters();
 
     void StartRSParticleEmitter(std::string& _name);
     void PauseRSParticleEmitter(std::string& _name);
@@ -41,7 +41,7 @@ private:
 
     bool mResetFlg;
 
-    std::vector<RSParticleEmitter> mParticleEmitterVec;
+    std::vector<RSParticleEmitter*> mParticleEmitterVec;
     std::unordered_map<std::string, RSParticleEmitter*>
         mParticleEmitterMap;
 };

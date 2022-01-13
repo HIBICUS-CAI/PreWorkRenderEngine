@@ -811,7 +811,7 @@ int WINAPI WinMain(
                     for (int i = 0; i < 64; i++)
                     {
                         name = "point-light-" + std::to_string(i + 2);
-                        root->LightsContainer()->DeleteRSLight(name);
+                        root->LightsContainer()->DeleteRSLight(name,false);
                     }
                 }
                 else

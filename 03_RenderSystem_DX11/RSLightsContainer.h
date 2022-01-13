@@ -24,7 +24,7 @@ public:
     class RSLight* CreateRSLight(std::string& _name, LIGHT_INFO* _info);
     class RSLight* GetRSLight(std::string& _name);
     RS_LIGHT_INFO* GetRSLightInfo(std::string& _name);
-    void DeleteRSLight(std::string& _name);
+    void DeleteRSLight(std::string& _name, bool _bloomDeleteByFrame);
 
     bool CreateLightCameraFor(std::string& _name, CAM_INFO* _info);
 
@@ -32,6 +32,8 @@ public:
         DirectX::XMFLOAT4&& _light);
     void EraseAmbientLight(std::string&& _name);
     void SetCurrentAmbientLight(std::string&& _name);
+    void ForceCurrentAmbientLight(DirectX::XMFLOAT4&& _ambient);
+    void ForceCurrentAmbientLight(DirectX::XMFLOAT4& _ambient);
     DirectX::XMFLOAT4& GetCurrentAmbientLight();
 
     std::vector<class RSLight*>* GetLights();

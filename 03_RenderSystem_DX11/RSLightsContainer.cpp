@@ -103,7 +103,8 @@ RS_LIGHT_INFO* RSLightsContainer::GetRSLightInfo(
     }
 }
 
-void RSLightsContainer::DeleteRSLight(std::string& _name)
+void RSLightsContainer::DeleteRSLight(std::string& _name,
+    bool _bloomDeleteByFrame)
 {
     auto found = mLightMap.find(_name);
     if (found != mLightMap.end())
@@ -116,16 +117,33 @@ void RSLightsContainer::DeleteRSLight(std::string& _name)
                 break;
             }
         }
-        // TODO delete shadow and shadow index
+
+        for (auto i = mShadowLightIndeices.begin();
+            i != mShadowLightIndeices.end(); i++)
+        {
+            if (mShadowLights[(*i)] == found->second)
+            {
+                for (auto& index : mShadowLightIndeices)
+                {
+                    if (index > (*i)) { --index; }
+                }
+                mShadowLightIndeices.erase(i);
+                std::string camName = _name + "-light-cam";
+                mRootPtr->CamerasContainer()->DeleteRSCamera(camName);
+                break;
+            }
+        }
         for (auto i = mShadowLights.begin();
             i != mShadowLights.end(); i++)
         {
             if ((*i) == found->second)
             {
                 mShadowLights.erase(i);
+                break;
             }
         }
-        found->second->ReleaseLightBloom();
+
+        found->second->ReleaseLightBloom(_bloomDeleteByFrame);
         delete found->second;
         mLightMap.erase(found);
     }
@@ -205,6 +223,16 @@ DirectX::XMFLOAT4& RSLightsContainer::GetAmbientLight(
 void RSLightsContainer::SetCurrentAmbientLight(std::string&& _name)
 {
     mCurrentAmbient = GetAmbientLight(_name);
+}
+
+void RSLightsContainer::ForceCurrentAmbientLight(DirectX::XMFLOAT4&& _ambient)
+{
+    mCurrentAmbient = _ambient;
+}
+
+void RSLightsContainer::ForceCurrentAmbientLight(DirectX::XMFLOAT4& _ambient)
+{
+    mCurrentAmbient = _ambient;
 }
 
 DirectX::XMFLOAT4& RSLightsContainer::GetCurrentAmbientLight()

@@ -13,6 +13,7 @@
 #include "RSResourceManager.h"
 #include "RSDrawCallsPool.h"
 #include "RSMeshHelper.h"
+#include "RSCamera.h"
 
 RSLight::RSLight(LIGHT_INFO* _info) :
     mLightType(_info->mType),
@@ -75,6 +76,18 @@ void RSLight::SetRSLightPosition(DirectX::XMFLOAT3 _position)
 {
     mLightPosition = _position;
     mRSLightInfo.mPosition = _position;
+
+    if (mRSLightCamera)
+    {
+        mRSLightCamera->ChangeRSCameraPosition(_position);
+    }
+    if (mBloomLightFlg)
+    {
+        static DirectX::XMMATRIX mat = {};
+        mat = DirectX::XMMatrixTranslation(
+            mLightPosition.x, mLightPosition.y, mLightPosition.z);
+        DirectX::XMStoreFloat4x4(&(mLightInstanceData[0].mWorldMat), mat);
+    }
 }
 
 void RSLight::SetRSLightFallOff(float _start, float _end)
@@ -137,6 +150,20 @@ void RSLight::SetLightBloom(RS_SUBMESH_DATA& _meshData)
         mLightMeshData.mTopologyType;
 }
 
+void RSLight::UpdateBloomColor()
+{
+    if (mBloomLightFlg)
+    {
+        mLightInstanceData[0].mCustomizedData1.x =
+            mLightStrength.x * 1.6f;
+        mLightInstanceData[0].mCustomizedData1.y =
+            mLightStrength.y * 1.6f;
+        mLightInstanceData[0].mCustomizedData1.z =
+            mLightStrength.z * 1.6f;
+        mLightInstanceData[0].mCustomizedData1.w = 1.f;
+    }
+}
+
 void RSLight::UploadLightDrawCall()
 {
     static auto pool = GetRSRoot_DX11_Singleton()->
@@ -148,11 +175,17 @@ void RSLight::UploadLightDrawCall()
     }
 }
 
-void RSLight::ReleaseLightBloom()
+void RSLight::ReleaseLightBloom(bool _deleteByFrame)
 {
-    if (mBloomLightFlg)
+    if (mBloomLightFlg && !_deleteByFrame)
     {
         GetRSRoot_DX11_Singleton()->MeshHelper()->ReleaseSubMesh(
             mLightMeshData);
     }
+}
+
+DirectX::XMFLOAT4X4* RSLight::GetLightWorldMat()
+{
+    if (!mLightInstanceData.size()) { return nullptr; }
+    return &(mLightInstanceData[0].mWorldMat);
 }
