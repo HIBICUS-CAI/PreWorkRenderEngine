@@ -350,12 +350,7 @@ public:
 
     void Release(RSMeshHelper* _helper)
     {
-        static bool finish = false;
-        if (_helper && !finish)
-        {
-            _helper->ReleaseSubMesh(mData);
-            finish = true;
-        }
+
     }
 
     void AddInstanceData(DirectX::XMFLOAT2 _pos,
