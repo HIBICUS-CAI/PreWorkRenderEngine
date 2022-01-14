@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Scene3D.cpp" />
     <ClCompile Include="StartUp.cpp" />
     <ClCompile Include="TempMesh.cpp" />
     <ClCompile Include="TempPipeline_Diffuse.cpp" />
@@ -170,6 +171,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Scene3D.h" />
     <ClInclude Include="TempMesh.h" />
     <ClInclude Include="TempPipeline_Diffuse.h" />
     <ClInclude Include="TempPipeline_Light.h" />
