@@ -756,7 +756,8 @@ bool Run3DLoop(RSRoot_DX11* _rootPtr)
             static float speedFactor = 2.f;
 
             if (InputInterface::IsKeyPushedInSingle(
-                GP_RIGHTFORESHDBTN))
+                GP_RIGHTFORESHDBTN) ||
+                InputInterface::IsKeyPushedInSingle(KB_P))
             {
                 inWireframe = !inWireframe;
                 if (inWireframe)
@@ -775,7 +776,8 @@ bool Run3DLoop(RSRoot_DX11* _rootPtr)
 
             static bool pointLightBoom = false;
             if (InputInterface::IsKeyPushedInSingle(
-                GP_LEFTFORESHDBTN))
+                GP_LEFTFORESHDBTN) ||
+                InputInterface::IsKeyPushedInSingle(KB_L))
             {
                 std::string name = "";
                 if (pointLightBoom)
